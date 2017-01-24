@@ -5,18 +5,22 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
 
-var dataSetHash = {};
-
 export default class InsightFacade implements IInsightFacade {
-
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
 
     }
 
     addDataset(id: string, content: string): Promise<InsightResponse> {
+        var dataSetHash = {};
+        var JSZip = require("jszip");
+        var zip = new JSZip();
+
         return new Promise(function(fulfill, reject) {
             try {
+                //TODO: Finish implementation
+                //TODO: Create helper function to read all files
+                zip.loadAsync(content);
                 JSON.parse(content);
             } catch (SyntaxError) {
                 reject (InsightResponseInput(400, {"error": "my text"}))
@@ -39,9 +43,10 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function InsightResponseInput (code : number, body: Object) {
-    var ir : InsightResponse;
-    ir.body = body;
-    ir.code = code;
+function InsightResponseInput (c : number, b: Object) {
+    var ir : InsightResponse = {
+        code: c,
+        body: b
+    };
     return ir;
 }
