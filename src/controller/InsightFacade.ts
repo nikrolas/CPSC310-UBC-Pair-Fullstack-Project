@@ -5,6 +5,8 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
 
+var dataSetHash = {};
+
 export default class InsightFacade implements IInsightFacade {
 
     constructor() {
@@ -12,7 +14,19 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     addDataset(id: string, content: string): Promise<InsightResponse> {
-        return null;
+        return new Promise(function(fulfill, reject) {
+            try {
+                JSON.parse(content);
+            } catch (SyntaxError) {
+                reject (InsightResponseInput(400, {"error": "my text"}))
+            }
+            if (id in dataSetHash){
+                fulfill (InsightResponseInput(201, content));
+            }
+            if (!(id in dataSetHash)) {
+                fulfill (InsightResponseInput(204, content));
+            }
+        })
     }
 
     removeDataset(id: string): Promise<InsightResponse> {
@@ -22,4 +36,11 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return null;
     }
+}
+
+function InsightResponseInput (code : number, body: Object) {
+    var ir : InsightResponse;
+    ir.body = body;
+    ir.code = code;
+    return ir;
 }
