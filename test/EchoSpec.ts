@@ -18,6 +18,7 @@ describe("EchoSpec", function () {
 
     before(function () {
         Log.test('Before: ' + (<any>this).test.parent.title);
+
     });
 
     beforeEach(function () {
