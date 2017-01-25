@@ -8,30 +8,27 @@ import Log from "../Util";
 export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-
     }
 
     addDataset(id: string, content: string): Promise<InsightResponse> {
-        var dataSetHash = {};
+        var datasetHash = {};
         var JSZip = require("jszip");
         var zip = new JSZip();
 
         return new Promise(function(fulfill, reject) {
-            try {
-                //TODO: Finish implementation
-                //TODO: Create helper function to read all files
-                zip.loadAsync(content);
-                JSON.parse(content);
-            } catch (SyntaxError) {
-                reject (InsightResponseInput(400, {"error": "my text"}))
-            }
-            if (id in dataSetHash){
-                fulfill (InsightResponseInput(201, content));
-            }
-            if (!(id in dataSetHash)) {
-                fulfill (InsightResponseInput(204, content));
-            }
-        })
+            zip.loadAsync(content, {base64: true})
+                .then(function(zipContent) {
+                    zipContent.folder(id).forEach(function (relativePath: string, file) {
+                        //console.log("Path " + relativePath);
+                        //console.log("Filename" + file);
+                    });
+                    //console.log(datasetHash);
+                })
+                .catch(function (err: any) {
+                    reject(InsightResponseInput(400, {}));
+                });
+            fulfill(InsightResponseInput(0, {}));
+        });
     }
 
     removeDataset(id: string): Promise<InsightResponse> {
@@ -43,7 +40,7 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function InsightResponseInput (c : number, b: Object) {
+function InsightResponseInput(c : number, b: Object) {
     var ir : InsightResponse = {
         code: c,
         body: b
