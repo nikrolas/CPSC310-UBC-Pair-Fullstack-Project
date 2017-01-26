@@ -18,7 +18,7 @@ describe("InsightFacadeSpec", function () {
     });
 
     it.only("Dataset didn't exist; added successfully", function (done) {
-        var data = fs.readFileSync("./testing.zip");
+        var data = fs.readFileSync("./courses.zip");
         insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
