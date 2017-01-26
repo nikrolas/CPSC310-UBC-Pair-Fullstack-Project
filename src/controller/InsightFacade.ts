@@ -5,6 +5,9 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
 
+var JSZip = require("jszip");
+var zip = new JSZip();
+
 export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
@@ -12,22 +15,24 @@ export default class InsightFacade implements IInsightFacade {
 
     addDataset(id: string, content: string): Promise<InsightResponse> {
         var datasetHash = {};
-        var JSZip = require("jszip");
-        var zip = new JSZip();
 
         return new Promise(function(fulfill, reject) {
             zip.loadAsync(content, {base64: true})
-                .then(function(zipContent) {
-                    zipContent.folder(id).forEach(function (relativePath: string, file) {
-                        //console.log("Path " + relativePath);
-                        //console.log("Filename" + file);
-                    });
-                    //console.log(datasetHash);
+                .then(function(zipContent: any) {
+                    //console.log("first then");
+                    Promise.all(filePromiseCollector(zipContent))
+                        .then(function(arrayOfPromises) {
+                            console.log("here we are");
+                            console.log(arrayOfPromises);
+                            fulfill(insightResponseConstructor(0, {}));
+                        })
+                        .catch(function (err) {
+                          console.log(err);
+                        })
                 })
                 .catch(function (err: any) {
-                    reject(InsightResponseInput(400, {}));
+                    reject(insightResponseConstructor(400, "Error: Invalid Dataset"));
                 });
-            fulfill(InsightResponseInput(0, {}));
         });
     }
 
@@ -40,10 +45,23 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function InsightResponseInput(c : number, b: Object) {
+function insightResponseConstructor(c : number, b: Object) {
     var ir : InsightResponse = {
         code: c,
         body: b
     };
     return ir;
+}
+
+function filePromiseCollector(zip: any) {
+    let allPromises: Promise<String>[] = [];
+    let files = zip.files;
+    for (let filename in files) {
+        let file = zip.file(filename);
+        //console.log("inside for");
+        if(file) {
+            allPromises.push(zip.file(filename).async("string"));
+        }
+    }
+    return allPromises;
 }

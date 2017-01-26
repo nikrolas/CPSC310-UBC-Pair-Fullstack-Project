@@ -6,6 +6,7 @@ import {expect} from 'chai';
 
 import Log from "../src/Util";
 import InsightFacade from "../src/controller/InsightFacade";
+import {InsightResponse} from "../src/controller/IInsightFacade";
 
 describe("InsightFacadeSpec", function () {
 
@@ -16,8 +17,15 @@ describe("InsightFacadeSpec", function () {
         insightFacade = new InsightFacade();
     });
 
-    it("Dataset didn't exist; added successfully", function () {
+    it.only("Dataset didn't exist; added successfully", function (done) {
         var data = fs.readFileSync("./courses.zip");
-        return insightFacade.addDataset("courses", data.toString('base64'));
+        insightFacade.addDataset("courses", data.toString('base64'))
+            .then(function (response) {
+                expect(response.code).is.equal(204);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
     });
 });
