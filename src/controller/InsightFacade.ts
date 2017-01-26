@@ -7,6 +7,7 @@ import Log from "../Util";
 
 var JSZip = require("jszip");
 var zip = new JSZip();
+var fs = require ("fs");
 
 export default class InsightFacade implements IInsightFacade {
     constructor() {
@@ -21,9 +22,10 @@ export default class InsightFacade implements IInsightFacade {
                 .then(function(zipContent: any) {
                     //console.log("first then");
                     Promise.all(filePromiseCollector(zipContent))
-                        .then(function(arrayOfPromises) {
+                        .then(function(arrayOfJsonObjects) {
                             console.log("here we are");
-                            console.log(arrayOfPromises);
+                            console.log(arrayOfJsonObjects);
+                            fs.writeFileSync('./cache.txt', arrayOfJsonObjects);
                             fulfill(insightResponseConstructor(0, {}));
                         })
                         .catch(function (err) {
