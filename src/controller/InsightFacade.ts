@@ -4,12 +4,11 @@
 import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
-import {isNullOrUndefined} from "util";
 
 var JSZip = require("jszip");
 var zip = new JSZip();
 var fs = require("fs");
-var datasetHash:any = {};
+var datasetHash: any = {};
 
 export default class InsightFacade implements IInsightFacade {
     constructor() {
@@ -21,41 +20,35 @@ export default class InsightFacade implements IInsightFacade {
             zip.loadAsync(content, {base64: true})
                 .then(function(zipContent: any) {
                     Promise.all(filePromiseCollector(zipContent))
-                        .then(function(arrayOfPromises) {
-                            //console.log(arrayOfPromises);
-                            if(isNullOrUndefined(datasetHash[id])) {
-                                datasetHash[id] = arrayOfPromises;
-                                fs.writeFile(id.concat(".txt"), JSON.stringify(datasetHash),'w');
-                                console.log("Inside 204");
-                                fulfill(insightResponseConstructor(204,{}));
+                        .then(function(arrayOfJSONString) {
+                            if(datasetHash[id] == null) {
+                                addToHashset(id, arrayOfJSONString);
+                                fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
                             }
                             else{
-                                datasetHash[id] = arrayOfPromises;
-                                fs.writeFile(id.concat(".txt"), JSON.stringify(datasetHash),'w');
-                                console.log("Inside 201");
-                                fulfill(insightResponseConstructor(201,{}));
+                                addToHashset(id, arrayOfJSONString);
+                                fulfill(insightResponseConstructor(201, {"Success": "Dataset updated"}));
                             }
                         })
-                        .catch(function (err) {
-                          console.log("Inside inside 400");
-                          reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                        .catch(function(err: any) {
+                            reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
 
                         })
                 })
-                .catch(function (err: any) {
-                    console.log("Inside outside 400")
+                .catch(function(err: any) {
                     reject(insightResponseConstructor(400,{"Error": "Invalid Dataset"}));
                 });
         });
     }
 
     removeDataset(id: string): Promise<InsightResponse> {
-        var data = fs.readFileSync("./cache.txt");
-        datasetHash = JSON.parse(data);
-        if (datasetHash[id] == id) {
-            delete datasetHash[id];
-        }
-        return null;
+        return new Promise(function(fulfill, reject) {
+            var data = fs.readFileSync("./cache.txt");
+            datasetHash = JSON.parse(data);
+            if (datasetHash[id] == id) {
+                delete datasetHash[id];
+            }
+        });
     }
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
@@ -72,7 +65,7 @@ function insightResponseConstructor(c : number, b: Object) {
 }
 
 function filePromiseCollector(zip: any) {
-    let allPromises: Promise<String>[] = [];
+    let allPromises: any = [];
     let files = zip.files;
     for (let filename in files) {
         let file = zip.file(filename);
@@ -81,4 +74,25 @@ function filePromiseCollector(zip: any) {
         }
     }
     return allPromises;
+}
+
+function addToHashset(id: string, jsonStrings: any) {
+    datasetHash[id] = jsonStrings;
+    writeJSONFile(id, jsonStrings);
+}
+
+function writeJSONFile(id: string, jsonStrings: any) {
+    let jsons: any = {};
+    jsons["courses"] = [];
+    for (let string of jsonStrings) {
+        jsons["courses"].push(string);
+    }
+    fs.writeFile(id.concat(".json"), JSON.stringify(jsons), function (err: any) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            console.log("json created");
+        }
+    })
 }
