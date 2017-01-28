@@ -26,6 +26,7 @@ export default class InsightFacade implements IInsightFacade {
                                 fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
                             }
                             else{
+                                console.log("this?")
                                 addToHashset(id, arrayOfJSONString);
                                 fulfill(insightResponseConstructor(201, {"Success": "Dataset updated"}));
                             }
@@ -43,12 +44,18 @@ export default class InsightFacade implements IInsightFacade {
 
     removeDataset(id: string): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
-            var data = fs.readFileSync("./cache.txt");
+            var data = fs.readFileSync('./cache'.concat(".json"));
             datasetHash = JSON.parse(data);
-            if (datasetHash[id] == id) {
+            if(id in datasetHash){
                 delete datasetHash[id];
+                reWriteJSONFile(datasetHash);
+                fulfill(insightResponseConstructor(200, {"Success": "Dataset removed "}));
+            }
+            else {
+                reject(insightResponseConstructor(424,{"missing": [id] }));
             }
         });
+
     }
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
@@ -83,11 +90,11 @@ function addToHashset(id: string, jsonStrings: any) {
 
 function writeJSONFile(id: string, jsonStrings: any) {
     let jsons: any = {};
-    jsons["courses"] = [];
+    jsons[id] = [];
     for (let string of jsonStrings) {
-        jsons["courses"].push(string);
+        jsons[id].push(string);
     }
-    fs.writeFile(id.concat(".json"), JSON.stringify(jsons), function (err: any) {
+    fs.writeFile("./cache".concat(".json"), JSON.stringify(jsons), function (err: any) {
         if (err) {
             console.log(err);
         }
@@ -96,3 +103,14 @@ function writeJSONFile(id: string, jsonStrings: any) {
         }
     })
 }
+
+function reWriteJSONFile(jsonObject: any) {
+
+    fs.writeFile("./cache".concat(".json"),JSON.stringify(jsonObject), function (err: any) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            console.log("json created");
+        }
+    })
