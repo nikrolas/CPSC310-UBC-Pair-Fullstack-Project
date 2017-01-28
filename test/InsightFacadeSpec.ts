@@ -75,12 +75,28 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("Overwriting existing dataset; added successfully", function (done) {
+    // it.only("Adding second dataset; added successfully", function (done) {
+    //     console.log("In second test");
+    //     var data = fs.readFileSync("./test2.zip").toString('base64');
+    //     insightFacade.addDataset("courses2", data)
+    //         .then(function (response) {
+    //             expect(response.code).is.equal(201);
+    //             console.log("Second test complete");
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             console.log("fail 2-2");
+    //             expect.fail();
+    //             done();
+    //         })
+    // });
+
+    it.only("Adding overriding dataset; added successfully", function (done) {
         console.log("In second test");
-        var data = fs.readFileSync("./test2.zip").toString('base64');
-        insightFacade.addDataset("courses2", data)
+        var data = fs.readFileSync("./test3.zip").toString('base64');
+        insightFacade.addDataset("meow", data)
             .then(function (response) {
-                expect(response.code).is.equal(201);
+                expect(response.code).is.equal(204);
                 console.log("Second test complete");
                 done();
             })
@@ -105,18 +121,4 @@ describe("InsightFacadeSpec", function () {
                 done();
             })
     });
-    //
-    // it.only("Adding invalid dataset", function (done) {
-    //     var data = fs.readFileSync("./README.md");
-    //     insightFacade.addDataset("invalidData", data.toString('base64'))
-    //         .then(function (response) {
-    //             console.log("fail 3");
-    //             expect.fail();
-    //         })
-    //         .catch(function (err) {
-    //             console.log("In third test");
-    //             expect(err.code).is.equal(400);
-    //             done();
-    //         })
-    // });
 });

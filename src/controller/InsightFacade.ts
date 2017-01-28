@@ -10,6 +10,7 @@ var zip = new JSZip();
 var fs = require("fs");
 var datasetHash: any = {};
 
+
 export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
@@ -21,8 +22,8 @@ export default class InsightFacade implements IInsightFacade {
                 .then(function(zipContent: any) {
                     Promise.all(filePromiseCollector(zipContent))
                         .then(function(arrayOfJSONString) {
-                            if(datasetHash[id] == null) {
-                                console.log("Inside new id conditional");
+                            if(isEmptyObject(datasetHash)) {
+                                console.log("Inside very first data set");
                                 addToHashset(id, arrayOfJSONString)
                                     .then(function () {
                                         fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
@@ -31,18 +32,18 @@ export default class InsightFacade implements IInsightFacade {
                                         reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
                                     })
                             }
-                            else{
-                                console.log("this?")
-                                addToHashset(id, arrayOfJSONString);
-                                fulfill(insightResponseConstructor(201, {"Success": "Dataset updated"}));
-                                console.log("Inside existing id conditional");
-                                addToHashset(id, arrayOfJSONString)
-                                    .then(function () {
-                                        fulfill(insightResponseConstructor(201, {"Success": "Dataset updated"}));
-                                    })
-                                    .catch(function (err) {
-                                        reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
-                                    })
+                            else if (datasetHash[id]==null) {
+                                console.log("Inside new id conditional with a dataset previously");
+                                datasetHash[id] = arrayOfJSONString;
+                                reWriteJSONFile(datasetHash);
+                                fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
+                            }
+                            else if (id in datasetHash) {
+                                console.log("Inside existing id conditional with a dataset previously");
+                                delete datasetHash[id];                         //TODO: Need to replace value
+                                datasetHash[id] = arrayOfJSONString;
+                                reWriteJSONFile(datasetHash);
+                                fulfill(insightResponseConstructor(201, {"Success": "Dataset added"}));
                             }
                         })
                         .catch(function(err: any) {
@@ -58,11 +59,9 @@ export default class InsightFacade implements IInsightFacade {
 
     removeDataset(id: string): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
-            var data = fs.readFileSync('./cache'.concat(".json"));
-            datasetHash = JSON.parse(data);
             if(id in datasetHash){
                 delete datasetHash[id];
-                reWriteJSONFile(datasetHash);
+                reWriteJSONFile(datasetHash)
                 fulfill(insightResponseConstructor(200, {"Success": "Dataset removed "}));
             }
             else {
@@ -134,12 +133,20 @@ function writeJSONFile(id: string, jsonStrings: any) {
 }
 
 function reWriteJSONFile(jsonObject: any) {
-    fs.writeFile("./cache".concat(".json"),JSON.stringify(jsonObject), function (err: any) {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            console.log("json created");
-        }
+    return new Promise(function (fulfill, reject) {
+        console.log("Rewriting JsonFile");
+        fs.writeFile("./cache".concat(".json"), JSON.stringify(jsonObject), function (err: any) {
+            if (err) {
+                console.log(err);
+                reject(err);            }
+            else {
+                console.log("json created");
+                fulfill();
+            }
+        })
     })
+}
+
+function isEmptyObject(obj:Object) {
+    return !Object.keys(obj).length;
 }
