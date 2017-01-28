@@ -18,6 +18,7 @@ describe("InsightFacadeSpec", function () {
 
 
     it.only("Dataset didn't exist; added successfully", function (done) {
+        console.log("In first test");
         var data = fs.readFileSync("./test.zip");
         insightFacade.addDataset("meow", data.toString('base64'))
             .then(function (response) {
@@ -63,27 +64,45 @@ describe("InsightFacadeSpec", function () {
         var data = fs.readFileSync("./test.zip");
         insightFacade.addDataset("meow", data.toString('base64'))
             .then(function (response) {
-                console.log("In first test");
+                console.log("First test complete");
                 expect(response.code).is.equal(204);
                 done();
             })
             .catch(function (err) {
                 console.log("fail 1");
                 expect.fail();
+                done();
             })
     });
 
     it.only("Overwriting existing dataset; added successfully", function (done) {
-        var data = fs.readFileSync("./test2.zip");
-        insightFacade.addDataset("courses", data.toString('base64'))
+        console.log("In second test");
+        var data = fs.readFileSync("./test2.zip").toString('base64');
+        insightFacade.addDataset("courses2", data)
             .then(function (response) {
-                console.log("In second test");
                 expect(response.code).is.equal(201);
+                console.log("Second test complete");
                 done();
             })
             .catch(function (err) {
                 console.log("fail 2-2");
                 expect.fail();
+                done();
+            })
+    });
+
+    it.only("Adding invalid dataset", function (done) {
+        var data = fs.readFileSync("./README.md");
+        insightFacade.addDataset("invalidData", data.toString('base64'))
+            .then(function (response) {
+                console.log("fail 3");
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                console.log("In third test");
+                expect(err.code).is.equal(400);
+                done();
             })
     });
     //
