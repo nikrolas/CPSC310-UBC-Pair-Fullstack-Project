@@ -11,6 +11,7 @@ var fs = require("fs");
 var datasetHash: any = {};
 
 
+
 export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
@@ -22,29 +23,35 @@ export default class InsightFacade implements IInsightFacade {
                 .then(function(zipContent: any) {
                     Promise.all(filePromiseCollector(zipContent))
                         .then(function(arrayOfJSONString) {
-                            if(isEmptyObject(datasetHash)) {
-                                console.log("Inside very first data set");
-                                addToHashset(id, arrayOfJSONString)
-                                    .then(function () {
+                            if (!fs.existsSync("./cache.json")) {
+                                console.log("not exists");
+                                    addToHashset(id, arrayOfJSONString)
+                                        .then(function () {
+                                            fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
+                                        })
+                                        .catch(function (err) {
+                                            reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                                        })
+                                }
+                            else {
+                                console.log("exist");
+                                var datastring = fs.readFileSync("./cache.json");
+                                datasetHash = JSON.parse(datastring);
+                                if (datasetHash[id] == null) {
+                                        console.log("Inside new id conditional with a dataset previously");
+                                        datasetHash[id] = arrayOfJSONString
+                                        console.log(datasetHash[id]);
+                                        reWriteJSONFile(datasetHash);
                                         fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
-                                    })
-                                    .catch(function (err) {
-                                        reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
-                                    })
-                            }
-                            else if (datasetHash[id]==null) {
-                                console.log("Inside new id conditional with a dataset previously");
-                                datasetHash[id] = arrayOfJSONString;
-                                reWriteJSONFile(datasetHash);
-                                fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
-                            }
-                            else if (id in datasetHash) {
-                                console.log("Inside existing id conditional with a dataset previously");
-                                delete datasetHash[id];                         //TODO: Need to replace value
-                                datasetHash[id] = arrayOfJSONString;
-                                reWriteJSONFile(datasetHash);
-                                fulfill(insightResponseConstructor(201, {"Success": "Dataset added"}));
-                            }
+                                    }
+                                    else if (id in datasetHash) {
+                                        console.log("Inside existing id conditional with a dataset previously");
+                                        delete datasetHash[id];                             //TODO: Need to replace value
+                                        datasetHash[id] = arrayOfJSONString;
+                                        reWriteJSONFile(datasetHash);
+                                        fulfill(insightResponseConstructor(201, {"Success": "Dataset added"}));
+                                    }
+                                }
                         })
                         .catch(function(err: any) {
                             reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
@@ -61,7 +68,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill, reject) {
             if(id in datasetHash){
                 delete datasetHash[id];
-                reWriteJSONFile(datasetHash)
+                reWriteJSONFile(datasetHash);
                 fulfill(insightResponseConstructor(200, {"Success": "Dataset removed "}));
             }
             else {
@@ -72,7 +79,10 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
-        return null;
+        return new Promise(function(fulfill,reject) {
+            JSON.parse(datasetHash);
+
+        });
     }
 }
 
