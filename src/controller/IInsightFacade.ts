@@ -12,11 +12,15 @@ export interface InsightResponse {
 export interface QueryRequest {
     // you can define your own structure that complies with the EBNF here
     WHERE: FilterInterface;                     //BODY     ::= 'WHERE:' FILTER
-    COLUMNS: string[];                          //COLUMNS  ::= 'COLUMNS:[' key ( ',' key )* ']'
-    ORDER ?: string[];                            //( 'ORDER:' key ', ' )?
-    FORM : 'table';                             //'FORM : TABLE'
+    OPTIONS: OptionInterface;
 }
 
+export interface OptionInterface {
+    COLUMNS: string[];                          //COLUMNS  ::= 'COLUMNS:[' key ( ',' key )* ']'
+    ORDER ?: string[];                            //( 'ORDER:' key ', ' )?
+    FORM : string;                             //'FORM : TABLE'
+
+}
 export interface FilterInterface {
     // you can define your own structure that complies with the EBNF here
     AND ?: FilterInterface[];                   //LOGIC ':[{' FILTER ( '}, {' FILTER )* '}]'

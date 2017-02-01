@@ -6,7 +6,6 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 import Log from "../Util";
 
 var JSZip = require("jszip");
-var zip = new JSZip();
 var fs = require("fs");
 let datasetHash: any = {};
 
@@ -19,18 +18,20 @@ export default class InsightFacade implements IInsightFacade {
 
     addDataset(id: string, content: any): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
+            var zip = new JSZip();
             zip.loadAsync(content, {base64: true})
                 .then(function(zipContent: any) {
                     Promise.all(filePromiseCollector(zipContent))
                         .then(function(arrayOfJSONString) {
+                            console.log(arrayOfJSONString);
                             if (!fs.existsSync("./cache.json")) {
                                 console.log("not exists");
                                 addToHashset(id, arrayOfJSONString)
                                     .then(function () {
-                                        fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
+                                        return fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
                                     })
                                     .catch(function (err) {
-                                        reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                                       return reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
                                     })
                             }
                             else {
@@ -40,7 +41,7 @@ export default class InsightFacade implements IInsightFacade {
                                     console.log("Inside new id conditional with a dataset previously");
                                     datasetHash[id] = arrayOfJSONString;
                                     reWriteJSONFile(datasetHash);
-                                    fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
+                                     return fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
                                 }
                                 else if (id in datasetHash) {
                                     console.log("Inside existing id conditional with a dataset previously");
@@ -49,17 +50,17 @@ export default class InsightFacade implements IInsightFacade {
                                     datasetHash[id] = arrayOfJSONString;
                                     reWriteJSONFile(datasetHash);
                                     console.log("sofargood");
-                                    fulfill(insightResponseConstructor(201, {"Success": "Dataset added"}));
+                                    return fulfill(insightResponseConstructor(201, {"Success": "Dataset added"}));
                                 }
                             }
                         })
                         .catch(function(err: any) {
-                            reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                           return reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
 
                         })
                 })
                 .catch(function(err: any) {
-                    reject(insightResponseConstructor(400,{"Error": "Invalid Dataset"}));
+                    return reject(insightResponseConstructor(400,{"Error": "Invalid Dataset"}));
                 });
         });
     }
@@ -70,10 +71,10 @@ export default class InsightFacade implements IInsightFacade {
             if(id in datasetHash){
                 delete datasetHash[id];
                 reWriteJSONFile(datasetHash);
-                fulfill(insightResponseConstructor(200, {"Success": "Dataset removed "}));
+                return fulfill(insightResponseConstructor(200, {"Success": "Dataset removed "}));
             }
             else {
-                reject(insightResponseConstructor(424,{"missing": [id] }));
+                return reject(insightResponseConstructor(424,{"missing": [id] }));
             }
         });
 
@@ -83,21 +84,38 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill,reject) {
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
             let covertedArray:string[] = [];
-            for (var i = 0; i < query.COLUMNS.length; i++) {                    //Checking Columns for wanted values
-                covertedArray[i] = correspondingJSON(query.COLUMNS[i]);
+            let valueArray:any = {};
+            let arrayOfValueArray: any = [];                                        //Filted info added to result key in queryinfo
+            let queryInfo: any = {render: query.OPTIONS.FORM, result: null};        //Final Output/Object
+
+            //FILTER AND OR NOT
+
+
+
+            for (var i = 0; i < query.OPTIONS.COLUMNS.length; i++) {                         //Checking Columns for wanted values
+                covertedArray[i] = correspondingJSON(query.OPTIONS.COLUMNS[i]);
             }
-            for (var i = 0; i < covertedArray.length; i++) {
-                for (var key in datasetHash) {                   //number of keys in datasethash
-                    for (var j = 0; j < datasetHash[key].length; j++) {                 //number of objects in array of key
-                        var covertedToObj = JSON.parse(datasetHash[key][j]);
-                        for (var k=0; k<covertedToObj['result'].length; k++) {
+            for (var key in datasetHash) {                                          //number of keys in datasethash
+                for (var j = 0; j < datasetHash[key].length; j++) {                 //number of objects in array of key
+                    var covertedToObj = JSON.parse(datasetHash[key][j])
+                    for (var k=0; k<covertedToObj['result'].length; k++) {
+                        for (var i = 0; i < covertedArray.length; i++) {
+
+                            //FILTER IS
                             if (covertedArray[i] in covertedToObj["result"][k]) {              //Finding each object in array of dictionary
-                                console.log(covertedToObj["result"][k][covertedArray[i]]);
+
+                                //FILTER GT,EQ,LT
+                                valueArray[query.OPTIONS.COLUMNS[i]] = covertedToObj["result"][k][covertedArray[i]];    //adding query columns into valueArray
                             }
                         }
+                        arrayOfValueArray.push(valueArray);
+                        valueArray = {};
                     }
                 }
             }
+            queryInfo['result'] = arrayOfValueArray;
+            console.log(queryInfo);
+            //FILTER ORDER
 
         });
     }
@@ -161,10 +179,10 @@ function addToHashset(id: string, jsonStrings: any) {
         datasetHash[id] = jsonStrings;
         writeJSONFile(id, jsonStrings)
             .then(function () {
-                fulfill();
+                return fulfill();
             })
             .catch(function (err: any) {
-                reject(err);
+                return reject(err);
             });
     })
 }
@@ -180,11 +198,11 @@ function writeJSONFile(id: string, jsonStrings: any) {
         fs.writeFile("./cache.json", JSON.stringify(jsons), function (err: any) {
             if (err) {
                 console.log(err);
-                reject(err);
+                return reject(err);
             }
             else {
                 console.log("json created");
-                fulfill();
+                 return fulfill();
             }
         })
     })

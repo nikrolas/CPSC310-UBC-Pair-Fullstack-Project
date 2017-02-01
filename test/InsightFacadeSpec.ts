@@ -12,12 +12,25 @@ describe("InsightFacadeSpec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
     var qr : QueryRequest = {
-            COLUMNS:[
+
+        WHERE: {
+            IS: {
+                "courses_dept":"apsc"
+            }
+        },
+        OPTIONS: {
+            COLUMNS: [
                 "courses_dept",
                 "courses_avg"
             ],
+            FORM:"TABLE"
+
+        },
 
     };
+    var data = fs.readFileSync("./test.zip");
+    var data1 = fs.readFileSync("./test3.zip");
+
 
 
     beforeEach(function () {
@@ -25,38 +38,32 @@ describe("InsightFacadeSpec", function () {
     });
 
 
-
-    it.only("Dataset didn't exist; added successfully", function (done) {
+    it.only("Dataset didn't exist; added successfully", function () {
         fs.unlinkSync('./cache.json');
         console.log("In first test");
-        var data = fs.readFileSync("./test.zip");
-        insightFacade.addDataset("meow", data.toString('base64'))
+       return insightFacade.addDataset("meow", data.toString('base64'))
             .then(function (response) {
                 console.log("Success");
                 expect(response.code).is.equal(204);
-                done();
             })
             .catch(function (err) {
                 console.log("fail 1");
                 expect.fail();
-                done(err);
             })
     });
 
-    // it.only("Dataset does not exist in cache; added successfully", function (done) {
-    //     var data1 = fs.readFileSync("./test3.zip");
-    //     insightFacade.addDataset("pow", data1.toString('base64'))
+    // it.only("Dataset does not exist in cache; added successfully", function () {
+    //     return insightFacade.addDataset("pow", data1.toString('base64'))
     //         .then(function (response) {
     //             console.log("First test complete");
     //             expect(response.code).is.equal(204);
-    //             done();
     //         })
     //         .catch(function (err) {
     //             console.log("fail 1");
     //             expect.fail();
     //         })
     // });
-    //
+
     // it.only("Dataset exists in cache; added successfully", function (done) {
     //     var data2 = fs.readFileSync("./test3.zip");
     //     insightFacade.addDataset("meow", data2.toString('base64'))
@@ -71,18 +78,18 @@ describe("InsightFacadeSpec", function () {
     //         })
     // });
 
-    it.only("Query Data Simple", function (done) {
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                console.log("First test complete");
-                expect(response.code).is.equal(201);
-                done();
-            })
-            .catch(function (err) {
-                console.log("fail 1");
-                expect.fail();
-            })
-    });
+    // it.only("Query Data Simple", function (done) {
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             console.log("First test complete");
+    //             expect(response.code).is.equal(201);
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             console.log("fail 1");
+    //             expect.fail();
+    //         })
+    // });
 
     // it.only("remove dataset that is not in the set, error thrown", function () {
     //     insightFacade.removeDataset("blah")
