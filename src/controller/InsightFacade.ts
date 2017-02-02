@@ -1,7 +1,7 @@
 /**
  * This is the main programmatic entry point for the project.
  */
-import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
+import {IInsightFacade, InsightResponse, QueryRequest, FilterInterface, NumberFilter} from "./IInsightFacade";
 
 import Log from "../Util";
 
@@ -84,43 +84,95 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill,reject) {
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
             let covertedArray:string[] = [];
-            let valueArray:any = {};
-            let arrayOfValueArray: any = [];                                        //Filted info added to result key in queryinfo
+            let arrayOfValueArray: any = [];
             let queryInfo: any = {render: query.OPTIONS.FORM, result: null};        //Final Output/Object
-
-            //FILTER AND OR NOT
 
 
 
             for (var i = 0; i < query.OPTIONS.COLUMNS.length; i++) {                         //Checking Columns for wanted values
                 covertedArray[i] = correspondingJSON(query.OPTIONS.COLUMNS[i]);
             }
-            for (var key in datasetHash) {                                          //number of keys in datasethash
-                for (var j = 0; j < datasetHash[key].length; j++) {                 //number of objects in array of key
-                    var covertedToObj = JSON.parse(datasetHash[key][j])
-                    for (var k=0; k<covertedToObj['result'].length; k++) {
-                        for (var i = 0; i < covertedArray.length; i++) {
 
-                            //FILTER IS
-                            if (covertedArray[i] in covertedToObj["result"][k]) {              //Finding each object in array of dictionary
+            //FILTER AND OR NOT
 
-                                //FILTER GT,EQ,LT
-                                valueArray[query.OPTIONS.COLUMNS[i]] = covertedToObj["result"][k][covertedArray[i]];    //adding query columns into valueArray
-                            }
-                        }
-                        arrayOfValueArray.push(valueArray);
-                        valueArray = {};
-                    }
-                }
-            }
+
+            arrayOfValueArray = filterInfo(covertedArray,query);
+
+            //FILTER ORDER
             queryInfo['result'] = arrayOfValueArray;
             console.log(queryInfo);
-            //FILTER ORDER
-
         });
     }
 }
 
+function filterInfo(convertedArray: string[], query:QueryRequest, filterinterface ?: FilterInterface) {
+    let valueArray:any = {};
+    let arrayOfValueArray: any = [];                                        //Filted info added to result key in queryinfo
+    //FILTERANDOR
+    if (query.WHERE.AND == null && query.WHERE.OR == null && query.WHERE.NOT == null) {
+        for (var key in datasetHash) {                                          //number of keys in datasethash
+            for (var j = 0; j < datasetHash[key].length; j++) {                 //number of objects in array of key
+                var covertedToObj = JSON.parse(datasetHash[key][j])
+                for (var k=0; k<covertedToObj['result'].length; k++) {
+                    for (var i = 0; i < convertedArray.length; i++) {
+
+                        //FILTER IS
+                        if (convertedArray[i] in covertedToObj["result"][k]) {              //Finding each object in array of dictionary
+
+                            //FILTER GT,EQ,LT
+                            valueArray[query.OPTIONS.COLUMNS[i]] = covertedToObj["result"][k][convertedArray[i]];    //adding query columns into valueArray
+                            //TODO: Attempted GT
+
+                        }
+                    }
+                    //TODO: Attempted GT
+                    if (query.WHERE.GT != null){
+                        if (numberHelper(query.WHERE.GT, valueArray)) {
+
+                        }
+                    }
+                    else {
+                        arrayOfValueArray.push(valueArray);                                 //Pushes the object into the array
+                        valueArray = {};                                                    //Resets the Object to add in the next file info
+                    }
+                }
+            }
+        }
+        return arrayOfValueArray;
+    }
+    else if(query.WHERE.OR!= null){
+        for(var i =0; i < query.WHERE.OR.length; i++) {
+            arrayOfValueArray.push(filterInfo(convertedArray, query, query.WHERE.OR[i]));
+        }
+    }
+    else if(query.WHERE.AND!= null){
+        for(var i =0; i < query.WHERE.OR.length; i++) {
+            arrayOfValueArray.push(filterInfo(convertedArray, query, query.WHERE.OR[i]));
+        }
+    }
+    //TODO Not is a bit different
+    // else if(query.WHERE.NOT != null){
+    //     for(var i =0; i < query.WHERE.OR.length; i++) {
+    //         arrayOfValueArray.push(filterInfo(convertedArray, query, query.WHERE.OR[i]));
+    //     }
+    // }
+}
+function numberHelper( numberobject: NumberFilter, compareObj: Object) {
+    for (var i = 0; Object.keys(compareObj); i++ ){
+        if(Object.keys(numberobject)[0]== Object.keys(compareObj)[i]){
+            if(numberobject[0] < compareObj[i]) {                           //TODO should we define type object?
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else{
+           return false;
+        }
+    }
+
+}
 function correspondingJSON(string : String) {
     if (string == 'courses_dept') {
         return "Subject";

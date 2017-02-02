@@ -14,9 +14,11 @@ describe("InsightFacadeSpec", function () {
     var qr : QueryRequest = {
 
         WHERE: {
-            IS: {
-                "courses_dept":"apsc"
-            }
+            OR: [{
+                GT: {
+                    "courses_avg":90
+                }
+            }]
         },
         OPTIONS: {
             COLUMNS: [
@@ -24,10 +26,9 @@ describe("InsightFacadeSpec", function () {
                 "courses_avg"
             ],
             FORM:"TABLE"
-
-        },
-
+        }
     };
+
     var data = fs.readFileSync("./test.zip");
     var data1 = fs.readFileSync("./test3.zip");
 
@@ -78,18 +79,18 @@ describe("InsightFacadeSpec", function () {
     //         })
     // });
 
-    // it.only("Query Data Simple", function (done) {
-    //     insightFacade.performQuery(qr)
-    //         .then(function (response) {
-    //             console.log("First test complete");
-    //             expect(response.code).is.equal(201);
-    //             done();
-    //         })
-    //         .catch(function (err) {
-    //             console.log("fail 1");
-    //             expect.fail();
-    //         })
-    // });
+    it.only("Query Data Simple", function (done) {
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                console.log("First test complete");
+                expect(response.code).is.equal(201);
+                done();
+            })
+            .catch(function (err) {
+                console.log("fail 1");
+                expect.fail();
+            })
+    });
 
     // it.only("remove dataset that is not in the set, error thrown", function () {
     //     insightFacade.removeDataset("blah")
