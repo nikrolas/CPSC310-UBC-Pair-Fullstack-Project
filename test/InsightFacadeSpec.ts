@@ -11,26 +11,9 @@ describe("InsightFacadeSpec", function () {
 
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
-    var qr : QueryRequest = {
 
-        WHERE: {
-            OR: [{
-                GT: {
-                    "courses_avg":90
-                }
-            }]
-        },
-        OPTIONS: {
-            COLUMNS: [
-                "courses_dept",
-                "courses_avg"
-            ],
-            FORM:"TABLE"
-        }
-    };
-
-    var data = fs.readFileSync("./test.zip");
-    var data1 = fs.readFileSync("./test3.zip");
+     var data = fs.readFileSync("./test.zip");
+    // var data1 = fs.readFileSync("./test3.zip");
 
 
 
@@ -41,14 +24,11 @@ describe("InsightFacadeSpec", function () {
 
     it.only("Dataset didn't exist; added successfully", function () {
         fs.unlinkSync('./cache.json');
-        console.log("In first test");
-       return insightFacade.addDataset("meow", data.toString('base64'))
+       return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
-                console.log("Success");
                 expect(response.code).is.equal(204);
             })
             .catch(function (err) {
-                console.log("fail 1");
                 expect.fail();
             })
     });
@@ -79,16 +59,178 @@ describe("InsightFacadeSpec", function () {
     //         })
     // });
 
-    it.only("Query Data Simple", function (done) {
+    it("LT test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                LT: {
+                    "courses_avg": 65
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
         insightFacade.performQuery(qr)
             .then(function (response) {
-                console.log("First test complete");
-                expect(response.code).is.equal(201);
-                done();
+                expect(response.code).is.equal(200);
             })
             .catch(function (err) {
-                console.log("fail 1");
                 expect.fail();
+            })
+    });
+
+    it("GT Test", function () {
+        let qr : QueryRequest = {
+            WHERE: {
+                OR: [{
+                    GT: {
+                        "courses_avg":80
+                    }
+                }]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("EQ Test", function () {
+        let qr : QueryRequest = {
+            WHERE: {
+                OR: [{
+                    EQ: {
+                        "courses_avg":90
+                    }
+                }]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+            })
+    });
+
+    it("AND test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                {
+                    GT:{
+                        "courses_avg":68
+                    }
+                },
+                {
+                    LT:{
+                        "courses_avg":90
+                    }
+                }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it.only("OR test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                OR: [
+                    {
+                        GT:{
+                            "courses_avg":68
+                        }
+                    },
+                    {
+                        EQ:{
+                            "courses_avg":90
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("Invalid order test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        GT:{
+                            "courses_avg":90
+                        }
+                    },
+                    {
+                        EQ:{
+                            "courses_avg":90
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER: "courses_instructor",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect.fail();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);
             })
     });
 

@@ -17,7 +17,7 @@ export interface QueryRequest {
 
 export interface OptionInterface {
     COLUMNS: string[];                          //COLUMNS  ::= 'COLUMNS:[' key ( ',' key )* ']'
-    ORDER ?: string[];                            //( 'ORDER:' key ', ' )?
+    ORDER ?: string;                           //( 'ORDER:' key ', ' )?
     FORM : string;                             //'FORM : TABLE'
 
 }
