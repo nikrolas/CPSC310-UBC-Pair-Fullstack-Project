@@ -86,7 +86,7 @@ export default class InsightFacade implements IInsightFacade {
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
             let setID = query.OPTIONS.COLUMNS[0].split('_')[0];
             let dataToFilter = datasetHash[setID];
-            let finalFilteredData = {render: query.OPTIONS.FORM, result: []};
+            let finalFilteredData = {render: query.OPTIONS.FORM, result: <any>[]};
             let storage:any = [];
             let finalArray:any = [];
             for (let eachCourse of dataToFilter) {
@@ -102,7 +102,7 @@ export default class InsightFacade implements IInsightFacade {
             // Show only desired columns
             for (let eachClass of filteredData) {
                 let row: any = {};
-                if (query.WHERE.OR != null || query.WHERE.AND != null) {                        //TODO implementation to handle filtereddata being an array of objects for OR
+                if (query.WHERE.OR != null || query.WHERE.AND != null) {     //TODO implementation to handle filtereddata being an array of objects for OR
                     for(let filteredKeys in eachClass) {
                         for (let column of query.OPTIONS.COLUMNS) {
                             row[column] = eachClass[filteredKeys][correspondingJSON(column)];
@@ -242,15 +242,11 @@ function filterData(dataset: any, request: any): any[] {
 
 
         }
-        // else if (Object.keys(request)[0] == "NOT") {
-        //     // TODO
-        //     return filterData(dataset, request.NOT);
-        // }
     }
 }
 
 function sortByNum(data: any, order: string) {
-    data.sort(function (a, b) {
+    data.sort(function (a: any, b: any) {
         var dataA = a[order], dataB = b[order];
         return dataA-dataB;
     });
@@ -258,7 +254,7 @@ function sortByNum(data: any, order: string) {
 }
 
 function sortByChar(data: any, order: string) {
-    data.sort(function (a, b) {
+    data.sort(function (a: any, b: any) {
         var dataA = a[order], dataB = b[order];
         if (dataA < dataB) return -1;
         if (dataA > dataB) return -1;
@@ -310,8 +306,8 @@ function correspondingJSON(string : String) {
     if (string == 'courses_audit') { //number
         return "Audit";
     }
-    if (string == 'courses_uuid') { //number                    // TODO: not sure if this is correct
-        return "Section";
+    if (string == 'courses_uuid') { //STRING; need to be changed from number           // TODO: Changed to id based on piazza
+        return "id";
     }
 }
 
