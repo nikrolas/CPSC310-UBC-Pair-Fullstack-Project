@@ -119,41 +119,21 @@ export default class InsightFacade implements IInsightFacade {
                 }
             }
 
-            console.log(finalArray);
-
             // Sort by column
             let order = query.OPTIONS.ORDER;
 
             if(typeof order != "undefined") {
-                if(typeof order == "number") {
-                    finalArray = sortByNum(finalArray, correspondingJSON(order));
+                if(correspondingNumber(order)) {
+                    finalArray = sortByNum(finalArray, order);
                 }
                 else {
                     finalArray = sortByChar(finalArray, correspondingJSON(order));
                 }
             }
-
+            console.log(finalArray);
             finalFilteredData["result"] = finalArray;
             fulfill(insightResponseConstructor(200, finalFilteredData));
 
-            // let covertedArray:string[] = [];
-            // let arrayOfValueArray: any = [];
-            // let queryInfo: any = {render: query.OPTIONS.FORM, result: null};        //Final Output/Object
-            //
-            //
-            //
-            // for (var i = 0; i < query.OPTIONS.COLUMNS.length; i++) {                         //Checking Columns for wanted values
-            //     covertedArray[i] = correspondingJSON(query.OPTIONS.COLUMNS[i]);
-            // }
-
-            //FILTER AND OR NOT
-
-
-            //arrayOfValueArray = filterInfo(covertedArray,query);
-
-            //FILTER ORDER
-            // queryInfo['result'] = arrayOfValueArray;
-            // console.log(queryInfo);
         });
     }
 }
@@ -241,12 +221,39 @@ function filterData(dataset: any, request: any): any[] {
 }
 
 function sortByNum(data: any, order: string) {
- return;
+    data.sort(function (a, b) {
+        var dataA = a[order], dataB = b[order];
+        return dataA-dataB;
+    });
+    return data;
 }
 
 function sortByChar(data: any, order: string) {
-    // TODO
-    return;
+    data.sort(function (a, b) {
+        var dataA = a[order], dataB = b[order];
+        if (dataA < dataB) return -1;
+        if (dataA > dataB) return -1;
+        return 0;
+    });
+    return data;
+}
+function correspondingNumber(string : String) {
+
+    if (string == 'courses_avg') { //number
+        return true;
+    }
+    if (string == 'courses_pass') { //number
+        return true;
+    }
+    if (string == 'courses_fail') { //number
+        return true;
+    }
+    if (string == 'courses_audit') { //number
+        return true;
+    }
+    if (string == 'courses_uuid') { //number                    // TODO: not sure if this is correct
+        return true;
+    }
 }
 
 function correspondingJSON(string : String) {
