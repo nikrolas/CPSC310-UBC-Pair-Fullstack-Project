@@ -59,7 +59,7 @@ describe("InsightFacadeSpec", function () {
     //         })
     // });
 
-    it("LT test", function () {
+    it.only("LT test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 LT: {
@@ -83,14 +83,12 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("GT Test", function () {
+    it.only("GT Test", function () {
         let qr : QueryRequest = {
             WHERE: {
-                OR: [{
-                    GT: {
-                        "courses_avg":80
-                    }
-                }]
+                GT: {
+                    "courses_avg":80
+                }
             },
             OPTIONS: {
                 COLUMNS: [
@@ -109,14 +107,12 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("EQ Test", function () {
+    it.only("EQ Test", function () {
         let qr : QueryRequest = {
             WHERE: {
-                OR: [{
-                    EQ: {
-                        "courses_avg":90
-                    }
-                }]
+                EQ: {
+                    "courses_avg":90
+                }
             },
             OPTIONS: {
                 COLUMNS: [
@@ -134,18 +130,18 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("AND test", function () {
+    it.only("AND test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
                 {
                     GT:{
-                        "courses_avg":68
+                        "courses_avg":61
                     }
                 },
                 {
                     LT:{
-                        "courses_avg":90
+                        "courses_avg":62
                     }
                 }
                 ]
@@ -173,12 +169,12 @@ describe("InsightFacadeSpec", function () {
                 OR: [
                     {
                         GT:{
-                            "courses_avg":68
+                            "courses_avg":90
                         }
                     },
                     {
                         EQ:{
-                            "courses_avg":90
+                            "courses_avg":70
                         }
                     }
                 ]
@@ -200,18 +196,18 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("Invalid order test", function () {
+    it.only("AND SORTING test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
                     {
                         GT:{
-                            "courses_avg":90
+                            "courses_avg":61
                         }
                     },
                     {
-                        EQ:{
-                            "courses_avg":90
+                        LT:{
+                            "courses_avg":62
                         }
                     }
                 ]
@@ -221,18 +217,53 @@ describe("InsightFacadeSpec", function () {
                     "courses_dept",
                     "courses_avg"
                 ],
-                ORDER: "courses_instructor",
+
+                ORDER: "courses_avg",
                 FORM:"TABLE"
             }
         };
         insightFacade.performQuery(qr)
             .then(function (response) {
-                expect.fail();
+                expect(response.code).is.equal(200);
             })
             .catch(function (err) {
-                expect(err.code).is.equal(400);
+                expect.fail();
             })
     });
+    //
+    // it("Invalid order test", function () {
+    //     let qr: QueryRequest = {
+    //         WHERE: {
+    //             AND: [
+    //                 {
+    //                     GT:{
+    //                         "courses_avg":90
+    //                     }
+    //                 },
+    //                 {
+    //                     EQ:{
+    //                         "courses_avg":90
+    //                     }
+    //                 }
+    //             ]
+    //         },
+    //         OPTIONS: {
+    //             COLUMNS: [
+    //                 "courses_dept",
+    //                 "courses_avg"
+    //             ],
+    //             ORDER: "courses_instructor",
+    //             FORM:"TABLE"
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect.fail();
+    //         })
+    //         .catch(function (err) {
+    //             expect(err.code).is.equal(400);
+    //         })
+    // });
 
     // it.only("remove dataset that is not in the set, error thrown", function () {
     //     insightFacade.removeDataset("blah")

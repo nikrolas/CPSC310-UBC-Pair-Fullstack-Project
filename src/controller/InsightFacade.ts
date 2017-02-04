@@ -32,7 +32,7 @@ export default class InsightFacade implements IInsightFacade {
                                         fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
                                     })
                                     .catch(function (err) {
-                                       reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                                        reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
                                     })
                             }
                             else {
@@ -51,7 +51,7 @@ export default class InsightFacade implements IInsightFacade {
                             }
                         })
                         .catch(function(err: any) {
-                           reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                            reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
 
                         })
                 })
@@ -87,29 +87,53 @@ export default class InsightFacade implements IInsightFacade {
             let setID = query.OPTIONS.COLUMNS[0].split('_')[0];
             let dataToFilter = datasetHash[setID];
             let finalFilteredData = {render: query.OPTIONS.FORM, result: []};
-
-            let filteredData = filterData(dataToFilter, query.WHERE);
+            let storage:any = [];
+            let finalArray:any = [];
+            for (let eachCourse of dataToFilter) {
+                let json = JSON.parse(eachCourse);
+                if (json["result"].length != 0) {
+                    for (let courseSection of json["result"]) {
+                        storage.push(courseSection);
+                    }
+                }
+            }
+            let filteredData = filterData(storage, query.WHERE);
 
             // Show only desired columns
             for (let eachClass of filteredData) {
                 let row: any = {};
-                for (let column of query.OPTIONS.COLUMNS) {
-                    row[column] = eachClass[correspondingJSON(column)];
-                }
-                finalFilteredData["result"].push(row);
-            }
-
-            console.log(finalFilteredData);
-            // Sort by column
-            let order = query.OPTIONS.ORDER;
-            if(typeof order != "undefined") {
-                if(typeof order == "number") {
-                    sortByNum(filteredData, correspondingJSON(order));
+                if (query.WHERE.OR != null || query.WHERE.AND != null) {                        //TODO implementation to handle filtereddata being an array of objects for OR
+                    for(let filteredKeys in eachClass) {
+                        for (let column of query.OPTIONS.COLUMNS) {
+                            row[column] = eachClass[filteredKeys][correspondingJSON(column)];
+                        }
+                        finalArray.push(row);
+                        row = {};
+                    }
                 }
                 else {
-                    sortByChar(filteredData, correspondingJSON(order));
+                    for (let column of query.OPTIONS.COLUMNS) {
+                        row[column] = eachClass[correspondingJSON(column)];
+                    }
+                    finalArray.push(row);
                 }
             }
+
+            console.log(finalArray);
+
+            // Sort by column
+            let order = query.OPTIONS.ORDER;
+
+            if(typeof order != "undefined") {
+                if(typeof order == "number") {
+                    finalArray = sortByNum(finalArray, correspondingJSON(order));
+                }
+                else {
+                    finalArray = sortByChar(finalArray, correspondingJSON(order));
+                }
+            }
+
+            finalFilteredData["result"] = finalArray;
             fulfill(insightResponseConstructor(200, finalFilteredData));
 
             // let covertedArray:string[] = [];
@@ -135,98 +159,89 @@ export default class InsightFacade implements IInsightFacade {
 }
 
 function filterData(dataset: any, request: any): any[] {
-        // Base cases
-        if (Object.keys(request)[0] == "LT") {
-            let filteredData = [];
-            let key = Object.keys(request.LT)[0];
-            let value = request.LT[key];
-            if (typeof value != "number") {
-                // TODO Must reject
-            }
-            let translatedKey = correspondingJSON(key);
+    // Base cases
+    if (Object.keys(request)[0] == "LT") {
+        let filteredData = [];
+        let key = Object.keys(request.LT)[0];
+        let value = request.LT[key];
+        if (typeof value != "number") {
+            // TODO Must reject
+        }
+        let translatedKey = correspondingJSON(key);
 
-            for (let eachCourse of dataset) {
-                let json = JSON.parse(eachCourse);
-                if (json["result"].length != 0) {
-                    for (let courseSection of json["result"]) {
-                        if (courseSection[translatedKey] < value) {
-                            filteredData.push(courseSection);
-                        }
-                    }
-                }
+        for (let courseSection of dataset) {
+            if (courseSection[translatedKey] < value) {
+                filteredData.push(courseSection);
             }
+        }
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "GT") {
+        let filteredData = [];
+        let key = Object.keys(request.GT)[0];
+        let value = request.GT[key];
+        if (typeof value != "number") {
+            // TODO must reject
+        }
+        let translatedKey = correspondingJSON(key);
+
+
+        for (let courseSection of dataset) {
+            if (courseSection[translatedKey] > value) {
+                filteredData.push(courseSection);
+            }
+        }
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "EQ") {
+        let filteredData = [];
+        let key = Object.keys(request.EQ)[0];
+        let value = request.EQ[key];
+        if (typeof value != "number") {
+            // TODO must reject
+        }
+        let translatedKey = correspondingJSON(key);
+
+        for (let courseSection of dataset) {
+            if (courseSection[translatedKey] == value) {
+                filteredData.push(courseSection);
+            }
+        }
+        return filteredData;
+    }
+    // Other recursive cases
+    // TODO Implementation
+    else {
+        if (Object.keys(request)[0] == "AND") {
+            let filteredData: any = [];
+            let modifiableDataset: any = dataset;
+            let arrayedModifiabledataset:any = [];
+            for (let operand of request.AND) {
+                modifiableDataset = filterData(modifiableDataset, operand);
+            }
+            filteredData.push(modifiableDataset);
             return filteredData;
         }
-        else if (Object.keys(request)[0] == "GT") {
+        else if (Object.keys(request)[0] == "OR") {                     //TODO: Requires an array of 2 filter interfaces or reject
             let filteredData = [];
-            let key = Object.keys(request.GT)[0];
-            let value = request.GT[key];
-            if (typeof value != "number") {
-                // TODO must reject
-            }
-            let translatedKey = correspondingJSON(key);
-
-            for (let eachCourse of dataset) {
-                let json = JSON.parse(eachCourse);
-                if (json["result"].length != 0) {
-                    for (let courseSection of json["result"]) {
-                        if (courseSection[translatedKey] > value) {
-                            filteredData.push(courseSection);
-                        }
-                    }
-                }
+            for (let operand of request.OR) {
+                filteredData.push(filterData(dataset, operand));
             }
             return filteredData;
-        }
-        else if (Object.keys(request)[0] == "EQ") {
-            let filteredData = [];
-            let key = Object.keys(request.EQ)[0];
-            let value = request.EQ[key];
-            if (typeof value != "number") {
-                // TODO must reject
-            }
-            let translatedKey = correspondingJSON(key);
+            // return filteredData.reduce(function (a, b) {
+            //     return a.concat(b);
+            // }, []);
 
-            for (let eachCourse of dataset) {
-                let json = JSON.parse(eachCourse);
-                if (json["result"].length != 0) {
-                    for (let courseSection of json["result"]) {
-                        if (courseSection[translatedKey] == value) {
-                            filteredData.push(courseSection);
-                        }
-                    }
-                }
-            }
-            return filteredData;
         }
-        // Other recursive cases
-            // TODO Implementation
-        else {
-            if (Object.keys(request)[0] == "AND") {
-                let filteredData: any = [];
-                for (let operand of request.AND) {
-                    filteredData.push(filterData(dataset, operand));
-                }
-            }
-            else if (Object.keys(request)[0] == "OR") {
-                let filteredData = [];
-                for (let operand of request.OR) {
-                    filteredData.push(filterData(dataset, operand));
-                }
-                return filteredData.reduce(function (a, b) {
-                    return a.concat(b);
-                }, []);
-            }
-            else if (Object.keys(request)[0] == "NOT") {
-                // TODO
-                return filterData(dataset, request.NOT);
-            }
+        else if (Object.keys(request)[0] == "NOT") {
+            // TODO
+            return filterData(dataset, request.NOT);
         }
+    }
 }
 
 function sortByNum(data: any, order: string) {
-    // TODO
-    return;
+ return;
 }
 
 function sortByChar(data: any, order: string) {
@@ -234,74 +249,6 @@ function sortByChar(data: any, order: string) {
     return;
 }
 
-// function filterInfo(convertedArray: string[], query:QueryRequest, filterinterface ?: FilterInterface) {
-//     let valueArray:any = {};
-//     let arrayOfValueArray: any = [];                                        //Filted info added to result key in queryinfo
-//     //FILTERANDOR
-//     if (query.WHERE.AND == null && query.WHERE.OR == null && query.WHERE.NOT == null) {
-//         for (var key in datasetHash) {                                          //number of keys in datasethash
-//             for (var j = 0; j < datasetHash[key].length; j++) {                 //number of objects in array of key
-//                 var covertedToObj = JSON.parse(datasetHash[key][j])
-//                 for (var k=0; k<covertedToObj['result'].length; k++) {
-//                     for (var i = 0; i < convertedArray.length; i++) {
-//
-//                         //FILTER IS
-//                         if (convertedArray[i] in covertedToObj["result"][k]) {              //Finding each object in array of dictionary
-//
-//                             //FILTER GT,EQ,LT
-//                             valueArray[query.OPTIONS.COLUMNS[i]] = covertedToObj["result"][k][convertedArray[i]];    //adding query columns into valueArray
-//                             //TODO: Attempted GT
-//
-//                         }
-//                     }
-//                     //TODO: Attempted GT
-//                     if (query.WHERE.GT != null){
-//                         if (numberHelper(query.WHERE.GT, valueArray)) {
-//
-//                         }
-//                     }
-//                     else {
-//                         arrayOfValueArray.push(valueArray);                                 //Pushes the object into the array
-//                         valueArray = {};                                                    //Resets the Object to add in the next file info
-//                     }
-//                 }
-//             }
-//         }
-//         return arrayOfValueArray;
-//     }
-//     else if(query.WHERE.OR!= null){
-//         for(var i =0; i < query.WHERE.OR.length; i++) {
-//             arrayOfValueArray.push(filterInfo(convertedArray, query, query.WHERE.OR[i]));
-//         }
-//     }
-//     else if(query.WHERE.AND!= null){
-//         for(var i =0; i < query.WHERE.OR.length; i++) {
-//             arrayOfValueArray.push(filterInfo(convertedArray, query, query.WHERE.OR[i]));
-//         }
-//     }
-//     //TODO Not is a bit different
-//     // else if(query.WHERE.NOT != null){
-//     //     for(var i =0; i < query.WHERE.OR.length; i++) {
-//     //         arrayOfValueArray.push(filterInfo(convertedArray, query, query.WHERE.OR[i]));
-//     //     }
-//     // }
-// }
-// function numberHelper( numberobject: NumberFilter, compareObj: Object) {
-//     for (var i = 0; Object.keys(compareObj); i++ ){
-//         if(Object.keys(numberobject)[0]== Object.keys(compareObj)[i]){
-//             if(numberobject[0] < compareObj[i]) {                           //TODO should we define type object?
-//                 return true;
-//             }
-//             else {
-//                 return false;
-//             }
-//         }
-//         else{
-//            return false;
-//         }
-//     }
-//
-// }
 function correspondingJSON(string : String) {
     if (string == 'courses_dept') {
         return "Subject";
@@ -327,7 +274,7 @@ function correspondingJSON(string : String) {
     if (string == 'courses_audit') { //number
         return "Audit";
     }
-    if (string == 'courses_uuid') { //number
+    if (string == 'courses_uuid') { //number                    // TODO: not sure if this is correct
         return "Section";
     }
 }
@@ -378,7 +325,7 @@ function writeJSONFile(id: string, jsonStrings: any) {
                 return reject(err);
             }
             else {
-                 return fulfill();
+                return fulfill();
             }
         })
     })
