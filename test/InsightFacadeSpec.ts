@@ -12,8 +12,8 @@ describe("InsightFacadeSpec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-     var data = fs.readFileSync("./courses.zip");
-    // var data1 = fs.readFileSync("./test3.zip");
+     var data = fs.readFileSync("./test.zip");
+     var data1 = fs.readFileSync("./test3.zip");
 
 
 
@@ -33,33 +33,113 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    // it.only("Dataset does not exist in cache; added successfully", function () {
-    //     return insightFacade.addDataset("pow", data1.toString('base64'))
-    //         .then(function (response) {
-    //             console.log("First test complete");
-    //             expect(response.code).is.equal(204);
-    //         })
-    //         .catch(function (err) {
-    //             console.log("fail 1");
-    //             expect.fail();
-    //         })
-    // });
+    it.only("Adding invalid dataset", function (done) {
+        var data = fs.readFileSync("./README.md");
+        insightFacade.addDataset("invalidData", data.toString('base64'))
+            .then(function (response) {
+                console.log("fail 3");
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                console.log("In third test");
+                expect(err.code).is.equal(400);
+                done();
+            })
+    });
 
-    // it.only("Dataset exists in cache; added successfully", function (done) {
-    //     var data2 = fs.readFileSync("./test3.zip");
-    //     insightFacade.addDataset("meow", data2.toString('base64'))
-    //         .then(function (response) {
-    //             console.log("First test complete");
-    //             expect(response.code).is.equal(201);
-    //             done();
-    //         })
-    //         .catch(function (err) {
-    //             console.log("fail 1");
-    //             expect.fail();
-    //         })
-    // });
+    it.only("remove dataset that is not in the set, error thrown", function () {
+        insightFacade.removeDataset("blah")
+            .then(function (response) {
+                console.log("In remove test");
+                expect.fail();
+            })
+            .catch(function (err) {
+                console.log("In remove test");
+                expect(err.code).is.equal(424);
+            })
+    });
 
-    it("LT test", function () {
+    it.only("remove dataset that is in the set", function () {
+        insightFacade.removeDataset("courses")
+            .then(function (response) {
+                console.log("In remove test");
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                console.log("In remove test");
+                expect.fail();
+            })
+    });
+
+    it.only("Dataset does not exist, cache does; added successfully again", function () {
+        return insightFacade.addDataset("courses", data.toString('base64'))
+            .then(function (response) {
+                expect(response.code).is.equal(204);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it.only("Dataset exist; replaced successfully ", function () {
+        return insightFacade.addDataset("courses", data1.toString('base64'))
+            .then(function (response) {
+                expect(response.code).is.equal(201);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+
+    it.only("Dataset does not exist in cache; added successfully", function () {
+        return insightFacade.addDataset("pow", data1.toString('base64'))
+            .then(function (response) {
+                console.log("First test complete");
+                expect(response.code).is.equal(204);
+            })
+            .catch(function (err) {
+                console.log("fail 1");
+                expect.fail();
+            })
+    });
+
+    it.only("remove dataset that is in the set again", function () {
+        insightFacade.removeDataset("pow")
+            .then(function (response) {
+                console.log("In remove test");
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                console.log("In remove test");
+                expect.fail();
+            })
+    });
+    it.only("remove dataset that is in the set again", function () {
+        insightFacade.removeDataset("courses")
+            .then(function (response) {
+                console.log("In remove test");
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                console.log("In remove test");
+                expect.fail();
+            })
+    });
+
+    it.only("Dataset does not exist; added successfully for filter tests ", function () {
+        return insightFacade.addDataset("courses", data.toString('base64'))
+            .then(function (response) {
+                expect(response.code).is.equal(204);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+
+    it.only("LT test: > 65 and order: CoursesAvg", function () {
         let qr: QueryRequest = {
             WHERE: {
                 LT: {
@@ -71,7 +151,10 @@ describe("InsightFacadeSpec", function () {
                     "courses_dept",
                     "courses_avg"
                 ],
+                ORDER: "courses_avg",
                 FORM:"TABLE"
+
+
             }
         };
         insightFacade.performQuery(qr)
@@ -83,7 +166,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("GT Test", function () {
+    it.only("GT Test: <80 and ORDER: courses_avg ", function () {
         let qr : QueryRequest = {
             WHERE: {
                 GT: {
@@ -95,6 +178,7 @@ describe("InsightFacadeSpec", function () {
                     "courses_dept",
                     "courses_avg"
                 ],
+                ORDER:"courses_avg",
                 FORM:"TABLE"
             }
         };
@@ -107,7 +191,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("EQ Test", function () {
+    it.only("EQ Test", function () {
         let qr : QueryRequest = {
             WHERE: {
                 EQ: {
@@ -130,7 +214,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("IS AND Sorting String test", function () {
+    it.only("IS AND Sorting String test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -166,7 +250,7 @@ describe("InsightFacadeSpec", function () {
     });
 
 
-    it("AND test", function () {
+    it.only("AND test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -199,7 +283,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("OR test", function () {
+    it.only("OR test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 OR: [
@@ -232,7 +316,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("AND SORTING NUMBER test", function () {
+    it.only("AND SORTING NUMBER test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -267,7 +351,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("AND SORTING STRING test", function () {
+    it.only("AND SORTING STRING test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -302,11 +386,12 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("SORT by courses_uuid, special case", function () {
+
+    it.only("SORT by courses_uuid, special case", function () {
         let qr: QueryRequest = {
             WHERE:{
-                EQ:{
-                    "courses_pass":0
+                GT:{
+                    "courses_pass":70
                 }
             },
             OPTIONS:{
@@ -467,19 +552,5 @@ describe("InsightFacadeSpec", function () {
     //         })
     // });
 
-    // it.only("Adding invalid dataset", function (done) {
-    //     var data = fs.readFileSync("./README.md");
-    //     insightFacade.addDataset("invalidData", data.toString('base64'))
-    //         .then(function (response) {
-    //             console.log("fail 3");
-    //             expect.fail();
-    //             done();
-    //         })
-    //         .catch(function (err) {
-    //             console.log("In third test");
-    //             expect(err.code).is.equal(400);
-    //             done();
-    //         })
-    // });
 
 });
