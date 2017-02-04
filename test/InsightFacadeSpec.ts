@@ -130,6 +130,42 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
+    it.only("IS AND Sorting String test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        IS:{
+                            "courses_dept":"apsc"
+                        }
+                    },
+                    {
+                        GT:{
+                            "courses_avg":91
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+
+                ORDER: "courses_avg",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+
     it.only("AND test", function () {
         let qr: QueryRequest = {
             WHERE: {

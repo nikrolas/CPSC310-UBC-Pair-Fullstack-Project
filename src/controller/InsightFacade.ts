@@ -189,13 +189,44 @@ function filterData(dataset: any, request: any): any[] {
         }
         return filteredData;
     }
+    else if (Object.keys(request)[0] == "IS") {             //TODO:SAME AS EQ but WITH STRING?!
+        let filteredData = [];
+        let key = Object.keys(request.IS)[0];
+        let value = request.IS[key];
+        if (typeof value != "number") {
+            // TODO must reject
+        }
+        let translatedKey = correspondingJSON(key);
+
+        for (let courseSection of dataset) {
+            if (courseSection[translatedKey] == value) {
+                filteredData.push(courseSection);
+            }
+        }
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "NOT") {             //TODO:NOT Case
+        let filteredData = [];
+        let key = Object.keys(request.IS)[0];
+        let value = request.IS[key];
+        if (typeof value != "number") {
+            // TODO must reject
+        }
+        let translatedKey = correspondingJSON(key);
+
+        for (let courseSection of dataset) {
+            if (courseSection[translatedKey] == value) {
+                filteredData.push(courseSection);
+            }
+        }
+        return filteredData;
+    }
     // Other recursive cases
     // TODO Implementation
     else {
         if (Object.keys(request)[0] == "AND") {
             let filteredData: any = [];
             let modifiableDataset: any = dataset;
-            let arrayedModifiabledataset:any = [];
             for (let operand of request.AND) {
                 modifiableDataset = filterData(modifiableDataset, operand);
             }
@@ -208,15 +239,13 @@ function filterData(dataset: any, request: any): any[] {
                 filteredData.push(filterData(dataset, operand));
             }
             return filteredData;
-            // return filteredData.reduce(function (a, b) {
-            //     return a.concat(b);
-            // }, []);
+
 
         }
-        else if (Object.keys(request)[0] == "NOT") {
-            // TODO
-            return filterData(dataset, request.NOT);
-        }
+        // else if (Object.keys(request)[0] == "NOT") {
+        //     // TODO
+        //     return filterData(dataset, request.NOT);
+        // }
     }
 }
 
