@@ -12,7 +12,7 @@ describe("InsightFacadeSpec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-     var data = fs.readFileSync("./test.zip");
+     var data = fs.readFileSync("./courses.zip");
     // var data1 = fs.readFileSync("./test3.zip");
 
 
@@ -59,7 +59,7 @@ describe("InsightFacadeSpec", function () {
     //         })
     // });
 
-    it.only("LT test", function () {
+    it("LT test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 LT: {
@@ -83,7 +83,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("GT Test", function () {
+    it("GT Test", function () {
         let qr : QueryRequest = {
             WHERE: {
                 GT: {
@@ -107,7 +107,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("EQ Test", function () {
+    it("EQ Test", function () {
         let qr : QueryRequest = {
             WHERE: {
                 EQ: {
@@ -130,7 +130,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("IS AND Sorting String test", function () {
+    it("IS AND Sorting String test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -166,7 +166,7 @@ describe("InsightFacadeSpec", function () {
     });
 
 
-    it.only("AND test", function () {
+    it("AND test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -199,7 +199,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("OR test", function () {
+    it("OR test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 OR: [
@@ -232,7 +232,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("AND SORTING NUMBER test", function () {
+    it("AND SORTING NUMBER test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -267,7 +267,7 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it.only("AND SORTING STRING test", function () {
+    it("AND SORTING STRING test", function () {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -301,40 +301,89 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
-    //
-    // it("Invalid order test", function () {
-    //     let qr: QueryRequest = {
-    //         WHERE: {
-    //             AND: [
-    //                 {
-    //                     GT:{
-    //                         "courses_avg":90
-    //                     }
-    //                 },
-    //                 {
-    //                     EQ:{
-    //                         "courses_avg":90
-    //                     }
-    //                 }
-    //             ]
-    //         },
-    //         OPTIONS: {
-    //             COLUMNS: [
-    //                 "courses_dept",
-    //                 "courses_avg"
-    //             ],
-    //             ORDER: "courses_instructor",
-    //             FORM:"TABLE"
-    //         }
-    //     };
-    //     insightFacade.performQuery(qr)
-    //         .then(function (response) {
-    //             expect.fail();
-    //         })
-    //         .catch(function (err) {
-    //             expect(err.code).is.equal(400);
-    //         })
-    // });
+
+    it("SORT by courses_uuid, special case", function () {
+        let qr: QueryRequest = {
+            WHERE:{
+                EQ:{
+                    "courses_pass":0
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "courses_dept",
+                    "courses_avg",
+                    "courses_uuid"
+                ],
+                FORM:"TABLE",
+                ORDER:"courses_uuid"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("Invalid dataset ID to be queried", function () {
+        let qr: QueryRequest = {
+            WHERE:{
+                EQ:{
+                    "invalid_pass": 9
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "invalid_dept"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect.fail();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(424);
+            })
+    });
+
+    it("Invalid order test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        GT:{
+                            "courses_avg":90
+                        }
+                    },
+                    {
+                        EQ:{
+                            "courses_avg":90
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER: "courses_instructor",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect.fail();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);
+            })
+    });
 
     // it.only("remove dataset that is not in the set, error thrown", function () {
     //     insightFacade.removeDataset("blah")
