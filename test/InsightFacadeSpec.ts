@@ -470,6 +470,38 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
+    it("Invalid COLUMNS test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        GT:{
+                            "courses_avg":90
+                        }
+                    },
+                    {
+                        EQ:{
+                            "courses_avg":90
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                ],
+                ORDER: "courses_instructor",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect.fail();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);
+            })
+    });
+
     // it.only("remove dataset that is not in the set, error thrown", function () {
     //     insightFacade.removeDataset("blah")
     //         .then(function (response) {

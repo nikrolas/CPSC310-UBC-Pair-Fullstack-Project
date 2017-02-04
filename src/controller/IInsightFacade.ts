@@ -33,7 +33,7 @@ export interface FilterInterface {
 }
 
 export interface NumberFilter {
-    [key: string] : number ;
+    [key: string] : number;
 }
 
 export interface SCOMPARISON {

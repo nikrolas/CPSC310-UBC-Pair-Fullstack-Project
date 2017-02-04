@@ -29,10 +29,10 @@ export default class InsightFacade implements IInsightFacade {
                             if (!fs.existsSync("./cache.json")) {
                                 addToHashset(id, arrayOfJSONString)
                                     .then(function () {
-                                        return fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
+                                        return fulfill(insightResponseConstructor(204, {}));
                                     })
                                     .catch(function (err) {
-                                        return reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                                        return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                                     })
                             }
                             else {
@@ -40,23 +40,23 @@ export default class InsightFacade implements IInsightFacade {
                                 if (datasetHash[id] == null) {
                                     datasetHash[id] = arrayOfJSONString;
                                     reWriteJSONFile(datasetHash);
-                                    return fulfill(insightResponseConstructor(204, {"Success": "Dataset added"}));
+                                    return fulfill(insightResponseConstructor(204, {}));
                                 }
                                 else if (id in datasetHash) {
                                     fs.unlinkSync('./cache.json');
                                     datasetHash[id] = arrayOfJSONString;
                                     reWriteJSONFile(datasetHash);
-                                    return fulfill(insightResponseConstructor(201, {"Success": "Dataset added"}));
+                                    return fulfill(insightResponseConstructor(201, {}));
                                 }
                             }
                         })
                         .catch(function(err: any) {
-                            return reject(insightResponseConstructor(400, {"Error": "Invalid Dataset"}));
+                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
 
                         })
                 })
                 .catch(function(err: any) {
-                    return reject(insightResponseConstructor(400,{"Error": "Invalid Dataset"}));
+                    return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                 });
         });
     }
@@ -67,28 +67,36 @@ export default class InsightFacade implements IInsightFacade {
             if(id in datasetHash){
                 delete datasetHash[id];
                 reWriteJSONFile(datasetHash);
-                return fulfill(insightResponseConstructor(200, {"Success": "Dataset removed "}));
+                return fulfill(insightResponseConstructor(200, {}));
             }
             else {
-                return reject(insightResponseConstructor(424,{"missing": [id] }));
+                return reject(insightResponseConstructor(404, {}));
             }
         });
-
     }
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return new Promise(function(fulfill,reject) {
-            // Checks if order is contained in columns; query invalid if it is not
+            // Checks if ORDER is contained in columns; query invalid if it is not
             if(typeof query.OPTIONS.ORDER != "undefined" && !query.OPTIONS.COLUMNS.includes(query.OPTIONS.ORDER)) {
-                return reject(insightResponseConstructor(400, {"Error": "Order is not contained in columns"}))
+                return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}))
             }
+            // Checks for empty COLUMNS array
+            if(query.OPTIONS.COLUMNS.length == 0) {
+                return reject(insightResponseConstructor(400, {"error": "Columns array empty"}))
+            }
+            // Checks for invalid OPTIONS
+            if(query.OPTIONS.FORM == "undefined" || query.OPTIONS.FORM != "TABLE") {
+                return reject(insightResponseConstructor(400, {"error": "Options is invalid"}))
+            }
+
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
 
             let setID = query.OPTIONS.COLUMNS[0].split('_')[0];
 
             // Checks if cached dataset has the given ID, query invalid if it does not exist
             if (typeof datasetHash[setID] == "undefined") {
-                return reject(insightResponseConstructor(424, {"ERror": "No dataset with given ID exists"}))
+                return reject(insightResponseConstructor(424, {"missing": [setID]}))
             }
 
             let dataToFilter = datasetHash[setID];
