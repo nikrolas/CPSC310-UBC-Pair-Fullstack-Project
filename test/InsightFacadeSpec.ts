@@ -23,7 +23,7 @@ describe("InsightFacadeSpec", function () {
 
 
     it("Dataset didn't exist; added successfully", function () {
-        fs.unlinkSync('./cache.json');
+//        fs.unlinkSync('./cache.json');
        return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
