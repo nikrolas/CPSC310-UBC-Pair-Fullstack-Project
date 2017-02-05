@@ -12,18 +12,15 @@ describe("InsightFacadeSpec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-     var data = fs.readFileSync("./courses.zip");
-     var data1 = fs.readFileSync("./test3.zip");
-
-
+    var data = fs.readFileSync("./courses.zip");
+    var data1 = fs.readFileSync("./test3.zip");
 
     beforeEach(function () {
         insightFacade = new InsightFacade();
     });
 
-
     it("Dataset didn't exist; added successfully", function () {
-//        fs.unlinkSync('./cache.json');
+        fs.unlinkSync('./cache.json');
        return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -32,8 +29,6 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
-
-
 
     it("Adding invalid dataset", function (done) {
         var data = fs.readFileSync("./README.md");
@@ -88,7 +83,6 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-
     it("Dataset does not exist in cache; added successfully", function () {
         return insightFacade.addDataset("pow", data1.toString('base64'))
             .then(function (response) {
@@ -108,6 +102,7 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
+
     it("remove dataset that is in the set again", function () {
         insightFacade.removeDataset("courses")
             .then(function (response) {
@@ -127,7 +122,6 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
-
 
     it("LT test: <65 and order: CoursesAvg, should have 6 classes", function () {
         let qr: QueryRequest = {
@@ -247,7 +241,6 @@ describe("InsightFacadeSpec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
-                console.log(response.body);
             })
             .catch(function (err) {
             })
@@ -301,6 +294,31 @@ describe("InsightFacadeSpec", function () {
                 ],
 
                 ORDER: "courses_avg",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("IS courses_uuid test", function () {
+        let qr: QueryRequest = {
+            WHERE:{
+                IS:{
+                    "courses_uuid":"88924"
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER:"courses_avg",
                 FORM:"TABLE"
             }
         };
@@ -539,6 +557,7 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
+
     it("NESTED AND SORTING STRING test", function () {
         let qr: QueryRequest = {
             WHERE: {
@@ -589,7 +608,6 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
-
 
     it("AND SORTING NUMBER test", function () {
         let qr: QueryRequest = {
@@ -896,6 +914,7 @@ describe("InsightFacadeSpec", function () {
                 expect(err.code).is.equal(400);
             })
     });
+
     it("OR test", function () {
         let qr: QueryRequest = {
             WHERE: {
@@ -1002,6 +1021,81 @@ describe("InsightFacadeSpec", function () {
                     "courses_dept",
                     "courses_avg"
                 ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("IS end wildcard test", function () {
+        let qr : QueryRequest =     {
+            WHERE:{
+                IS:{
+                    "courses_uuid":"8892*"
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER:"courses_avg",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("IS beginning wildcard test", function () {
+        let qr : QueryRequest =     {
+            WHERE:{
+                IS:{
+                    "courses_uuid":"*8892"
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER:"courses_avg",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("IS double wildcard test", function () {
+        let qr : QueryRequest =  {
+            WHERE:{
+                IS:{
+                    "courses_uuid":"*000*"
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER:"courses_avg",
                 FORM:"TABLE"
             }
         };

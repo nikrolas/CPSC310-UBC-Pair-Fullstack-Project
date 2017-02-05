@@ -240,19 +240,16 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
     else if (Object.keys(request)[0] == "IS") {
         let filteredData = [];
         let key = Object.keys(request.IS)[0];
-        let value = null;
-        // Special case for courses_uuid, must treat as string according to specs
-        if (key == "courses_uuid") {
-            value = parseInt(request.IS[key]);
-        }
-        else {
-            value = request.IS[key];
-        }
+        let value = request.IS[key];
+        let regexFlag = value.includes("*");
         let translatedKey = correspondingJSON(key);
 
         if(notflag == false || notflag == null) {
             for (let courseSection of dataset) {
-                if (courseSection[translatedKey] == value) {
+                if(regexFlag && regexChecker(courseSection[translatedKey], value)) {
+                    filteredData.push(courseSection);
+                }
+                else if(!regexFlag && value == courseSection[translatedKey]){
                     filteredData.push(courseSection);
                 }
             }
@@ -260,7 +257,10 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         }
         else {
             for (let courseSection of dataset) {
-                if (courseSection[translatedKey] != value) {
+                if(regexFlag && !regexChecker(courseSection[translatedKey], value)) {
+                    filteredData.push(courseSection);
+                }
+                else if(!regexFlag && value != courseSection[translatedKey]){
                     filteredData.push(courseSection);
                 }
             }
@@ -304,6 +304,16 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
     }
     else {
         throw new Error("Invalid key");
+    }
+}
+
+// regex check from http://stackoverflow.com/a/32402438
+function regexChecker(valueToBeChecked: any, rule: string) {
+    if (typeof valueToBeChecked == "number") {
+        return new RegExp("^" + rule.split("*").join(".*") + "$").test(valueToBeChecked.toString());
+    }
+    else {
+        return new RegExp("^" + rule.split("*").join(".*") + "$").test(valueToBeChecked);
     }
 }
 
