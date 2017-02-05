@@ -67,10 +67,10 @@ export default class InsightFacade implements IInsightFacade {
             if(id in datasetHash){
                 delete datasetHash[id];
                 reWriteJSONFile(datasetHash);
-                return fulfill(insightResponseConstructor(200, {}));
+                return fulfill(insightResponseConstructor(204, {}));
             }
             else {
-                return reject(insightResponseConstructor(404, {}));
+                return reject(insightResponseConstructor(404, {}));                 //POTENTIAL ERROR?
             }
         });
     }
@@ -145,8 +145,9 @@ export default class InsightFacade implements IInsightFacade {
                         finalArray = sortByChar(finalArray, correspondingJSON(order));
                     }
                 }
+                console.log (finalArray);
                 finalFilteredData["result"] = finalArray;
-                console.log(finalFilteredData);
+
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -155,7 +156,7 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function filterData(dataset: any, request: any): any[] {
+function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
     // Base cases
     if (Object.keys(request)[0] == "LT") {
         let filteredData = [];
@@ -165,13 +166,23 @@ function filterData(dataset: any, request: any): any[] {
             throw new Error("Value for less than must be a number");
         }
         let translatedKey = correspondingJSON(key);
-
-        for (let courseSection of dataset) {
-            if (courseSection[translatedKey] < value) {
-                filteredData.push(courseSection);
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] < value) {
+                    filteredData.push(courseSection);
+                }
             }
+            return filteredData;
         }
-        return filteredData;
+        else{
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] > value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+
+        }
     }
     else if (Object.keys(request)[0] == "GT") {
         let filteredData = [];
@@ -182,13 +193,23 @@ function filterData(dataset: any, request: any): any[] {
         }
         let translatedKey = correspondingJSON(key);
 
-
-        for (let courseSection of dataset) {
-            if (courseSection[translatedKey] > value) {
-                filteredData.push(courseSection);
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] > value) {
+                    filteredData.push(courseSection);
+                }
             }
+            return filteredData;
         }
-        return filteredData;
+        else {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] < value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+
+        }
     }
     else if (Object.keys(request)[0] == "EQ") {
         let filteredData = [];
@@ -199,12 +220,22 @@ function filterData(dataset: any, request: any): any[] {
         }
         let translatedKey = correspondingJSON(key);
 
-        for (let courseSection of dataset) {
-            if (courseSection[translatedKey] == value) {
-                filteredData.push(courseSection);
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] == value) {
+                    filteredData.push(courseSection);
+                }
             }
+            return filteredData;
         }
-        return filteredData;
+        else {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] != value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
     }
     else if (Object.keys(request)[0] == "IS") {
         let filteredData = [];
@@ -218,31 +249,29 @@ function filterData(dataset: any, request: any): any[] {
             value = request.IS[key];
         }
         let translatedKey = correspondingJSON(key);
-        for (let courseSection of dataset) {
-            if (courseSection[translatedKey] == value) {
-                filteredData.push(courseSection);
-            }
-        }
-        return filteredData;
-    }
-    else if (Object.keys(request)[0] == "NOT") {
-        let filteredData = [];
-        let key = Object.keys(request.IS)[0];
-        let value = request.IS[key];
-        if (typeof value != "string") {
-            throw new Error("Value for IS must be a string");
-        }
-        let translatedKey = correspondingJSON(key);
 
-        for (let courseSection of dataset) {
-            if (courseSection[translatedKey] == value) {
-                filteredData.push(courseSection);
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] == value) {
+                    filteredData.push(courseSection);
+                }
             }
+            return filteredData;
         }
-        return filteredData;
+        else {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] != value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
     }
 
     else if (Object.keys(request)[0] == "AND") {
+        if(request.AND.length == 0) {
+            throw new Error("AND cannot be empty");
+        }
         let filteredData: any = [];
         let modifiableDataset: any = dataset;
         for (let operand of request.AND) {
@@ -252,10 +281,25 @@ function filterData(dataset: any, request: any): any[] {
         return filteredData;
     }
     else if (Object.keys(request)[0] == "OR") {
+        if(request.OR.length == 0) {
+            throw new Error("OR cannot be empty");
+        }
         let filteredData :any = [];
         for (let operand of request.OR) {
             filteredData = filteredData.concat(filterData(dataset, operand));
         }
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "NOT") {
+        let value = request.NOT;
+        let filteredData :any = [];
+        if (notflag == null || notflag == false) {
+            filteredData = filteredData.concat(filterData(dataset, value, true));
+        }
+        else {
+            filteredData = filteredData.concat(filterData(dataset, value, false));
+        }
+
         return filteredData;
     }
     else {
