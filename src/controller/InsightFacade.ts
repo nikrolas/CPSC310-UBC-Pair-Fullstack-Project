@@ -116,26 +116,22 @@ export default class InsightFacade implements IInsightFacade {
                 }
             }
             try {
-                let filteredData = filterData(storage, query.WHERE);
+                let filteredData = null;
+                // Checks if WHERE is an empty object
+                if(query.WHERE == {}) {
+                    filteredData = storage;
+                }
+                else {
+                    filteredData = filterData(storage, query.WHERE);
+                }
 
                 // Show only desired columns
                 for (let eachClass of filteredData) {
                     let row: any = {};
-                    if (query.WHERE.OR != null || query.WHERE.AND != null) {     //TODO implementation to handle filtereddata being an array of objects for OR
-                        for (let filteredKeys in eachClass) {
-                            for (let column of query.OPTIONS.COLUMNS) {
-                                row[column] = eachClass[filteredKeys][correspondingJSON(column)];
-                            }
-                            finalArray.push(row);
-                            row = {};
-                        }
+                    for (let column of query.OPTIONS.COLUMNS) {
+                        row[column] = eachClass[correspondingJSON(column)];
                     }
-                    else {
-                        for (let column of query.OPTIONS.COLUMNS) {
-                            row[column] = eachClass[correspondingJSON(column)];
-                        }
-                        finalArray.push(row);
-                    }
+                    finalArray.push(row);
                 }
 
                 // Sort by column
@@ -150,7 +146,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                //console.log(finalFilteredData);
+                console.log(finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -210,7 +206,7 @@ function filterData(dataset: any, request: any): any[] {
         }
         return filteredData;
     }
-    else if (Object.keys(request)[0] == "IS") {             //TODO:SAME AS EQ but WITH STRING?!
+    else if (Object.keys(request)[0] == "IS") {
         let filteredData = [];
         let key = Object.keys(request.IS)[0];
         let value = null;
@@ -229,12 +225,11 @@ function filterData(dataset: any, request: any): any[] {
         }
         return filteredData;
     }
-    else if (Object.keys(request)[0] == "NOT") {             //TODO:NOT Case
+    else if (Object.keys(request)[0] == "NOT") {
         let filteredData = [];
         let key = Object.keys(request.IS)[0];
         let value = request.IS[key];
         if (typeof value != "string") {
-            // TODO must reject
             throw new Error("Value for IS must be a string");
         }
         let translatedKey = correspondingJSON(key);
@@ -246,25 +241,25 @@ function filterData(dataset: any, request: any): any[] {
         }
         return filteredData;
     }
-    // Other recursive cases
-    // TODO Where case needs to be here
+
+    else if (Object.keys(request)[0] == "AND") {
+        let filteredData: any = [];
+        let modifiableDataset: any = dataset;
+        for (let operand of request.AND) {
+            modifiableDataset = filterData(modifiableDataset, operand);
+        }
+        filteredData = filteredData.concat(modifiableDataset);
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "OR") {
+        let filteredData :any = [];
+        for (let operand of request.OR) {
+            filteredData = filteredData.concat(filterData(dataset, operand));
+        }
+        return filteredData;
+    }
     else {
-        if (Object.keys(request)[0] == "AND") {
-            let filteredData: any = [];
-            let modifiableDataset: any = dataset;
-            for (let operand of request.AND) {
-                modifiableDataset = filterData(modifiableDataset, operand);
-            }
-            filteredData.push(modifiableDataset);
-            return filteredData;
-        }
-        else if (Object.keys(request)[0] == "OR") {                     //TODO: Requires an array of 2 filter interfaces or reject
-            let filteredData = [];
-            for (let operand of request.OR) {
-                filteredData.push(filterData(dataset, operand));
-            }
-            return filteredData;
-        }
+        throw new Error("Invalid key");
     }
 }
 
@@ -286,7 +281,7 @@ function sortByChar(data: any, order: string) {
     data.sort(function (a: any, b: any) {
         var dataA = a[order], dataB = b[order];
         if (dataA < dataB) return -1;
-        if (dataA > dataB) return -1;
+        if (dataA > dataB) return 1;
         return 0;
     });
     return data;

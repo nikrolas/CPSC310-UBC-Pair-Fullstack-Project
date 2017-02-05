@@ -22,7 +22,7 @@ describe("InsightFacadeSpec", function () {
     });
 
 
-    it.only("Dataset didn't exist; added successfully", function () {
+    it("Dataset didn't exist; added successfully", function () {
         fs.unlinkSync('./cache.json');
        return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
@@ -139,7 +139,7 @@ describe("InsightFacadeSpec", function () {
                     "courses_dept",
                     "courses_avg"
                 ],
-                ORDER: "courses_avg",
+                ORDER: "courses_dept",
                 FORM:"TABLE"
             }
         };
@@ -376,6 +376,178 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
+
+    it("AND SORTING NUMBER test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        GT:{
+                            "courses_avg":61
+                        }
+                    },
+                    {
+                        LT:{
+                            "courses_avg":62
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+
+                ORDER: "courses_avg",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("AND SORTING STRING test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        GT:{
+                            "courses_avg":61
+                        }
+                    },
+                    {
+                        LT:{
+                            "courses_avg":62
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+
+                ORDER: "courses_dept",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("NESTED OR SORTING STRING test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                OR: [
+                    {
+                        OR: [
+                            {
+                                GT:{
+                                    "courses_avg":90
+                                }
+                            },
+                            {
+                                GT:{
+                                    "courses_avg":70
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        OR: [
+                            {
+                                EQ:{
+                                    "courses_avg":70
+                                }
+                            },
+                            {
+                                EQ:{
+                                    "courses_avg":73
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+    it("NESTED AND SORTING STRING test", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                AND: [
+                    {
+                        AND: [
+                            {
+                                GT:{
+                                    "courses_avg":70
+                                }
+                            },
+                            {
+                                LT:{
+                                    "courses_avg":80
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        AND: [
+                            {
+                                GT:{
+                                    "courses_avg":74
+                                }
+                            },
+                            {
+                                LT:{
+                                    "courses_avg":76
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
 
     it("AND SORTING NUMBER test", function () {
         let qr: QueryRequest = {
