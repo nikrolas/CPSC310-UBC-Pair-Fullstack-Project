@@ -77,17 +77,21 @@ export default class InsightFacade implements IInsightFacade {
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return new Promise(function(fulfill,reject) {
+            // Checks if WHERE and OPTIONS are defined
+            if(typeof query.WHERE == "undefined" || typeof query.OPTIONS == "undefined") {
+                return reject(insightResponseConstructor(400, {"error": "invalid request"}));
+            }
             // Checks if ORDER is contained in columns; query invalid if it is not
             if(typeof query.OPTIONS.ORDER != "undefined" && !query.OPTIONS.COLUMNS.includes(query.OPTIONS.ORDER)) {
-                return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}))
+                return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}));
             }
-            // Checks for empty COLUMNS array
-            if(query.OPTIONS.COLUMNS.length == 0) {
-                return reject(insightResponseConstructor(400, {"error": "Columns array empty"}))
+            // Checks for empty COLUMNS array or missing COLUMNS array
+            if(query.OPTIONS.COLUMNS.length == 0 || typeof query.OPTIONS.COLUMNS == "undefined") {
+                return reject(insightResponseConstructor(400, {"error": "Columns missing or empty"}));
             }
             // Checks for invalid OPTIONS
             if(query.OPTIONS.FORM == "undefined" || query.OPTIONS.FORM != "TABLE") {
-                return reject(insightResponseConstructor(400, {"error": "Options is invalid"}))
+                return reject(insightResponseConstructor(400, {"error": "Options is invalid"}));
             }
 
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
@@ -96,7 +100,7 @@ export default class InsightFacade implements IInsightFacade {
 
             // Checks if cached dataset has the given ID, query invalid if it does not exist
             if (typeof datasetHash[setID] == "undefined") {
-                return reject(insightResponseConstructor(424, {"missing": [setID]}))
+                return reject(insightResponseConstructor(424, {"missing": [setID]}));
             }
 
             let dataToFilter = datasetHash[setID];
@@ -146,10 +150,10 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                console.log(finalFilteredData);
+                //console.log(finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
-                return reject(insightResponseConstructor(400, {e}))
+                return reject(insightResponseConstructor(400, {"error": e}))
             }
         });
     }
@@ -243,7 +247,7 @@ function filterData(dataset: any, request: any): any[] {
         return filteredData;
     }
     // Other recursive cases
-    // TODO Implementation
+    // TODO Where case needs to be here
     else {
         if (Object.keys(request)[0] == "AND") {
             let filteredData: any = [];
@@ -260,8 +264,6 @@ function filterData(dataset: any, request: any): any[] {
                 filteredData.push(filterData(dataset, operand));
             }
             return filteredData;
-
-
         }
     }
 }
