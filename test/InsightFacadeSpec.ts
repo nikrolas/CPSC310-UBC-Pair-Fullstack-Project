@@ -20,8 +20,7 @@ describe("InsightFacadeSpec", function () {
     });
 
     it("Dataset didn't exist; added successfully", function () {
-        fs.unlinkSync('./cache.json');
-       return insightFacade.addDataset("courses", data.toString( 'base64'))
+       return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
             })
@@ -50,6 +49,17 @@ describe("InsightFacadeSpec", function () {
             })
             .catch(function (err) {
                 expect(err.code).is.equal(404);
+                console.log(err);
+            })
+    });
+    it("remove dataset that is not in the set, error thrown", function () {
+        insightFacade.removeDataset("course")
+            .then(function (response) {
+                expect.fail();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(404);
+                console.log(err);
             })
     });
 
@@ -117,6 +127,31 @@ describe("InsightFacadeSpec", function () {
         return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
+            })
+            .catch(function (err) {
+                expect.fail();
+            })
+    });
+
+    it("All the categories!", function () {
+        let qr: QueryRequest = {
+            WHERE: {
+                LT: {
+                    "courses_avg": 4.5
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                ORDER: "courses_dept",
+                FORM:"TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
             })
             .catch(function (err) {
                 expect.fail();
@@ -663,7 +698,15 @@ describe("InsightFacadeSpec", function () {
             OPTIONS: {
                 COLUMNS: [
                     "courses_dept",
-                    "courses_avg"
+                    "courses_avg",
+                    "courses_id",
+                    "courses_instructor",
+                    "courses_title",
+                    "courses_pass",
+                    "courses_fail",
+                    "courses_audit",
+                    "courses_uuid"
+
                 ],
 
                 ORDER: "courses_dept",
@@ -758,14 +801,13 @@ describe("InsightFacadeSpec", function () {
     it("Invalid dataset ID to be queried", function () {
         let qr: QueryRequest = {
             WHERE:{
-                GT:{
-                    "invalid1_avg":97
+                EQ:{
+                    "invalid_pass": 9
                 }
             },
             OPTIONS:{
                 COLUMNS:[
-                    "invalid2_dept",
-                    "invalid3_avg"
+                    "invalid_dept"
                 ],
                 FORM:"TABLE"
             }
@@ -894,12 +936,12 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("WHERE valid empty test", function () {
+    it("WHERE empty test", function () {
         let qr: QueryRequest = {
             WHERE:{
             },
             OPTIONS:{
-                COLUMNS:[
+                "COLUMNS":[
                     "courses_dept",
                     "courses_avg"
                 ],
@@ -909,10 +951,10 @@ describe("InsightFacadeSpec", function () {
         };
         insightFacade.performQuery(qr)
             .then(function (response) {
-                expect(response.code).is.equal(200);
+                expect.fail();
             })
             .catch(function (err) {
-                expect.fail();
+                expect(err.code).is.equal(400);
             })
     });
 
@@ -952,17 +994,27 @@ describe("InsightFacadeSpec", function () {
     it("NOT test", function () {
         let qr : QueryRequest = {
             WHERE: {
-
-
-
+                AND: [
+                    {
+                        GT:{
+                            "courses_avg":61
+                        }
+                    },
+                    {
+                        LT:{
+                            "courses_avg":62
+                        }
+                    },
+                    {
                         NOT:{
 
                                 IS: {
-                                    "courses_dept":"aanb"
+                                    "courses_dept":"apbi"
                                 }
 
                         }
-
+                    }
+                ]
             },
             OPTIONS: {
                 COLUMNS: [
@@ -1098,4 +1150,7 @@ describe("InsightFacadeSpec", function () {
                 expect.fail();
             })
     });
+
+
+
 });
