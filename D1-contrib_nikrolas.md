@@ -1,3 +1,7 @@
+For deliverable d1, this commit received a grade of 85%.
+
+Test summary: 85% (45 passing, 8 failing, 0 skipped)
+Line coverage: 79%
 
 I implemented removedataset, the recusion for AND OR NOT, the interface for QueryRequest, sortbyNum and sortbyChar and many test files
 
