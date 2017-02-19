@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe("InsightFacadeSpec", function () {
+describe("d1Spec", function () {
 
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
@@ -19,14 +19,16 @@ describe("InsightFacadeSpec", function () {
         insightFacade = new InsightFacade();
     });
 
-    it("Dataset didn't exist; added successfully", function () {
+    it("Dataset didn't exist; added successfully", function (done) {
         fs.unlinkSync('./cache.json');
-       return insightFacade.addDataset("courses", data.toString( 'base64'))
-            .then(function (response) {
+       insightFacade.addDataset("courses", data.toString( 'base64'))
+           .then(function (response) {
                 expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
@@ -43,43 +45,51 @@ describe("InsightFacadeSpec", function () {
             })
     });
 
-    it("remove dataset that is not in the set, error thrown", function () {
+    it("remove dataset that is not in the set, error thrown", function (done) {
         insightFacade.removeDataset("blah")
             .then(function (response) {
                 expect.fail();
+                done();
             })
             .catch(function (err) {
                 expect(err.code).is.equal(404);
+                done();
             })
     });
 
-    it("remove dataset that is in the set", function () {
+    it("remove dataset that is in the set", function (done) {
         insightFacade.removeDataset("courses")
             .then(function (response) {
-                expect(response.code).is.equal(200);
+                expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("Dataset does not exist, cache does; added successfully again", function () {
+    it("Dataset does not exist, cache does; added successfully again", function (done) {
         return insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("Dataset exist; replaced successfully ", function () {
+    it("Dataset exist; replaced successfully ", function (done) {
         return insightFacade.addDataset("courses", data1.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(201);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 

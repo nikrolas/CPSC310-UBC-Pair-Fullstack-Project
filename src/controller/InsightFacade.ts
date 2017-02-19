@@ -2,8 +2,7 @@
  * This is the main programmatic entry point for the project.
  */
 import {
-    IInsightFacade, InsightResponse, QueryRequest, FilterInterface, NumberFilter,
-    OptionInterface
+    IInsightFacade, InsightResponse, QueryRequest
 } from "./IInsightFacade";
 
 import Log from "../Util";
@@ -11,7 +10,6 @@ import Log from "../Util";
 var JSZip = require("jszip");
 var fs = require("fs");
 var datasetHash: any = {};
-
 
 export default class InsightFacade implements IInsightFacade {
 
