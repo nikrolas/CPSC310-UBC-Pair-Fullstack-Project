@@ -68,7 +68,7 @@ export default class InsightFacade implements IInsightFacade {
                 return fulfill(insightResponseConstructor(204, {}));
             }
             else {
-                return reject(insightResponseConstructor(404, {}));                 //POTENTIAL ERROR?
+                return reject(insightResponseConstructor(404, {"missing": id}));                 //POTENTIAL ERROR?
             }
         });
     }
@@ -94,63 +94,48 @@ export default class InsightFacade implements IInsightFacade {
 
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
 
+            let setID = query.OPTIONS.COLUMNS[0].split('_')[0];
+
+            // Checks if cached dataset has the given ID, query invalid if it does not exist
+            if (typeof datasetHash[setID] == "undefined") {
+                return reject(insightResponseConstructor(424, {"missing": [setID]}));
+            }
+
+            let dataToFilter = datasetHash[setID];
             let finalFilteredData = {render: query.OPTIONS.FORM, result: <any>[]};
-            let finalArray: any = [];
+            let storage:any = [];
+            let finalArray:any = [];
+            //
+            for (let eachCourse of dataToFilter) {
+                let json = JSON.parse(eachCourse);
+                if (json["result"].length != 0) {
+                    for (let courseSection of json["result"]) {
+                        storage.push(courseSection);
+                    }
+                }
+            }
             try {
                 let filteredData = null;
-                let missingIDArray: any = [];
                 // Checks if WHERE is an empty object
-                if(Object.keys(query.WHERE).length == 0) {
-                    for (let column of query.OPTIONS.COLUMNS) {
-                        if (!validIDCheck(column) && !column.includes("_")) {
-                            return reject(insightResponseConstructor(400, {"error": "Invalid key"}))
-                        }
-                        else if (!validIDCheck(column)) {
-                            missingIDArray.push(column.split("_")[0]);
-                        }
-                    }
-                    if (missingIDArray.length > 0) {
-                        return reject(insightResponseConstructor(424, {"missing": missingIDArray}));
-                    }
-                    filteredData = datasetHash[query.OPTIONS.COLUMNS[0].split("_")[0]];
+                if(query.WHERE == {}) {
+                    filteredData = storage;
                 }
                 else {
-                    filteredData = filterData(query.WHERE, missingIDArray, false);
-                }
-
-                if (typeof filteredData == "undefined") {
-                    for (let column of query.OPTIONS.COLUMNS) {
-                        if (!validIDCheck(column) && !column.includes("_")) {
-                            return reject(insightResponseConstructor(400, {"error": "Invalid key"}))
-                        }
-                        else if (!validIDCheck(column)) {
-                            missingIDArray.push(column.split("_")[0]);
-                        }
-                    }
-                    if (missingIDArray.length > 0) {
-                        return reject(insightResponseConstructor(424, {"missing": missingIDArray}));
-                    }
+                    filteredData = filterData(storage, query.WHERE);
                 }
 
                 // Show only desired columns
                 for (let eachClass of filteredData) {
                     let row: any = {};
                     for (let column of query.OPTIONS.COLUMNS) {
-                        if (validIDCheck(column)) {
-                            row[column] = eachClass[correspondingJSON(column)];
-                        }
-                        else {
-                            missingIDArray.push(column.split("_")[0]);
-                        }
+                        row[column] = eachClass[correspondingJSON(column)];
                     }
                     finalArray.push(row);
-                }
-                if (missingIDArray.length > 0) {
-                    return reject(insightResponseConstructor(424, {"missing": missingIDArray}));
                 }
 
                 // Sort by column
                 let order = query.OPTIONS.ORDER;
+
                 if(typeof order != "undefined") {
                     if(correspondingNumber(order)) {
                         finalArray = sortByNum(finalArray, order);
@@ -159,7 +144,7 @@ export default class InsightFacade implements IInsightFacade {
                         finalArray = sortByChar(finalArray, correspondingJSON(order));
                     }
                 }
-                //console.log (finalArray);
+                console.log (finalArray);
                 finalFilteredData["result"] = finalArray;
 
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
@@ -170,203 +155,115 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function filterData(request: any, missingIDArray: any[], notFlag ?: boolean, dataReceived ?: any[]): any[] {
+function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
+    // Base cases
     if (Object.keys(request)[0] == "LT") {
         let filteredData = [];
         let key = Object.keys(request.LT)[0];
-        if (validIDCheck(key)) {
-            let dataset:any;
-            if ( dataReceived != null) {
-                if (dataReceived.length > 0) {
-                    dataset = dataReceived;
-                }
-                else {
-                    dataset = dataAccumulator(key);
-                }
-            }
-            else {
-                dataset = dataAccumulator(key);
-            }
-            let value = request.LT[key];
-            if (typeof value != "number") {
-                throw new Error("Value for less than must be a number");
-            }
-            let translatedKey = correspondingJSON(key);
-            if(notFlag == false || notFlag == null) {
-                for (let courseSection of dataset) {
-                    if (courseSection[translatedKey] < value) {
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
-            else{
-                for (let courseSection of dataset) {
-                    if (courseSection[translatedKey] > value) {
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
+        let value = request.LT[key];
+        if (typeof value != "number") {
+            throw new Error("Value for less than must be a number");
         }
-        else {
-            if(key.includes("_")) {
-                missingIDArray.push(key.split("_")[0]);
+        let translatedKey = correspondingJSON(key);
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] < value) {
+                    filteredData.push(courseSection);
+                }
             }
-            else {
-                throw new Error("Invalid key");
+            return filteredData;
+        }
+        else{
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] > value) {
+                    filteredData.push(courseSection);
+                }
             }
+            return filteredData;
+
         }
     }
-
     else if (Object.keys(request)[0] == "GT") {
         let filteredData = [];
         let key = Object.keys(request.GT)[0];
-        if (validIDCheck(key)) {
-            let dataset:any;
-            if ( dataReceived != null) {
-                if (dataReceived.length > 0) {
-                    dataset = dataReceived;
+        let value = request.GT[key];
+        if (typeof value != "number") {
+            throw new Error("Value for greater than must be a number");
+        }
+        let translatedKey = correspondingJSON(key);
+
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] > value) {
+                    filteredData.push(courseSection);
                 }
-                else {
-                    dataset = dataAccumulator(key);
-                }
             }
-            else {
-                dataset = dataAccumulator(key);
-            }
-            let value = request.GT[key];
-            if (typeof value != "number") {
-                throw new Error("Value for less than must be a number");
-            }
-            let translatedKey = correspondingJSON(key);
-            if(notFlag == false || notFlag == null) {
-                for (let courseSection of dataset) {
-                    if (courseSection[translatedKey] > value) {
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
-            else{
-                for (let courseSection of dataset) {
-                    if (courseSection[translatedKey] < value) {
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
+            return filteredData;
         }
         else {
-            if(key.includes("_")) {
-                missingIDArray.push(key.split("_")[0]);
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] < value) {
+                    filteredData.push(courseSection);
+                }
             }
-            else {
-                throw new Error("Invalid key");
-            }
+            return filteredData;
+
         }
     }
-
     else if (Object.keys(request)[0] == "EQ") {
         let filteredData = [];
         let key = Object.keys(request.EQ)[0];
-        if (validIDCheck(key)) {
-            let dataset:any;
-            if ( dataReceived != null) {
-                if (dataReceived.length > 0) {
-                    dataset = dataReceived;
+        let value = request.EQ[key];
+        if (typeof value != "number") {
+            throw new Error("Value for equals must be a number");
+        }
+        let translatedKey = correspondingJSON(key);
+
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] == value) {
+                    filteredData.push(courseSection);
                 }
-                else {
-                    dataset = dataAccumulator(key);
-                }
             }
-            else {
-                dataset = dataAccumulator(key);
-            }
-            let value = request.EQ[key];
-            if (typeof value != "number") {
-                throw new Error("Value for less than must be a number");
-            }
-            let translatedKey = correspondingJSON(key);
-            if(notFlag == false || notFlag == null) {
-                for (let courseSection of dataset) {
-                    if (courseSection[translatedKey] == value) {
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
-            else{
-                for (let courseSection of dataset) {
-                    if (courseSection[translatedKey] != value) {
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
+            return filteredData;
         }
         else {
-            if(key.includes("_")) {
-                missingIDArray.push(key.split("_")[0]);
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] != value) {
+                    filteredData.push(courseSection);
+                }
             }
-            else {
-                throw new Error("Invalid key");
-            }
+            return filteredData;
         }
     }
-
     else if (Object.keys(request)[0] == "IS") {
         let filteredData = [];
         let key = Object.keys(request.IS)[0];
-        if (validIDCheck(key)) {
-            let dataset:any;
-            if ( dataReceived != null) {
-                if (dataReceived.length > 0) {
-                    dataset = dataReceived;
+        let value = request.IS[key];
+        let regexFlag = value.includes("*");
+        let translatedKey = correspondingJSON(key);
+
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if(regexFlag && regexChecker(courseSection[translatedKey], value)) {
+                    filteredData.push(courseSection);
                 }
-                else {
-                    dataset = dataAccumulator(key);
+                else if(!regexFlag && value == courseSection[translatedKey]){
+                    filteredData.push(courseSection);
                 }
             }
-            else {
-                dataset = dataAccumulator(key);
-            }
-            let value = request.IS[key];
-            let regexFlag = value.includes("*");
-            if (typeof value != "string") {
-                throw new Error("Value for less than must be a number");
-            }
-            let translatedKey = correspondingJSON(key);
-            if(notFlag == false || notFlag == null) {
-                for (let courseSection of dataset) {
-                    if(regexFlag && regexChecker(courseSection[translatedKey], value)) {
-                        filteredData.push(courseSection);
-                    }
-                    else if(!regexFlag && value == courseSection[translatedKey]){
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
-            else {
-                for (let courseSection of dataset) {
-                    if(regexFlag && !regexChecker(courseSection[translatedKey], value)) {
-                        filteredData.push(courseSection);
-                    }
-                    else if(!regexFlag && value != courseSection[translatedKey]){
-                        filteredData.push(courseSection);
-                    }
-                }
-                return filteredData;
-            }
+            return filteredData;
         }
         else {
-            if(key.includes("_")) {
-                missingIDArray.push(key.split("_")[0]);
+            for (let courseSection of dataset) {
+                if(regexFlag && !regexChecker(courseSection[translatedKey], value)) {
+                    filteredData.push(courseSection);
+                }
+                else if(!regexFlag && value != courseSection[translatedKey]){
+                    filteredData.push(courseSection);
+                }
             }
-            else {
-                throw new Error("Invalid key");
-            }
+            return filteredData;
         }
     }
 
@@ -375,64 +272,38 @@ function filterData(request: any, missingIDArray: any[], notFlag ?: boolean, dat
             throw new Error("AND cannot be empty");
         }
         let filteredData: any = [];
-        let modifiableDataset: any = [];
+        let modifiableDataset: any = dataset;
         for (let operand of request.AND) {
-            modifiableDataset = filterData(operand, missingIDArray, false, modifiableDataset);
+            modifiableDataset = filterData(modifiableDataset, operand);
         }
         filteredData = filteredData.concat(modifiableDataset);
         return filteredData;
     }
-
     else if (Object.keys(request)[0] == "OR") {
         if(request.OR.length == 0) {
             throw new Error("OR cannot be empty");
         }
         let filteredData :any = [];
         for (let operand of request.OR) {
-            filteredData = filteredData.concat(filterData(operand, missingIDArray));
+            filteredData = filteredData.concat(filterData(dataset, operand));
         }
         return filteredData;
     }
-
     else if (Object.keys(request)[0] == "NOT") {
         let value = request.NOT;
         let filteredData :any = [];
-        if (notFlag == null || notFlag == false) {
-            filteredData = filteredData.concat(filterData(value, missingIDArray, true));
+        if (notflag == null || notflag == false) {
+            filteredData = filteredData.concat(filterData(dataset, value, true));
         }
         else {
-            filteredData = filteredData.concat(filterData(value, missingIDArray, false));
+            filteredData = filteredData.concat(filterData(dataset, value, false));
         }
+
         return filteredData;
     }
-
     else {
         throw new Error("Invalid key");
     }
-}
-
-function dataAccumulator(key: string) {
-    let dataset = datasetHash[key.split("_")[0]];
-    let dataToBeFiltered: any = [];
-    for (let eachCourse of dataset) {
-        let json = JSON.parse(eachCourse);
-        if (json["result"].length != 0) {
-            for (let courseSection of json["result"]) {
-                dataToBeFiltered.push(courseSection);
-            }
-        }
-    }
-    return dataToBeFiltered;
-}
-
-function validIDCheck(key: string) {
-    if (key.includes("_")) {
-        let id = key.split("_")[0];
-        if (id in datasetHash) {
-            return true;
-        }
-    }
-    return false;
 }
 
 // regex check from http://stackoverflow.com/a/32402438
@@ -461,7 +332,7 @@ function sortByNum(data: any, order: string) {
 
 function sortByChar(data: any, order: string) {
     data.sort(function (a: any, b: any) {
-        let dataA = a[order], dataB = b[order];
+        var dataA = a[order], dataB = b[order];
         if (dataA < dataB) return -1;
         if (dataA > dataB) return 1;
         return 0;
@@ -469,6 +340,7 @@ function sortByChar(data: any, order: string) {
     return data;
 }
 function correspondingNumber(string : String) {
+
     if (string == 'courses_avg') { //number
         return true;
     }
@@ -559,6 +431,7 @@ function writeJSONFile(id: string, jsonStrings: any) {
         }
         fs.writeFile("./cache.json", JSON.stringify(jsons), function (err: any) {
             if (err) {
+                console.log(err);
                 return reject(err);
             }
             else {
