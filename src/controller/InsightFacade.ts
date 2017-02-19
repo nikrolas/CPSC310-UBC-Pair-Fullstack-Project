@@ -24,6 +24,10 @@ export default class InsightFacade implements IInsightFacade {
                 .then(function(zipContent: any) {
                     Promise.all(filePromiseCollector(zipContent))
                         .then(function(arrayOfJSONString) {
+                            // Tests for valid zip, not containing any information
+                            if (arrayOfJSONString[0] == "") {
+                                return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                            }
                             if (!fs.existsSync("./cache.json")) {
                                 addToHashset(id, arrayOfJSONString)
                                     .then(function () {
@@ -75,26 +79,32 @@ export default class InsightFacade implements IInsightFacade {
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return new Promise(function(fulfill,reject) {
+            let where = query.WHERE;
+            let options = query.OPTIONS;
+            let columns = options.COLUMNS;
+            let form = options.FORM;
+            let order = options.ORDER;
+
             // Checks if WHERE and OPTIONS are defined
-            if(typeof query.WHERE == "undefined" || typeof query.OPTIONS == "undefined") {
+            if(typeof where == "undefined" || typeof options == "undefined") {
                 return reject(insightResponseConstructor(400, {"error": "invalid request"}));
             }
             // Checks if ORDER is contained in columns; query invalid if it is not
-            if(typeof query.OPTIONS.ORDER != "undefined" && !query.OPTIONS.COLUMNS.includes(query.OPTIONS.ORDER)) {
+            if(typeof order != "undefined" && !columns.includes(order)) {
                 return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}));
             }
             // Checks for empty COLUMNS array or missing COLUMNS array
-            if(query.OPTIONS.COLUMNS.length == 0 || typeof query.OPTIONS.COLUMNS == "undefined") {
+            if(columns.length == 0 || typeof columns == "undefined") {
                 return reject(insightResponseConstructor(400, {"error": "Columns missing or empty"}));
             }
             // Checks for invalid OPTIONS
-            if(query.OPTIONS.FORM == "undefined" || query.OPTIONS.FORM != "TABLE") {
+            if(form == "undefined" || form != "TABLE") {
                 return reject(insightResponseConstructor(400, {"error": "Options is invalid"}));
             }
 
             datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
 
-            let setID = query.OPTIONS.COLUMNS[0].split('_')[0];
+            let setID = columns[0].split('_')[0];
 
             // Checks if cached dataset has the given ID, query invalid if it does not exist
             if (typeof datasetHash[setID] == "undefined") {
@@ -102,7 +112,7 @@ export default class InsightFacade implements IInsightFacade {
             }
 
             let dataToFilter = datasetHash[setID];
-            let finalFilteredData = {render: query.OPTIONS.FORM, result: <any>[]};
+            let finalFilteredData = {render: form, result: <any>[]};
             let storage:any = [];
             let finalArray:any = [];
             //
@@ -117,31 +127,31 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let filteredData = null;
                 // Checks if WHERE is an empty object
-                if(query.WHERE == {}) {
+                if(where == {}) {
                     filteredData = storage;
                 }
                 else {
-                    filteredData = filterData(storage, query.WHERE);
+                    filteredData = filterData(storage, where);
                 }
 
                 // Show only desired columns
                 for (let eachClass of filteredData) {
                     let row: any = {};
-                    for (let column of query.OPTIONS.COLUMNS) {
+                    for (let column of columns) {
                         row[column] = eachClass[correspondingJSON(column)];
                     }
                     finalArray.push(row);
                 }
 
                 // Sort by column
-                let order = query.OPTIONS.ORDER;
+                let sortOrder = order;
 
-                if(typeof order != "undefined") {
-                    if(correspondingNumber(order)) {
-                        finalArray = sortByNum(finalArray, order);
+                if(typeof sortOrder != "undefined") {
+                    if(correspondingNumber(sortOrder)) {
+                        finalArray = sortByNum(finalArray, sortOrder);
                     }
                     else {
-                        finalArray = sortByChar(finalArray, correspondingJSON(order));
+                        finalArray = sortByChar(finalArray, correspondingJSON(sortOrder));
                     }
                 }
                 console.log (finalArray);

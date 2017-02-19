@@ -45,6 +45,19 @@ describe("d1Spec", function () {
             })
     });
 
+    it("Adding valid zip, no real data", function (done) {
+        var data = fs.readFileSync("./emptyText.zip");
+        insightFacade.addDataset("noData", data.toString('base64'))
+            .then(function (response) {
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);
+                done();
+            })
+    });
+
     it("remove dataset that is not in the set, error thrown", function (done) {
         insightFacade.removeDataset("blah")
             .then(function (response) {
@@ -70,7 +83,7 @@ describe("d1Spec", function () {
     });
 
     it("Dataset does not exist, cache does; added successfully again", function (done) {
-        return insightFacade.addDataset("courses", data.toString('base64'))
+        insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
                 done();
@@ -82,7 +95,7 @@ describe("d1Spec", function () {
     });
 
     it("Dataset exist; replaced successfully ", function (done) {
-        return insightFacade.addDataset("courses", data1.toString('base64'))
+        insightFacade.addDataset("courses", data1.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(201);
                 done();
@@ -93,47 +106,55 @@ describe("d1Spec", function () {
             })
     });
 
-    it("Dataset does not exist in cache; added successfully", function () {
-        return insightFacade.addDataset("pow", data1.toString('base64'))
+    it("Dataset does not exist in cache; added successfully", function (done) {
+        insightFacade.addDataset("pow", data1.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("remove dataset that is in the set again", function () {
+    it("remove dataset that is in the set again", function (done) {
         insightFacade.removeDataset("pow")
             .then(function (response) {
                 expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("remove dataset that is in the set again", function () {
+/*    it("remove second dataset that is in the set", function (done) {
         insightFacade.removeDataset("courses")
             .then(function (response) {
                 expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
-    });
+    });*/
 
-    it("Dataset does not exist; added successfully for filter tests ", function () {
-        return insightFacade.addDataset("courses", data.toString('base64'))
+    it("Dataset does not exist; added successfully for filter tests ", function (done) {
+        insightFacade.addDataset("courses", data.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("LT test: <65 and order: CoursesAvg, should have 6 classes", function () {
+    it("LT test: <65 and order: CoursesAvg, should have 6 classes", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 LT: {
@@ -152,13 +173,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("LT invalid test", function () {
+    it("LT invalid test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 LT: {
@@ -177,13 +200,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect.fail();
+                done();
             })
             .catch(function (err) {
                 expect(err.code).is.equal(400);
+                done();
             })
     });
 
-    it("GT Test: >99.77 and ORDER: courses_avg, should be 2 math courses", function () {
+    it("GT Test: >99.77 and ORDER: courses_avg, should be 2 math courses", function (done) {
         let qr : QueryRequest = {
             WHERE:{
                 GT:{
@@ -202,13 +227,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("GT invalid test", function () {
+    it("GT invalid test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 GT: {
@@ -227,13 +254,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect.fail();
+                done();
             })
             .catch(function (err) {
                 expect(err.code).is.equal(400);
+                done();
             })
     });
 
-    it("EQ Test =0, should be 3 classes", function () {
+    it("EQ Test =0, should be 3 classes", function (done) {
         let qr : QueryRequest = {
             WHERE: {
                 EQ: {
@@ -251,12 +280,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
+                expect.fail();
+                done();
             })
     });
 
-    it("EQ invalid test", function () {
+    it("EQ invalid test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 EQ: {
@@ -275,13 +307,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect.fail();
+                done();
             })
             .catch(function (err) {
                 expect(err.code).is.equal(400);
+                done();
             })
     });
 
-    it("IS AND Sorting String test", function () {
+    it("IS AND Sorting String test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -310,13 +344,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("IS courses_uuid test", function () {
+    it("IS courses_uuid test", function (done) {
         let qr: QueryRequest = {
             WHERE:{
                 IS:{
@@ -335,13 +371,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("AND test", function () {
+    it("AND test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -368,13 +406,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("OR test", function () {
+    it("OR test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 OR: [
@@ -401,13 +441,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("AND SORTING NUMBER test", function () {
+    it("AND SORTING NUMBER test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -436,13 +478,15 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
-    it("AND Mulitple Cases  test", function () {
+    it("AND Mulitple Cases  test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
@@ -476,9 +520,11 @@ describe("d1Spec", function () {
         insightFacade.performQuery(qr)
             .then(function (response) {
                 expect(response.code).is.equal(200);
+                done();
             })
             .catch(function (err) {
                 expect.fail();
+                done();
             })
     });
 
