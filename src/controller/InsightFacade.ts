@@ -10,6 +10,7 @@ import Log from "../Util";
 var JSZip = require("jszip");
 var fs = require("fs");
 var datasetHash: any = {};
+var p5 = require("parse5");
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -116,12 +117,17 @@ export default class InsightFacade implements IInsightFacade {
             let storage:any = [];
             let finalArray:any = [];
             //
-            for (let eachCourse of dataToFilter) {
-                let json = JSON.parse(eachCourse);
-                if (json["result"].length != 0) {
-                    for (let courseSection of json["result"]) {
-                        storage.push(courseSection);
+            for (let eachItem of dataToFilter) {
+                if (setID == "courses") {
+                    let json = JSON.parse(eachItem);
+                    if (json["result"].length != 0) {
+                        for (let courseSection of json["result"]) {
+                            storage.push(courseSection);
+                        }
                     }
+                }
+                else if (setID == "rooms") {
+                    storage.push(p5.parse(eachItem));
                 }
             }
             try {
@@ -131,7 +137,12 @@ export default class InsightFacade implements IInsightFacade {
                     filteredData = storage;
                 }
                 else {
-                    filteredData = filterData(storage, where);
+                    if (setID == "rooms") {
+                        filteredData = filterDataRooms(storage, where);
+                    }
+                    else {
+                        filteredData = filterDataCourses(storage, where);
+                    }
                 }
 
                 // Show only desired columns
@@ -165,7 +176,11 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
+function filterDataRooms(dataset: any, request: any, notflag ?: boolean): any[] {
+    for (let building of dataset) {
+
+    }
+
     // Base cases
     if (Object.keys(request)[0] == "LT") {
         let filteredData = [];
@@ -284,7 +299,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData: any = [];
         let modifiableDataset: any = dataset;
         for (let operand of request.AND) {
-            modifiableDataset = filterData(modifiableDataset, operand);
+            modifiableDataset = filterDataCourses(modifiableDataset, operand);
         }
         filteredData = filteredData.concat(modifiableDataset);
         return filteredData;
@@ -295,7 +310,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         }
         let filteredData :any = [];
         for (let operand of request.OR) {
-            filteredData = filteredData.concat(filterData(dataset, operand));
+            filteredData = filteredData.concat(filterDataCourses(dataset, operand));
         }
         return filteredData;
     }
@@ -303,10 +318,161 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let value = request.NOT;
         let filteredData :any = [];
         if (notflag == null || notflag == false) {
-            filteredData = filteredData.concat(filterData(dataset, value, true));
+            filteredData = filteredData.concat(filterDataCourses(dataset, value, true));
         }
         else {
-            filteredData = filteredData.concat(filterData(dataset, value, false));
+            filteredData = filteredData.concat(filterDataCourses(dataset, value, false));
+        }
+
+        return filteredData;
+    }
+    else {
+        throw new Error("Invalid key");
+    }
+}
+
+function filterDataCourses(dataset: any, request: any, notflag ?: boolean): any[] {
+    // Base cases
+    if (Object.keys(request)[0] == "LT") {
+        let filteredData = [];
+        let key = Object.keys(request.LT)[0];
+        let value = request.LT[key];
+        if (typeof value != "number") {
+            throw new Error("Value for less than must be a number");
+        }
+        let translatedKey = correspondingJSON(key);
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] < value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
+        else{
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] > value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+
+        }
+    }
+    else if (Object.keys(request)[0] == "GT") {
+        let filteredData = [];
+        let key = Object.keys(request.GT)[0];
+        let value = request.GT[key];
+        if (typeof value != "number") {
+            throw new Error("Value for greater than must be a number");
+        }
+        let translatedKey = correspondingJSON(key);
+
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] > value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
+        else {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] < value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+
+        }
+    }
+    else if (Object.keys(request)[0] == "EQ") {
+        let filteredData = [];
+        let key = Object.keys(request.EQ)[0];
+        let value = request.EQ[key];
+        if (typeof value != "number") {
+            throw new Error("Value for equals must be a number");
+        }
+        let translatedKey = correspondingJSON(key);
+
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] == value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
+        else {
+            for (let courseSection of dataset) {
+                if (courseSection[translatedKey] != value) {
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
+    }
+    else if (Object.keys(request)[0] == "IS") {
+        let filteredData = [];
+        let key = Object.keys(request.IS)[0];
+        let value = request.IS[key];
+        let regexFlag = value.includes("*");
+        let translatedKey = correspondingJSON(key);
+
+        if(notflag == false || notflag == null) {
+            for (let courseSection of dataset) {
+                if(regexFlag && regexChecker(courseSection[translatedKey], value)) {
+                    filteredData.push(courseSection);
+                }
+                else if(!regexFlag && value == courseSection[translatedKey]){
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
+        else {
+            for (let courseSection of dataset) {
+                if(regexFlag && !regexChecker(courseSection[translatedKey], value)) {
+                    filteredData.push(courseSection);
+                }
+                else if(!regexFlag && value != courseSection[translatedKey]){
+                    filteredData.push(courseSection);
+                }
+            }
+            return filteredData;
+        }
+    }
+
+    else if (Object.keys(request)[0] == "AND") {
+        if(request.AND.length == 0) {
+            throw new Error("AND cannot be empty");
+        }
+        let filteredData: any = [];
+        let modifiableDataset: any = dataset;
+        for (let operand of request.AND) {
+            modifiableDataset = filterDataCourses(modifiableDataset, operand);
+        }
+        filteredData = filteredData.concat(modifiableDataset);
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "OR") {
+        if(request.OR.length == 0) {
+            throw new Error("OR cannot be empty");
+        }
+        let filteredData :any = [];
+        for (let operand of request.OR) {
+            filteredData = filteredData.concat(filterDataCourses(dataset, operand));
+        }
+        return filteredData;
+    }
+    else if (Object.keys(request)[0] == "NOT") {
+        let value = request.NOT;
+        let filteredData :any = [];
+        if (notflag == null || notflag == false) {
+            filteredData = filteredData.concat(filterDataCourses(dataset, value, true));
+        }
+        else {
+            filteredData = filteredData.concat(filterDataCourses(dataset, value, false));
         }
 
         return filteredData;
