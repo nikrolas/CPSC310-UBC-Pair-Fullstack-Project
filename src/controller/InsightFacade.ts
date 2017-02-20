@@ -12,6 +12,9 @@ var fs = require("fs");
 var datasetHash: any = {};
 var p5 = require("parse5");
 
+
+
+
 export default class InsightFacade implements IInsightFacade {
 
     constructor() {
@@ -138,7 +141,8 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 else {
                     if (setID == "rooms") {
-                        filteredData = filterDataRooms(storage, where);
+                        let formatedRoomData:any = formatHTMLData(storage);
+                        filteredData = filterDataRooms(formatedRoomData, where);
                     }
                     else {
                         filteredData = filterDataCourses(storage, where);
@@ -177,21 +181,18 @@ export default class InsightFacade implements IInsightFacade {
 }
 
 function filterDataRooms(dataset: any, request: any, notflag ?: boolean): any[] {
-    for (let building of dataset) {
-
-    }
 
     // Base cases
     if (Object.keys(request)[0] == "LT") {
         let filteredData = [];
-        let key = Object.keys(request.LT)[0];
-        let value = request.LT[key];
+        let key = Object.keys(request.LT)[0];               //Key of the query - ie. room_number
+        let value = request.LT[key];                        //Value of the query - ie 120
         if (typeof value != "number") {
             throw new Error("Value for less than must be a number");
         }
         let translatedKey = correspondingJSON(key);
         if(notflag == false || notflag == null) {
-            for (let courseSection of dataset) {
+            for (let courseSection of dataset) {                //Filter data for HTMl here? Must be recurisve however
                 if (courseSection[translatedKey] < value) {
                     filteredData.push(courseSection);
                 }
@@ -619,4 +620,99 @@ function writeJSONFile(id: string, jsonStrings: any) {
 
 function reWriteJSONFile(jsonObject: any) {
     fs.writeFile("./cache".concat(".json"), JSON.stringify(jsonObject));
+}
+
+function formatHTMLData(data: any) {
+    var builtHTMLjson:any = [];
+    for (let rooms = 0; rooms < data.length - 1; rooms ++) {               //Ignoring Index.html
+        //tbody html tagname childrennode number represents the amount of objects needed to be created by the file
+        var room_object:any = helperRecursion (data[rooms])
+        if (room_object["rooms_number"] != null) {
+            var roomNumberObject:any ={};
+            for (var i = 0; i<room_object["rooms_number"].length; i++) {
+                roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
+                roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
+                roomNumberObject["rooms_address"] = room_object["rooms_address"];
+                roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
+                roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
+                roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
+                roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
+                roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
+                roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
+                roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
+                roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
+                builtHTMLjson.push(roomNumberObject);
+                roomNumberObject = {};
+            }
+        }
+        else {
+
+            builtHTMLjson.push (room_object);
+        }
+    }
+
+}
+
+function helperRecursion (roomData:any) {
+    var queue: any  =[];
+    var fileObject:any ={};
+    var rooms_name:string[] = [];
+    var rooms_number:string[] =[];
+    var rooms_seats:number[] =[];
+    var rooms_type: string[] = [];
+    var rooms_furniture: string[] =[];
+    var rooms_href: string[] = [];
+    queue.push(roomData);
+    while (queue.length != 0){
+        var i = queue.shift();
+        //Perform analysis here
+        if(i.attrs != null) {
+            if (i.attrs.length != 0) {
+                for (var attr of i.attrs) {         //Not sure if should hard cod or not
+                    if (attr.value == "building-info") {
+                        fileObject["rooms_fullname"] = i.childNodes[1].childNodes[0].childNodes[0].value; //room_name
+                        fileObject["rooms_address"] = i.childNodes[3].childNodes[0].childNodes[0].value;//room_address
+                    }
+                    if (attr.value == "canonical") {
+                        fileObject["rooms_shortname"] = i.attrs[1].value;                          //room_shortname
+                    }
+
+                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-number") {
+                        rooms_number.push(i.childNodes[1].childNodes[0].value);
+                        rooms_href.push(i.childNodes[1].attrs[0].value);
+                    }
+                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-capacity") {
+                        rooms_seats.push(i.childNodes[0].value.trim());
+                    }
+                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-type") {
+                        rooms_type.push(i.childNodes[0].value.trim());
+                    }
+                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-furniture") {
+                        rooms_furniture.push(i.childNodes[0].value.trim());
+                    }
+                }
+                //End of analysis
+            }
+        }
+
+        if (i.childNodes == null) {
+            continue;
+        }
+        else {
+            for (var child of i.childNodes) {
+                queue.push(child);
+            }
+        }
+        fileObject["rooms_name"] = rooms_name ;
+        fileObject["rooms_number"] = rooms_number;
+        fileObject["rooms_seats"] = rooms_seats;
+        fileObject["rooms_type"] = rooms_type;
+        fileObject["rooms_furniture"] = rooms_furniture;
+        fileObject["rooms_href"] = rooms_href;
+    }
+    for (let i = 0; i < rooms_number.length; i++) {
+        rooms_name.push(fileObject["rooms_shortname"] +"_"+ fileObject["rooms_number"][i]);
+    }
+
+    return fileObject;
 }
