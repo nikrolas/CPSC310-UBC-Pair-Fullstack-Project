@@ -208,7 +208,7 @@ describe.only("d2Spec", function () {
     //         })
     // });
 
-    it.only("Dataset didn't exist; added successfully", function (done) {
+    it("Dataset didn't exist; added successfully", function (done) {
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -220,7 +220,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Rooms test", function (done) {
+    it("Rooms test", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 IS: {
@@ -246,7 +246,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Rooms test2", function (done) {
+    it("Rooms test2", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 GT: {
@@ -272,7 +272,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Rooms test3", function (done) {
+    it("Rooms test3", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 IS: {
@@ -297,7 +297,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Rooms test4", function (done) {
+    it("Rooms test4", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                             AND: [

@@ -165,8 +165,8 @@ export default class InsightFacade implements IInsightFacade {
                         finalArray = sortByChar(finalArray, correspondingJSON(sortOrder));
                     }
                 }
-                console.log (finalArray);
                 finalFilteredData["result"] = finalArray;
+                console.log (JSON.stringify(finalFilteredData)); //Is it different for courses vs rooms?!?!?
 
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
