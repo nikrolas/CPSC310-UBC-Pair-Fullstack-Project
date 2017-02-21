@@ -22,7 +22,6 @@ describe.only("d2Spec", function () {
     });
 
     it("Dataset didn't exist; added successfully", function (done) {
-        fs.unlinkSync('./cache.json');
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -210,8 +209,6 @@ describe.only("d2Spec", function () {
     // });
 
     it.only("Dataset didn't exist; added successfully", function (done) {
-        fs.unlinkSync('./cache.json');
-
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);

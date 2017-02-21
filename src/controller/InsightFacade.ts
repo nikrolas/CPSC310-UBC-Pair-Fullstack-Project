@@ -27,6 +27,7 @@ export default class InsightFacade implements IInsightFacade {
                     Promise.all(filePromiseCollector(zipContent))
                         .then(function(arrayOfJSONString) {
                             // Tests for valid zip, not containing any information
+
                             if (arrayOfJSONString[0] == "") {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                             }
