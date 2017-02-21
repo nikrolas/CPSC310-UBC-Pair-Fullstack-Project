@@ -142,7 +142,6 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 else {
                     filteredData = filterData(storage, where);
-
                 }
 
                 // Show only desired columns
@@ -417,14 +416,18 @@ function correspondingNumber(string : String) {
     if(string == 'rooms_seats'){
         return true;
     }
+    if (string == 'rooms_lat') {
+        return true;
+    }
+    if (string == 'rooms_lon') {
+        return true;
+    }
     return false;
 }
 
 function correspondingJSON(given_string:string) {
-    let key_checker = given_string.split("_");
-    if(key_checker[0] == "rooms") {
-        return given_string;
-    }
+    let roomsValidKeys = new Set(["rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
+        "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"]);
     if (given_string == 'courses_dept') {
         return "Subject";
     }
@@ -454,6 +457,9 @@ function correspondingJSON(given_string:string) {
     }
     if (given_string == 'courses_year') {
         return "Year";
+    }
+    if (roomsValidKeys.has(given_string)) {
+        return given_string;
     }
     return "Invalid";
 }
@@ -610,9 +616,6 @@ function helperRecursion (roomData:any) {
         fileObject["rooms_furniture"] = rooms_furniture;
         fileObject["rooms_href"] = rooms_href;
     }
-
-
-
     // Get lat lon
 /*    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
     let location = latLonRequester(formattedAddr);
@@ -621,8 +624,7 @@ function helperRecursion (roomData:any) {
     })
         .catch(function (err) {
             console.log(err);
-        });
-    return fileObject;*/
+        });*/
     return fileObject;
 }
 
