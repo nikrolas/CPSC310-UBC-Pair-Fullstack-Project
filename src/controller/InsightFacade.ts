@@ -166,7 +166,7 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 finalFilteredData["result"] = finalArray;
                 console.log (JSON.stringify(finalFilteredData)); //Is it different for courses vs rooms?!?!?
-                return fulfill(insightResponseConstructor(200, JSON.stringify(finalFilteredData)));
+                return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
             }
@@ -393,7 +393,7 @@ function sortByChar(data: any, order: string) {
     });
     return data;
 }
-function correspondingNumber(string : String) {
+function correspondingNumber(string : string) {
     if (string == 'courses_avg') { //number
         return true;
     }
@@ -425,7 +425,7 @@ function correspondingNumber(string : String) {
     return false;
 }
 
-function correspondingJSON(given_string:string) {
+function correspondingJSON(given_string: string) {
     let roomsValidKeys = new Set(["rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
         "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"]);
     if (given_string == 'courses_dept') {
@@ -617,8 +617,8 @@ function helperRecursion (roomData:any) {
         fileObject["rooms_href"] = rooms_href;
     }
     // Get lat lon
-/*    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
-    let location = latLonRequester(formattedAddr);
+    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
+/*    let location = latLonRequester(formattedAddr);
     location.then(function (data) {
         console.log(data);
     })
@@ -630,8 +630,8 @@ function helperRecursion (roomData:any) {
 
 /*function latLonRequester(addr: string): Promise<string> {
     return new Promise(function (fulfill, reject) {
-        let body = "";
         try {
+            let body = "";
             http.get("http://skaha.cs.ubc.ca:11316/api/v1/team5/" + addr, function (res) {
                 res.on('data', function (chunk) {
                     body += chunk.toString();

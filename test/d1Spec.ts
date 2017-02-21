@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe("d1Spec", function () {
+describe.only("d1Spec", function () {
 
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
@@ -20,6 +20,7 @@ describe("d1Spec", function () {
     });
 
     it("Dataset didn't exist; added successfully", function (done) {
+        fs.unlinkSync("./cache.json");
        insightFacade.addDataset("courses", data.toString( 'base64'))
            .then(function (response) {
                 expect(response.code).is.equal(204);
