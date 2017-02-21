@@ -31,7 +31,7 @@ export default class InsightFacade implements IInsightFacade {
                             if (arrayOfJSONString[0] == "") {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                             }
-                            if (arrayOfJSONString[0].charAt(1) == "<") {
+                            if (arrayOfJSONString[0].toString().charAt(1) == "<") {
                                 for (var rooms_data in arrayOfJSONString) {
                                     arrayOfJSONString[rooms_data] = p5.parse(arrayOfJSONString[rooms_data]);
                                 }
