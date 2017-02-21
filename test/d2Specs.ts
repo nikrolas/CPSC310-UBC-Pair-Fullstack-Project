@@ -21,18 +21,6 @@ describe.only("d2Spec", function () {
         insightFacade = new InsightFacade();
     });
 
-    it("Dataset didn't exist; added successfully", function (done) {
-        insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
-            .then(function (response) {
-                expect(response.code).is.equal(204);
-                done();
-            })
-            .catch(function (err) {
-                expect.fail();
-                done();
-            })
-    });
-
     // it("Courses_year test, should be 4 courses starting from 90511", function (done) {
     //     let qr: QueryRequest = {
     //         WHERE:{
@@ -209,6 +197,7 @@ describe.only("d2Spec", function () {
     // });
 
     it("Dataset didn't exist; added successfully", function (done) {
+        fs.unlinkSync("./cache.json");
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -220,7 +209,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it("Rooms test", function (done) {
+    it("IS RoomName", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 IS: {
@@ -246,7 +235,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it("Rooms test2", function (done) {
+    it("GT seats", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 GT: {
@@ -272,7 +261,135 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it("Rooms test3", function (done) {
+    it("LT seats", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                LT: {
+                    "rooms_seats": 40
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_seats","rooms_name"
+                ],
+                ORDER: "rooms_seats",
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
+
+    it("EQ seats", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                EQ: {
+                    "rooms_seats": 20
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_seats","rooms_name"
+                ],
+                ORDER: "rooms_seats",
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
+
+    it("IS room_type Wildcard", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "rooms_type": "*mall G*"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_type","rooms_name"
+                ],
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
+
+    it("IS room_furniture Wildcard", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "rooms_furniture": "Classroom-M*"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_furniture","rooms_name"
+                ],
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
+
+    it("IS room_href Wildcard", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "rooms_href": "*DMP-201*"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_href","rooms_name"
+                ],
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
+
+
+    it("IS Room_Address Wildcard", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 IS: {
@@ -297,21 +414,12 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it("Rooms test4", function (done) {
+    it("IS Room_Address Wildcard", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
-                            AND: [
-                                {
-                                    IS:{
-                                        "rooms_name": "ORCH_1001"
-                                    }
-                                },
-                                {
-                                    IS:{
-                                        "rooms_address": "6363 Agronomy Road"
-                                    }
-                                }
-                            ]
+                IS: {
+                    "rooms_address": "*Agrono*"
+                }
             },
             OPTIONS: {
                 COLUMNS: [
@@ -331,5 +439,63 @@ describe.only("d2Spec", function () {
             })
     });
 
+    it("IS room_fullname Wildcard", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "rooms_fullname": "*ugh*"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_fullname","rooms_number"
+                ],
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    })
+
+    it("Specific Room & Address", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                AND: [
+                    {
+                        IS:{
+                            "rooms_name": "ORCH_1001"
+                        }
+                    },
+                    {
+                        IS:{
+                            "rooms_address": "6363 Agronomy Road"
+                        }
+                    }
+                ]
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_address","rooms_name"
+                ],
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
 
 });
