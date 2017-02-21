@@ -12,14 +12,14 @@ describe.only("d2Spec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-    var dataRooms = fs.readFileSync("./rooms_small.zip");
+    var dataRooms = fs.readFileSync("./rooms.zip");
     var dataCourses = fs.readFileSync("./courses.zip");
 
     beforeEach(function () {
         insightFacade = new InsightFacade();
     });
 
-    it.only("Dataset didn't exist; added successfully", function (done) {
+    it("Dataset didn't exist; added successfully", function (done) {
         fs.unlinkSync('./cache.json');
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
@@ -32,182 +32,182 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it("Courses_year test, should be 4 courses starting from 90511", function (done) {
-        let qr: QueryRequest = {
-            WHERE:{
-            AND:[
-                {
-                    EQ:{
-                        "courses_year":2007
-                    }
-                },
-                {
-                    IS:{
-                        "courses_dept":"cpsc"
-                    }
-                },
-                {
-                    IS:{
-                        "courses_id":"121"
-                    }
-                }
-            ]
-        },
-            OPTIONS:{
-            COLUMNS:[
-                "courses_uuid"
-            ],
-                ORDER:"courses_uuid",
-                FORM:"TABLE"
-        }};
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect(response.code).is.equal(200);
-                done();
-            })
-            .catch(function (err) {
-                expect.fail();
-                done();
-            })
-    });
+    // it("Courses_year test, should be 4 courses starting from 90511", function (done) {
+    //     let qr: QueryRequest = {
+    //         WHERE:{
+    //         AND:[
+    //             {
+    //                 EQ:{
+    //                     "courses_year":2007
+    //                 }
+    //             },
+    //             {
+    //                 IS:{
+    //                     "courses_dept":"cpsc"
+    //                 }
+    //             },
+    //             {
+    //                 IS:{
+    //                     "courses_id":"121"
+    //                 }
+    //             }
+    //         ]
+    //     },
+    //         OPTIONS:{
+    //         COLUMNS:[
+    //             "courses_uuid"
+    //         ],
+    //             ORDER:"courses_uuid",
+    //             FORM:"TABLE"
+    //     }};
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect(response.code).is.equal(200);
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect.fail();
+    //             done();
+    //         })
+    // });
+    //
+    // it("Courses_year test, should be 1 SPPH class with year 1900", function (done) {
+    //     let qr: QueryRequest = {
+    //         WHERE:{
+    //             AND: [
+    //                 {
+    //                     EQ:{
+    //                         "courses_avg":98.98
+    //                     }
+    //                 },
+    //                 {
+    //                     EQ:{
+    //                         "courses_year": 1900
+    //                     }
+    //                 }
+    //             ]
+    //         },
+    //         OPTIONS:{
+    //             COLUMNS:[
+    //                 "courses_year",
+    //                 "courses_avg",
+    //                 "courses_dept"
+    //             ],
+    //             FORM:"TABLE"
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect(response.code).is.equal(200);
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect.fail();
+    //             done();
+    //         })
+    // });
+    //
+    // it("Finding all sections of AANB", function (done) {
+    //     let qr : QueryRequest =  {
+    //         WHERE:{
+    //             IS:{
+    //                 "courses_dept": "aanb"
+    //             }
+    //         },
+    //         OPTIONS:{
+    //             COLUMNS:[
+    //                 "courses_dept",
+    //                 "courses_avg"
+    //             ],
+    //             ORDER:"courses_avg",
+    //             FORM:"TABLE"
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect(response.code).is.equal(200);
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect.fail();
+    //             done();
+    //         })
+    // });
+    //
+    // it("Simple invalid key", function (done) {
+    //     let qr : QueryRequest =  {
+    //         WHERE:{
+    //             IS:{
+    //                 "invalid": "aanb"
+    //             }
+    //         },
+    //         OPTIONS:{
+    //             COLUMNS:[
+    //                 "courses_dept",
+    //                 "courses_avg"
+    //             ],
+    //             ORDER:"courses_avg",
+    //             FORM:"TABLE"
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect.fail();
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect(err.code).is.equal(400);
+    //             done();
+    //         })
+    // });
+    //
+    // it("Nested invalid key", function (done) {
+    //     let qr : QueryRequest =  {
+    //         WHERE:{
+    //             OR:[
+    //                 {
+    //                     AND:[
+    //                         {
+    //                             GT:{
+    //                                 "courses_avg":90
+    //                             }
+    //                         },
+    //                         {
+    //                             IS:{
+    //                                 "invalid":"adhe"
+    //                             }
+    //                         }
+    //                     ]
+    //                 },
+    //                 {
+    //                     EQ:{
+    //                         "courses_avg":95
+    //                     }
+    //                 }
+    //             ]
+    //         },
+    //         OPTIONS:{
+    //             COLUMNS:[
+    //                 "courses_dept",
+    //                 "courses_id",
+    //                 "courses_avg"
+    //             ],
+    //             ORDER:"courses_avg",
+    //             FORM:"TABLE"
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect.fail();
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect(err.code).is.equal(400);
+    //             done();
+    //         })
+    // });
 
-    it("Courses_year test, should be 1 SPPH class with year 1900", function (done) {
-        let qr: QueryRequest = {
-            WHERE:{
-                AND: [
-                    {
-                        EQ:{
-                            "courses_avg":98.98
-                        }
-                    },
-                    {
-                        EQ:{
-                            "courses_year": 1900
-                        }
-                    }
-                ]
-            },
-            OPTIONS:{
-                COLUMNS:[
-                    "courses_year",
-                    "courses_avg",
-                    "courses_dept"
-                ],
-                FORM:"TABLE"
-            }
-        };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect(response.code).is.equal(200);
-                done();
-            })
-            .catch(function (err) {
-                expect.fail();
-                done();
-            })
-    });
-
-    it("Finding all sections of AANB", function (done) {
-        let qr : QueryRequest =  {
-            WHERE:{
-                IS:{
-                    "courses_dept": "aanb"
-                }
-            },
-            OPTIONS:{
-                COLUMNS:[
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                ORDER:"courses_avg",
-                FORM:"TABLE"
-            }
-        };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect(response.code).is.equal(200);
-                done();
-            })
-            .catch(function (err) {
-                expect.fail();
-                done();
-            })
-    });
-
-    it("Simple invalid key", function (done) {
-        let qr : QueryRequest =  {
-            WHERE:{
-                IS:{
-                    "invalid": "aanb"
-                }
-            },
-            OPTIONS:{
-                COLUMNS:[
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                ORDER:"courses_avg",
-                FORM:"TABLE"
-            }
-        };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect.fail();
-                done();
-            })
-            .catch(function (err) {
-                expect(err.code).is.equal(400);
-                done();
-            })
-    });
-
-    it("Nested invalid key", function (done) {
-        let qr : QueryRequest =  {
-            WHERE:{
-                OR:[
-                    {
-                        AND:[
-                            {
-                                GT:{
-                                    "courses_avg":90
-                                }
-                            },
-                            {
-                                IS:{
-                                    "invalid":"adhe"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        EQ:{
-                            "courses_avg":95
-                        }
-                    }
-                ]
-            },
-            OPTIONS:{
-                COLUMNS:[
-                    "courses_dept",
-                    "courses_id",
-                    "courses_avg"
-                ],
-                ORDER:"courses_avg",
-                FORM:"TABLE"
-            }
-        };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect.fail();
-                done();
-            })
-            .catch(function (err) {
-                expect(err.code).is.equal(400);
-                done();
-            })
-    });
-
-    it.only("Dataset didn't exist; added successfully", function (done) {
+    it("Dataset didn't exist; added successfully", function (done) {
         //fs.unlinkSync("./cache.json");
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {

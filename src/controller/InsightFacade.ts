@@ -48,6 +48,7 @@ export default class InsightFacade implements IInsightFacade {
                                 else {
                                     datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
                                     if (datasetHash[id] == null) {
+                                        fs.unlinkSync('./cache.json');
                                         datasetHash[id] = arrayOfJSONString;
                                         reWriteJSONFile(datasetHash);
                                         return fulfill(insightResponseConstructor(204, {}));
@@ -180,23 +181,15 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData = [];
         let key = Object.keys(request.LT)[0];
         let value = request.LT[key];
+        let translatedKey:string = correspondingJSON(key);
+
         if (typeof value != "number") {
             throw new Error("Value for less than must be a number");
-        }
-        let key_checker = key.split("_");
-        let translatedKey:string;
-        if(key_checker[0] == "courses") {
-            translatedKey = correspondingJSON(key);
-        }
-        else if (key_checker[0] == "rooms") {
-            translatedKey = key;
-        }
-        else {
-            translatedKey = "Invalid";
         }
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
+
         if(notflag == false || notflag == null) {
             for (let courseSection of dataset) {
                 if (translatedKey == "Year" && courseSection["Section"] == "overall") {
@@ -225,20 +218,12 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData = [];
         let key = Object.keys(request.GT)[0];
         let value = request.GT[key];
+        let translatedKey:string = correspondingJSON(key);
+
         if (typeof value != "number") {
             throw new Error("Value for greater than must be a number");
         }
-        let key_checker = key.split("_");
-        let translatedKey:string;
-        if(key_checker[0] == "courses") {
-            translatedKey = correspondingJSON(key);
-        }
-        else if (key_checker[0] == "rooms") {
-            translatedKey = key;
-        }
-        else {
-            translatedKey = "Invalid";
-        }
+
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
@@ -270,21 +255,12 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData = [];
         let key = Object.keys(request.EQ)[0];
         let value = request.EQ[key];
+        let translatedKey:string = correspondingJSON(key);
+
         if (typeof value != "number") {
             throw new Error("Value for equals must be a number");
         }
 
-        let key_checker = key.split("_");
-        let translatedKey:string;
-        if(key_checker[0] == "courses") {
-            translatedKey = correspondingJSON(key);
-        }
-        else if (key_checker[0] == "rooms") {
-            translatedKey = key;
-        }
-        else {
-            translatedKey = "Invalid";
-        }
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
@@ -317,17 +293,8 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let key = Object.keys(request.IS)[0];
         let value = request.IS[key];
         let regexFlag = value.includes("*");
-        let key_checker = key.split("_");
-        let translatedKey:string;
-        if(key_checker[0] == "courses") {
-            translatedKey = correspondingJSON(key);
-        }
-        else if (key_checker[0] == "rooms") {
-            translatedKey = key;
-        }
-        else {
-            translatedKey = "Invalid";
-        }
+        let translatedKey:string = correspondingJSON(key);
+
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
@@ -656,6 +623,7 @@ function helperRecursion (roomData:any) {
             console.log(err);
         });
     return fileObject;*/
+    return fileObject;
 }
 
 /*function latLonRequester(addr: string): Promise<string> {
