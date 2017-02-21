@@ -27,7 +27,6 @@ export default class InsightFacade implements IInsightFacade {
                     Promise.all(filePromiseCollector(zipContent))
                         .then(function(arrayOfJSONString) {
                             // Tests for valid zip, not containing any information
-
                             if (arrayOfJSONString[0] == "") {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                             }
@@ -125,7 +124,7 @@ export default class InsightFacade implements IInsightFacade {
             let finalFilteredData = {render: form, result: <any>[]};
             let storage:any = [];
             let finalArray:any = [];
-            //
+
             for (let eachItem of dataToFilter) {
                     let json = JSON.parse(eachItem);
                     if (json["result"].length != 0) {
@@ -421,7 +420,7 @@ function sortByNum(data: any, order: string) {
 
 function sortByChar(data: any, order: string) {
     data.sort(function (a: any, b: any) {
-        var dataA = a[order], dataB = b[order];
+        let dataA = a[order], dataB = b[order];
         if (dataA < dataB) return -1;
         if (dataA > dataB) return 1;
         return 0;
@@ -582,21 +581,21 @@ function formatHTMLData(data: any) {
 }
 
 function helperRecursion (roomData:any) {
-    var queue: any  =[];
-    var fileObject:any ={};
-    var rooms_name:string[] = [];
-    var rooms_number:string[] =[];
-    var rooms_seats:number[] =[];
-    var rooms_type: string[] = [];
-    var rooms_furniture: string[] =[];
-    var rooms_href: string[] = [];
+    let queue: any  =[];
+    let fileObject:any ={};
+    let rooms_name:string[] = [];
+    let rooms_number:string[] =[];
+    let rooms_seats:number[] =[];
+    let rooms_type: string[] = [];
+    let rooms_furniture: string[] =[];
+    let rooms_href: string[] = [];
     queue.push(roomData);
     while (queue.length != 0){
-        var i = queue.shift();
+        let i = queue.shift();
         //Perform analysis here
         if(i.attrs != null) {
             if (i.attrs.length != 0) {
-                for (var attr of i.attrs) {         //Not sure if should hard cod or not
+                for (let attr of i.attrs) {         //Not sure if should hard cod or not
                     if (attr.value == "building-info") {
                         fileObject["rooms_fullname"] = i.childNodes[1].childNodes[0].childNodes[0].value; //room_name
                         fileObject["rooms_address"] = i.childNodes[3].childNodes[0].childNodes[0].value;//room_address
@@ -627,7 +626,7 @@ function helperRecursion (roomData:any) {
             continue;
         }
         else {
-            for (var child of i.childNodes) {
+            for (let child of i.childNodes) {
                 queue.push(child);
             }
         }
@@ -648,21 +647,31 @@ function helperRecursion (roomData:any) {
 
 
     // Get lat lon
-    // let formattedAddr = fileObject["rooms_address"].split(" ").join("%");
-    // latLonRequester(formattedAddr);
-
-    return fileObject;
+/*    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
+    let location = latLonRequester(formattedAddr);
+    location.then(function (data) {
+        console.log(data);
+    })
+        .catch(function (err) {
+            console.log(err);
+        });
+    return fileObject;*/
 }
 
-// function latLonRequester(addr: string): Promise<string> {
-//     return new Promise(function (fulfill, reject) {
-//         var baseURL: string =  "http://skaha.cs.ubc.ca:11316/api/v1/team5/";
-//         http.get(baseURL + addr).then(function (res: string) {
-//                 console.log(res);
-//                 fulfill();
-//         })
-//             .catch(function (err: any) {
-//                 reject("Broken");
-//             });
-//     });
-// }
+/*function latLonRequester(addr: string): Promise<string> {
+    return new Promise(function (fulfill, reject) {
+        let body = "";
+        try {
+            http.get("http://skaha.cs.ubc.ca:11316/api/v1/team5/" + addr, function (res) {
+                res.on('data', function (chunk) {
+                    body += chunk.toString();
+                });
+                res.on('end', function () {
+                    fulfill(body);
+                });
+            })
+        } catch (e) {
+            reject(e);
+        }
+    })
+}*/
