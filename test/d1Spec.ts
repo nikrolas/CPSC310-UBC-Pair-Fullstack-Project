@@ -486,7 +486,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it("AND Mulitple Cases  test", function (done) {
+    it("AND Mulitple Cases test", function (done) {
         let qr: QueryRequest = {
             WHERE: {
                 AND: [
