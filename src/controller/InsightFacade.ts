@@ -30,29 +30,36 @@ export default class InsightFacade implements IInsightFacade {
                             if (arrayOfJSONString[0] == "") {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                             }
-                            if (!fs.existsSync("./cache.json")) {
-                                addToHashset(id, arrayOfJSONString)
-                                    .then(function () {
+                            if (arrayOfJSONString[0].charAt(1) == "<") {
+                                for (var rooms_data in arrayOfJSONString) {
+                                    arrayOfJSONString[rooms_data] = p5.parse(arrayOfJSONString[rooms_data]);
+                                }
+                                arrayOfJSONString = formatHTMLData(arrayOfJSONString);
+                            }
+                                if (!fs.existsSync("./cache.json")) {
+                                    addToHashset(id, arrayOfJSONString)
+                                        .then(function () {
+                                            return fulfill(insightResponseConstructor(204, {}));
+                                        })
+                                        .catch(function (err) {
+                                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                                        })
+                                }
+                                else {
+                                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+                                    if (datasetHash[id] == null) {
+                                        datasetHash[id] = arrayOfJSONString;
+                                        reWriteJSONFile(datasetHash);
                                         return fulfill(insightResponseConstructor(204, {}));
-                                    })
-                                    .catch(function (err) {
-                                        return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
-                                    })
-                            }
-                            else {
-                                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-                                if (datasetHash[id] == null) {
-                                    datasetHash[id] = arrayOfJSONString;
-                                    reWriteJSONFile(datasetHash);
-                                    return fulfill(insightResponseConstructor(204, {}));
+                                    }
+                                    else if (id in datasetHash) {
+                                        fs.unlinkSync('./cache.json');
+                                        datasetHash[id] = arrayOfJSONString;
+                                        reWriteJSONFile(datasetHash);
+                                        return fulfill(insightResponseConstructor(201, {}));
+                                    }
                                 }
-                                else if (id in datasetHash) {
-                                    fs.unlinkSync('./cache.json');
-                                    datasetHash[id] = arrayOfJSONString;
-                                    reWriteJSONFile(datasetHash);
-                                    return fulfill(insightResponseConstructor(201, {}));
-                                }
-                            }
+
                         })
                         .catch(function(err: any) {
                             return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
@@ -119,17 +126,12 @@ export default class InsightFacade implements IInsightFacade {
             let finalArray:any = [];
             //
             for (let eachItem of dataToFilter) {
-                if (setID == "courses") {
                     let json = JSON.parse(eachItem);
                     if (json["result"].length != 0) {
                         for (let courseSection of json["result"]) {
                             storage.push(courseSection);
                         }
                     }
-                }
-                else if (setID == "rooms") {
-                    storage.push(p5.parse(eachItem));
-                }
             }
             try {
                 let filteredData = null;
@@ -138,13 +140,8 @@ export default class InsightFacade implements IInsightFacade {
                     filteredData = storage;
                 }
                 else {
-                    if (setID == "rooms") {
-                        let formatedRoomData:any = formatHTMLData(storage);
-                        filteredData = filterData(formatedRoomData, where);
-                    }
-                    else {
-                        filteredData = filterData(storage, where);
-                    }
+                    filteredData = filterData(storage, where);
+
                 }
 
                 // Show only desired columns
@@ -187,7 +184,17 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         if (typeof value != "number") {
             throw new Error("Value for less than must be a number");
         }
-        let translatedKey = correspondingJSON(key);
+        let key_checker = key.split("_");
+        let translatedKey:string;
+        if(key_checker[0] == "courses") {
+            translatedKey = correspondingJSON(key);
+        }
+        else if (key_checker[0] == "rooms") {
+            translatedKey = key;
+        }
+        else {
+            translatedKey = "Invalid";
+        }
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
@@ -222,7 +229,17 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         if (typeof value != "number") {
             throw new Error("Value for greater than must be a number");
         }
-        let translatedKey = correspondingJSON(key);
+        let key_checker = key.split("_");
+        let translatedKey:string;
+        if(key_checker[0] == "courses") {
+            translatedKey = correspondingJSON(key);
+        }
+        else if (key_checker[0] == "rooms") {
+            translatedKey = key;
+        }
+        else {
+            translatedKey = "Invalid";
+        }
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
@@ -257,10 +274,22 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         if (typeof value != "number") {
             throw new Error("Value for equals must be a number");
         }
-        let translatedKey = correspondingJSON(key);
+
+        let key_checker = key.split("_");
+        let translatedKey:string;
+        if(key_checker[0] == "courses") {
+            translatedKey = correspondingJSON(key);
+        }
+        else if (key_checker[0] == "rooms") {
+            translatedKey = key;
+        }
+        else {
+            translatedKey = "Invalid";
+        }
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
+
         if(notflag == false || notflag == null) {
             for (let courseSection of dataset) {
                 if (translatedKey == "Year" && courseSection["Section"] == "overall") {
@@ -289,7 +318,17 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let key = Object.keys(request.IS)[0];
         let value = request.IS[key];
         let regexFlag = value.includes("*");
-        let translatedKey = correspondingJSON(key);
+        let key_checker = key.split("_");
+        let translatedKey:string;
+        if(key_checker[0] == "courses") {
+            translatedKey = correspondingJSON(key);
+        }
+        else if (key_checker[0] == "rooms") {
+            translatedKey = key;
+        }
+        else {
+            translatedKey = "Invalid";
+        }
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
         }
@@ -409,38 +448,45 @@ function correspondingNumber(string : String) {
     if (string == 'courses_year') {
         return true;
     }
+    if(string == 'rooms_seats'){
+        return true;
+    }
     return false;
 }
 
-function correspondingJSON(string : String) {
-    if (string == 'courses_dept') {
+function correspondingJSON(given_string:string) {
+    let key_checker = given_string.split("_");
+    if(key_checker[0] == "rooms") {
+        return given_string;
+    }
+    if (given_string == 'courses_dept') {
         return "Subject";
     }
-    if (string == 'courses_id') {
+    if (given_string == 'courses_id') {
         return "Course";
     }
-    if (string == 'courses_avg') { //number
+    if (given_string == 'courses_avg') { //number
         return "Avg";
     }
-    if (string == 'courses_instructor') {
+    if (given_string == 'courses_instructor') {
         return "Professor";
     }
-    if (string == 'courses_title') {
+    if (given_string == 'courses_title') {
         return "Title";
     }
-    if (string == 'courses_pass') { //number
+    if (given_string == 'courses_pass') { //number
         return "Pass";
     }
-    if (string == 'courses_fail') { //number
+    if (given_string == 'courses_fail') { //number
         return "Fail";
     }
-    if (string == 'courses_audit') { //number
+    if (given_string == 'courses_audit') { //number
         return "Audit";
     }
-    if (string == 'courses_uuid') { //STRING, special case
+    if (given_string == 'courses_uuid') { //STRING, special case
         return "id";
     }
-    if (string == 'courses_year') {
+    if (given_string == 'courses_year') {
         return "Year";
     }
     return "Invalid";
@@ -499,11 +545,12 @@ function writeJSONFile(id: string, jsonStrings: any) {
 }
 
 function reWriteJSONFile(jsonObject: any) {
-    fs.writeFile("./cache".concat(".json"), JSON.stringify(jsonObject));
+    fs.writeFile(("./cache.json"), JSON.stringify(jsonObject));
 }
 
 function formatHTMLData(data: any) {
     var builtHTMLjson:any = [];
+    var formatting: any = []
     for (let rooms = 0; rooms < data.length - 1; rooms ++) {               //Ignoring Index.html
         //tbody html tagname childrennode number represents the amount of objects needed to be created by the file
         var room_object:any = helperRecursion (data[rooms])
@@ -528,9 +575,10 @@ function formatHTMLData(data: any) {
         else {
             builtHTMLjson.push (room_object);
         }
-        return builtHTMLjson;
+        formatting.push(JSON.stringify({result:builtHTMLjson,rank:0}));
+        builtHTMLjson = [];
     }
-
+    return formatting;
 }
 
 function helperRecursion (roomData:any) {
@@ -583,32 +631,38 @@ function helperRecursion (roomData:any) {
                 queue.push(child);
             }
         }
-        fileObject["rooms_name"] = rooms_name ;
+
+    }
+    if(rooms_number.length != 0) {
+        for (let i = 0; i < rooms_number.length; i++) {
+            rooms_name.push(fileObject["rooms_shortname"] +"_"+ rooms_number[i]);
+        }
+        fileObject["rooms_name"] = rooms_name;
         fileObject["rooms_number"] = rooms_number;
         fileObject["rooms_seats"] = rooms_seats;
         fileObject["rooms_type"] = rooms_type;
         fileObject["rooms_furniture"] = rooms_furniture;
         fileObject["rooms_href"] = rooms_href;
     }
-    for (let i = 0; i < rooms_number.length; i++) {
-        rooms_name.push(fileObject["rooms_shortname"] +"_"+ fileObject["rooms_number"][i]);
-    }
+
+
+
     // Get lat lon
-    let formattedAddr = fileObject["rooms_address"].split(" ").join("%");
-    latLonRequester(formattedAddr);
+    // let formattedAddr = fileObject["rooms_address"].split(" ").join("%");
+    // latLonRequester(formattedAddr);
 
     return fileObject;
 }
 
-function latLonRequester(addr: string): Promise<string> {
-    return new Promise(function (fulfill, reject) {
-        var baseURL: string =  "http://skaha.cs.ubc.ca:11316/api/v1/team5/";
-        http.get(baseURL + addr).then(function (res: string) {
-                console.log(res);
-                fulfill();
-        })
-            .catch(function (err: any) {
-                reject("Broken");
-            });
-    });
-}
+// function latLonRequester(addr: string): Promise<string> {
+//     return new Promise(function (fulfill, reject) {
+//         var baseURL: string =  "http://skaha.cs.ubc.ca:11316/api/v1/team5/";
+//         http.get(baseURL + addr).then(function (res: string) {
+//                 console.log(res);
+//                 fulfill();
+//         })
+//             .catch(function (err: any) {
+//                 reject("Broken");
+//             });
+//     });
+// }
