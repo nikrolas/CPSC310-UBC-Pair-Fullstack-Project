@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe("d2Spec", function () {
+describe.only("d2Spec", function () {
 
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
