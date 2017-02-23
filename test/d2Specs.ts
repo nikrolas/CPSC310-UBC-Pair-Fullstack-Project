@@ -12,7 +12,7 @@ describe.only("d2Spec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-    var dataRooms = fs.readFileSync("./rooms_small.zip");
+    var dataRooms = fs.readFileSync("./rooms.zip");
     var dataCourses = fs.readFileSync("./courses.zip");
 
     beforeEach(function () {
@@ -139,7 +139,6 @@ describe.only("d2Spec", function () {
     });
 
     //Perform Query Test valid
-
     it("Room_name WildCard Test", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
