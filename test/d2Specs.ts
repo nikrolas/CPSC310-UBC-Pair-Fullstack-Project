@@ -64,7 +64,7 @@ describe.only("d2Spec", function () {
     //Testing addDataset functions
 
     it("Dataset didn't exist; added courses successfully", function (done) {
-        //fs.unlinkSync('./cache.json');
+        fs.unlinkSync('./cache.json');
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -76,7 +76,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Dataset didn't exist; added rooms successfully", function (done) {
+    it("Dataset didn't exist; added rooms successfully", function (done) {
         //fs.unlinkSync('./cache.json');
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {

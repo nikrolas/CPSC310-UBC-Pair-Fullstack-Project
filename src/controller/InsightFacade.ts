@@ -30,15 +30,8 @@ export default class InsightFacade implements IInsightFacade {
                             if (arrayOfJSONString[0] == "") {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                             }
-                            if (arrayOfJSONString[0].toString().charAt(1) == "<") {
-                                for (let rooms_data in arrayOfJSONString) {
-                                    arrayOfJSONString[rooms_data] = p5.parse(arrayOfJSONString[rooms_data]);
-                                }
-                                //arrayOfJSONString =
-                                Promise.all(formatHTMLData(arrayOfJSONString))
-                                    .then(function (allRooms) {
-                                        arrayOfJSONString = allRooms;
-                                    });
+                            if (id == "rooms") {
+                                return fulfill(addDatasetRooms(arrayOfJSONString));
                             }
                             if (!fs.existsSync("./cache.json")) {
                                 addToHashset(id, arrayOfJSONString)
@@ -147,7 +140,6 @@ export default class InsightFacade implements IInsightFacade {
                 else {
                     filteredData = filterData(storage, where);
                 }
-
                 // Show only desired columns
                 for (let eachClass of filteredData) {
                     let row: any = {};
@@ -156,7 +148,6 @@ export default class InsightFacade implements IInsightFacade {
                     }
                     finalArray.push(row);
                 }
-
                 // Sort by column
                 let sortOrder = order;
 
@@ -176,6 +167,55 @@ export default class InsightFacade implements IInsightFacade {
             }
         });
     }
+}
+
+function addDatasetRooms(arrayOfJSONString: any) {
+    return new Promise(function (fulfill, reject) {
+        Promise.all(promiseCollectorForRoomsDataset(arrayOfJSONString))
+            .then(function (data) {
+                let result = [];
+                for (let rooms of data) {
+                    result.push(JSON.stringify({result: rooms, rank: 0}));
+                }
+                return result;
+            })
+            .then(function (result) {
+                if (!fs.existsSync("./cache.json")) {
+                    addToHashset("rooms", result)
+                        .then(function () {
+                            return fulfill(insightResponseConstructor(204, {}));
+                        })
+                        .catch(function (err) {
+                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                        })
+                }
+                else {
+                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+                    if (datasetHash["rooms"] == null) {
+                        fs.unlinkSync('./cache.json');
+                        datasetHash["rooms"] = result;
+                        reWriteJSONFile(datasetHash);
+                        return fulfill(insightResponseConstructor(204, {}));
+                    }
+                    else if ("rooms" in datasetHash) {
+                        fs.unlinkSync('./cache.json');
+                        datasetHash["rooms"] = result;
+                        reWriteJSONFile(datasetHash);
+                        return fulfill(insightResponseConstructor(201, {}));
+                    }
+                }
+            })
+    })
+}
+
+
+function promiseCollectorForRoomsDataset(roomsData: any) {
+    let allPromises = [];
+    for (let i = 0; i < roomsData.length - 1; i++) {
+        let parsedHTML = p5.parse(roomsData[i]);
+        allPromises.push(formatHTMLData(parsedHTML));
+    }
+    return allPromises;
 }
 
 function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
@@ -526,62 +566,54 @@ function reWriteJSONFile(jsonObject: any) {
 }
 
 function formatHTMLData(data: any) {
-    //return new Promise(function (fulfill, reject) {
-        let builtHTMLjson: any = [];
-        let formatting: any = [];
-        for (let rooms = 0; rooms < data.length - 1; rooms++) {               //Ignoring Index.html
-            //tbody html tagname childrennode number represents the amount of objects needed to be created by the file
-            //var room_object: any =
-            formatting.push(helperRecursion(data[rooms])
-                .then(function (room_object: any) {
-                    if (room_object["rooms_number"] != null) {
-                        let roomNumberObject: any = {};
-                        for (let i = 0; i < room_object["rooms_number"].length; i++) {
-                            roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
-                            roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
-                            roomNumberObject["rooms_address"] = room_object["rooms_address"];
-                            roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
-                            roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
-                            roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
-                            roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
-                            roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
-                            roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
-                            roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
-                            roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
-                            builtHTMLjson.push(roomNumberObject);
-                            roomNumberObject = {};
-                        }
-                    }
-                    else {
-                        builtHTMLjson.push(room_object);
-                    }
-                    formatting.push(JSON.stringify({result: builtHTMLjson, rank: 0}));
-                    builtHTMLjson = [];
-                })
-                .catch(function (err) {
-                    //reject(err);
-                }))
-        }
-        return formatting;
-        //fulfill(formatting);
-    //})
+    return new Promise(function (fulfill, reject) {
+        let builtHTMLjson:any = [];
+        helperRecursion (data)
+            .then(function (room_object: any) {
+            if (room_object["rooms_number"] != null) {
+                let roomNumberObject: any = {};
+                for (let i = 0; i < room_object["rooms_number"].length; i++) {
+                    roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
+                    roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
+                    roomNumberObject["rooms_address"] = room_object["rooms_address"];
+                    roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
+                    roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
+                    roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
+                    roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
+                    roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
+                    roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
+                    roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
+                    roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
+                    builtHTMLjson.push(roomNumberObject);
+                    roomNumberObject = {};
+                }
+            }
+            else {
+                builtHTMLjson.push(room_object);
+            }
+            fulfill(builtHTMLjson);
+        })
+            .catch(function (err) {
+                reject(err);
+            })
+    })
 }
 
 function helperRecursion (roomData:any) {
     return new Promise(function (fulfill, reject) {
-        let queue: any = [];
-        let fileObject: any = {};
-        let rooms_name: string[] = [];
-        let rooms_number: string[] = [];
-        let rooms_seats: number[] = [];
+        let queue: any  =[];
+        let fileObject:any ={};
+        let rooms_name:string[] = [];
+        let rooms_number:string[] =[];
+        let rooms_seats:number[] =[];
         let rooms_type: string[] = [];
-        let rooms_furniture: string[] = [];
+        let rooms_furniture: string[] =[];
         let rooms_href: string[] = [];
         queue.push(roomData);
-        while (queue.length != 0) {
+        while (queue.length != 0){
             let i = queue.shift();
             //Perform analysis here
-            if (i.attrs != null) {
+            if(i.attrs != null) {
                 if (i.attrs.length != 0) {
                     for (let attr of i.attrs) {         //Not sure if should hard cod or not
                         if (attr.value == "building-info") {
@@ -592,17 +624,17 @@ function helperRecursion (roomData:any) {
                             fileObject["rooms_shortname"] = i.attrs[1].value;                          //room_shortname
                         }
 
-                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-number") {
+                        if(i.tagName == "td" && attr.value == "views-field views-field-field-room-number") {
                             rooms_number.push(i.childNodes[1].childNodes[0].value);
                             rooms_href.push(i.childNodes[1].attrs[0].value);
                         }
-                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-capacity") {
+                        if(i.tagName == "td" && attr.value == "views-field views-field-field-room-capacity") {
                             rooms_seats.push(i.childNodes[0].value.trim());
                         }
-                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-type") {
+                        if(i.tagName == "td" && attr.value == "views-field views-field-field-room-type") {
                             rooms_type.push(i.childNodes[0].value.trim());
                         }
-                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-furniture") {
+                        if(i.tagName == "td" && attr.value == "views-field views-field-field-room-furniture") {
                             rooms_furniture.push(i.childNodes[0].value.trim());
                         }
                     }
@@ -620,9 +652,9 @@ function helperRecursion (roomData:any) {
             }
 
         }
-        if (rooms_number.length != 0) {
+        if(rooms_number.length != 0) {
             for (let i = 0; i < rooms_number.length; i++) {
-                rooms_name.push(fileObject["rooms_shortname"] + "_" + rooms_number[i]);
+                rooms_name.push(fileObject["rooms_shortname"] +"_"+ rooms_number[i]);
             }
             fileObject["rooms_name"] = rooms_name;
             fileObject["rooms_number"] = rooms_number;
@@ -642,12 +674,15 @@ function helperRecursion (roomData:any) {
             .then(function (loc: any) {
                 return JSON.parse(loc);
             })
-            .then(function (jsonLoc: any) {
+            .then(function (jsonLoc) {
                 fileObject["rooms_lat"] = jsonLoc["lat"];
                 fileObject["rooms_lon"] = jsonLoc["lon"];
+            })
+            .then(function () {
                 fulfill(fileObject);
             })
             .catch(function (err) {
+                console.log(err);
                 reject(err);
             });
     })
@@ -664,8 +699,9 @@ function locationRequest(options: any) {
                 return;
             }
             res.setEncoding('utf8');
-            res.on('data', (chunk: string) => rawData += chunk);
+            res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {
+                console.log(rawData);
                 fulfill(rawData);
              });
         }).on('error', (e: any) => {
