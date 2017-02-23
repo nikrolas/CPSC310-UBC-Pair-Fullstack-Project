@@ -12,7 +12,7 @@ describe.only("d2Spec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-    var dataRooms = fs.readFileSync("./rooms.zip");
+    var dataRooms = fs.readFileSync("./rooms_small.zip");
     var dataCourses = fs.readFileSync("./courses.zip");
 
     beforeEach(function () {
@@ -76,7 +76,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it("Dataset didn't exist; added rooms successfully", function (done) {
+    it.only("Dataset didn't exist; added rooms successfully", function (done) {
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);

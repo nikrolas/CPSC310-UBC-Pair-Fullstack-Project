@@ -36,30 +36,30 @@ export default class InsightFacade implements IInsightFacade {
                                 }
                                 arrayOfJSONString = formatHTMLData(arrayOfJSONString);
                             }
-                                if (!fs.existsSync("./cache.json")) {
-                                    addToHashset(id, arrayOfJSONString)
-                                        .then(function () {
-                                            return fulfill(insightResponseConstructor(204, {}));
-                                        })
-                                        .catch(function (err) {
-                                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
-                                        })
-                                }
-                                else {
-                                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-                                    if (datasetHash[id] == null) {
-                                        fs.unlinkSync('./cache.json');
-                                        datasetHash[id] = arrayOfJSONString;
-                                        reWriteJSONFile(datasetHash);
+                            if (!fs.existsSync("./cache.json")) {
+                                addToHashset(id, arrayOfJSONString)
+                                    .then(function () {
                                         return fulfill(insightResponseConstructor(204, {}));
-                                    }
-                                    else if (id in datasetHash) {
-                                        fs.unlinkSync('./cache.json');
-                                        datasetHash[id] = arrayOfJSONString;
-                                        reWriteJSONFile(datasetHash);
-                                        return fulfill(insightResponseConstructor(201, {}));
-                                    }
+                                    })
+                                    .catch(function (err) {
+                                        return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                                    })
+                            }
+                            else {
+                                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+                                if (datasetHash[id] == null) {
+                                    fs.unlinkSync('./cache.json');
+                                    datasetHash[id] = arrayOfJSONString;
+                                    reWriteJSONFile(datasetHash);
+                                    return fulfill(insightResponseConstructor(204, {}));
                                 }
+                                else if (id in datasetHash) {
+                                    fs.unlinkSync('./cache.json');
+                                    datasetHash[id] = arrayOfJSONString;
+                                    reWriteJSONFile(datasetHash);
+                                    return fulfill(insightResponseConstructor(201, {}));
+                                }
+                            }
 
                         })
                         .catch(function(err: any) {
@@ -393,7 +393,8 @@ function sortByChar(data: any, order: string) {
     });
     return data;
 }
-function correspondingNumber(string : String) {
+
+function correspondingNumber(string : string) {
     if (string == 'courses_avg') { //number
         return true;
     }
@@ -425,7 +426,7 @@ function correspondingNumber(string : String) {
     return false;
 }
 
-function correspondingJSON(given_string:string) {
+function correspondingJSON(given_string: string) {
     let roomsValidKeys = new Set(["rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
         "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"]);
     if (given_string == 'courses_dept') {
@@ -522,7 +523,7 @@ function reWriteJSONFile(jsonObject: any) {
 
 function formatHTMLData(data: any) {
     var builtHTMLjson:any = [];
-    var formatting: any = []
+    var formatting: any = [];
     for (let rooms = 0; rooms < data.length - 1; rooms ++) {               //Ignoring Index.html
         //tbody html tagname childrennode number represents the amount of objects needed to be created by the file
         var room_object:any = helperRecursion (data[rooms])
@@ -617,31 +618,39 @@ function helperRecursion (roomData:any) {
         fileObject["rooms_href"] = rooms_href;
     }
     // Get lat lon
-/*    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
-    let location = latLonRequester(formattedAddr);
-    location.then(function (data) {
-        console.log(data);
-    })
-        .catch(function (err) {
-            console.log(err);
-        });*/
+    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
+    let options = {
+        host: "http://skaha.cs.ubc.ca:11316/api/v1/team5/",
+        path: formattedAddr,
+        json: true
+    };
+    locationRequest(options, function (data) {
+        let test = JSON.parse(data);
+    });
     return fileObject;
 }
 
-/*function latLonRequester(addr: string): Promise<string> {
-    return new Promise(function (fulfill, reject) {
-        let body = "";
-        try {
-            http.get("http://skaha.cs.ubc.ca:11316/api/v1/team5/" + addr, function (res) {
-                res.on('data', function (chunk) {
-                    body += chunk.toString();
-                });
-                res.on('end', function () {
-                    fulfill(body);
-                });
-            })
-        } catch (e) {
-            reject(e);
-        }
-    })
-}*/
+function locationRequest(options: any, callback: any) {
+    let request = http.get(options, (response: any) =>
+    {
+        let body: string = "";
+        response.setEncoding('utf8');
+        response.on('response', function (response: any) {
+            response.on('data', function (chunk: any) {
+                body += chunk;
+            });
+            response.on('end', () => {
+                try {
+                    let parsedData = JSON.parse(body);
+                    console.log(parsedData);
+                } catch (e) {
+                    console.log(e.message);
+                }
+            });
+            response.on('error', function (err: any) {
+                console.log(err);
+            });
+        })
+    });
+    callback(request);
+}

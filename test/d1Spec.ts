@@ -19,7 +19,7 @@ describe("d1Spec", function () {
         insightFacade = new InsightFacade();
     });
 
-    it.only("Dataset didn't exist; added successfully", function (done) {
+    it("Dataset didn't exist; added successfully", function (done) {
         fs.unlinkSync("./cache.json");
        insightFacade.addDataset("courses", data.toString( 'base64'))
            .then(function (response) {
@@ -208,7 +208,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it.only("GT Test: >99.77 and ORDER: courses_avg, should be 2 math courses", function (done) {
+    it("GT Test: >99.77 and ORDER: courses_avg, should be 2 math courses", function (done) {
         let qr : QueryRequest = {
             WHERE:{
                 GT:{
@@ -226,7 +226,6 @@ describe("d1Spec", function () {
         };
         insightFacade.performQuery(qr)
             .then(function (response) {
-                console.log(response.body);
                 expect(response.code).is.equal(200);
                 done();
             })
@@ -951,7 +950,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it("WHERE valid empty test", function () {
+/*    it("WHERE valid empty test", function () {
         let qr: QueryRequest = {
             WHERE:{
             },
@@ -971,7 +970,7 @@ describe("d1Spec", function () {
             .catch(function (err) {
                 expect.fail();
             })
-    });
+    });*/
 
     it("OR test", function () {
         let qr: QueryRequest = {
