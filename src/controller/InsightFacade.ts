@@ -31,10 +31,14 @@ export default class InsightFacade implements IInsightFacade {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                             }
                             if (arrayOfJSONString[0].toString().charAt(1) == "<") {
-                                for (var rooms_data in arrayOfJSONString) {
+                                for (let rooms_data in arrayOfJSONString) {
                                     arrayOfJSONString[rooms_data] = p5.parse(arrayOfJSONString[rooms_data]);
                                 }
-                                arrayOfJSONString = formatHTMLData(arrayOfJSONString);
+                                //arrayOfJSONString =
+                                Promise.all(formatHTMLData(arrayOfJSONString))
+                                    .then(function (allRooms) {
+                                        arrayOfJSONString = allRooms;
+                                    });
                             }
                             if (!fs.existsSync("./cache.json")) {
                                 addToHashset(id, arrayOfJSONString)
@@ -522,128 +526,137 @@ function reWriteJSONFile(jsonObject: any) {
 }
 
 function formatHTMLData(data: any) {
-    var builtHTMLjson:any = [];
-    var formatting: any = [];
-    for (let rooms = 0; rooms < data.length - 1; rooms ++) {               //Ignoring Index.html
-        //tbody html tagname childrennode number represents the amount of objects needed to be created by the file
-        var room_object:any = helperRecursion (data[rooms])
-        if (room_object["rooms_number"] != null) {
-            var roomNumberObject:any ={};
-            for (var i = 0; i<room_object["rooms_number"].length; i++) {
-                roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
-                roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
-                roomNumberObject["rooms_address"] = room_object["rooms_address"];
-                roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
-                roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
-                roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
-                roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
-                roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
-                roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
-                roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
-                roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
-                builtHTMLjson.push(roomNumberObject);
-                roomNumberObject = {};
-            }
+    //return new Promise(function (fulfill, reject) {
+        let builtHTMLjson: any = [];
+        let formatting: any = [];
+        for (let rooms = 0; rooms < data.length - 1; rooms++) {               //Ignoring Index.html
+            //tbody html tagname childrennode number represents the amount of objects needed to be created by the file
+            //var room_object: any =
+            formatting.push(helperRecursion(data[rooms])
+                .then(function (room_object: any) {
+                    if (room_object["rooms_number"] != null) {
+                        let roomNumberObject: any = {};
+                        for (let i = 0; i < room_object["rooms_number"].length; i++) {
+                            roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
+                            roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
+                            roomNumberObject["rooms_address"] = room_object["rooms_address"];
+                            roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
+                            roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
+                            roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
+                            roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
+                            roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
+                            roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
+                            roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
+                            roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
+                            builtHTMLjson.push(roomNumberObject);
+                            roomNumberObject = {};
+                        }
+                    }
+                    else {
+                        builtHTMLjson.push(room_object);
+                    }
+                    formatting.push(JSON.stringify({result: builtHTMLjson, rank: 0}));
+                    builtHTMLjson = [];
+                })
+                .catch(function (err) {
+                    //reject(err);
+                }))
         }
-        else {
-            builtHTMLjson.push (room_object);
-        }
-        formatting.push(JSON.stringify({result:builtHTMLjson,rank:0}));
-        builtHTMLjson = [];
-    }
-    return formatting;
+        return formatting;
+        //fulfill(formatting);
+    //})
 }
 
 function helperRecursion (roomData:any) {
-    let queue: any  =[];
-    let fileObject:any ={};
-    let rooms_name:string[] = [];
-    let rooms_number:string[] =[];
-    let rooms_seats:number[] =[];
-    let rooms_type: string[] = [];
-    let rooms_furniture: string[] =[];
-    let rooms_href: string[] = [];
-    queue.push(roomData);
-    while (queue.length != 0){
-        let i = queue.shift();
-        //Perform analysis here
-        if(i.attrs != null) {
-            if (i.attrs.length != 0) {
-                for (let attr of i.attrs) {         //Not sure if should hard cod or not
-                    if (attr.value == "building-info") {
-                        fileObject["rooms_fullname"] = i.childNodes[1].childNodes[0].childNodes[0].value; //room_name
-                        fileObject["rooms_address"] = i.childNodes[3].childNodes[0].childNodes[0].value;//room_address
-                    }
-                    if (attr.value == "canonical") {
-                        fileObject["rooms_shortname"] = i.attrs[1].value;                          //room_shortname
-                    }
+    return new Promise(function (fulfill, reject) {
+        let queue: any = [];
+        let fileObject: any = {};
+        let rooms_name: string[] = [];
+        let rooms_number: string[] = [];
+        let rooms_seats: number[] = [];
+        let rooms_type: string[] = [];
+        let rooms_furniture: string[] = [];
+        let rooms_href: string[] = [];
+        queue.push(roomData);
+        while (queue.length != 0) {
+            let i = queue.shift();
+            //Perform analysis here
+            if (i.attrs != null) {
+                if (i.attrs.length != 0) {
+                    for (let attr of i.attrs) {         //Not sure if should hard cod or not
+                        if (attr.value == "building-info") {
+                            fileObject["rooms_fullname"] = i.childNodes[1].childNodes[0].childNodes[0].value; //room_name
+                            fileObject["rooms_address"] = i.childNodes[3].childNodes[0].childNodes[0].value;//room_address
+                        }
+                        if (attr.value == "canonical") {
+                            fileObject["rooms_shortname"] = i.attrs[1].value;                          //room_shortname
+                        }
 
-                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-number") {
-                        rooms_number.push(i.childNodes[1].childNodes[0].value);
-                        rooms_href.push(i.childNodes[1].attrs[0].value);
+                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-number") {
+                            rooms_number.push(i.childNodes[1].childNodes[0].value);
+                            rooms_href.push(i.childNodes[1].attrs[0].value);
+                        }
+                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-capacity") {
+                            rooms_seats.push(i.childNodes[0].value.trim());
+                        }
+                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-type") {
+                            rooms_type.push(i.childNodes[0].value.trim());
+                        }
+                        if (i.tagName == "td" && attr.value == "views-field views-field-field-room-furniture") {
+                            rooms_furniture.push(i.childNodes[0].value.trim());
+                        }
                     }
-                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-capacity") {
-                        rooms_seats.push(i.childNodes[0].value.trim());
-                    }
-                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-type") {
-                        rooms_type.push(i.childNodes[0].value.trim());
-                    }
-                    if(i.tagName == "td" && attr.value == "views-field views-field-field-room-furniture") {
-                        rooms_furniture.push(i.childNodes[0].value.trim());
-                    }
+                    //End of analysis
                 }
-                //End of analysis
             }
-        }
 
-        if (i.childNodes == null) {
-            continue;
-        }
-        else {
-            for (let child of i.childNodes) {
-                queue.push(child);
+            if (i.childNodes == null) {
+                continue;
             }
-        }
+            else {
+                for (let child of i.childNodes) {
+                    queue.push(child);
+                }
+            }
 
-    }
-    if(rooms_number.length != 0) {
-        for (let i = 0; i < rooms_number.length; i++) {
-            rooms_name.push(fileObject["rooms_shortname"] +"_"+ rooms_number[i]);
         }
-        fileObject["rooms_name"] = rooms_name;
-        fileObject["rooms_number"] = rooms_number;
-        fileObject["rooms_seats"] = rooms_seats;
-        fileObject["rooms_type"] = rooms_type;
-        fileObject["rooms_furniture"] = rooms_furniture;
-        fileObject["rooms_href"] = rooms_href;
-    }
-    // Get lat lon
-    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
-    let options = {
-        host: "skaha.cs.ubc.ca",
-        port: 11316,
-        path: "/api/v1/team5/" + formattedAddr
-    };
-    locationRequest(options)
-        .then(function (loc) {
-            return JSON.parse(loc);
-        })
-        .then(function (jsonLoc) {
-            fileObject["rooms_lat"] = jsonLoc["lat"];
-            fileObject["rooms_lon"] = jsonLoc["lon"];
-        })
-        .then(function () {
-            return fileObject;
-        })
-        .catch(function (err) {
-            console.log(err);
-        });
+        if (rooms_number.length != 0) {
+            for (let i = 0; i < rooms_number.length; i++) {
+                rooms_name.push(fileObject["rooms_shortname"] + "_" + rooms_number[i]);
+            }
+            fileObject["rooms_name"] = rooms_name;
+            fileObject["rooms_number"] = rooms_number;
+            fileObject["rooms_seats"] = rooms_seats;
+            fileObject["rooms_type"] = rooms_type;
+            fileObject["rooms_furniture"] = rooms_furniture;
+            fileObject["rooms_href"] = rooms_href;
+        }
+        // Get lat lon
+        let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
+        let options = {
+            host: "skaha.cs.ubc.ca",
+            port: 11316,
+            path: "/api/v1/team5/" + formattedAddr
+        };
+        locationRequest(options)
+            .then(function (loc: any) {
+                return JSON.parse(loc);
+            })
+            .then(function (jsonLoc: any) {
+                fileObject["rooms_lat"] = jsonLoc["lat"];
+                fileObject["rooms_lon"] = jsonLoc["lon"];
+                fulfill(fileObject);
+            })
+            .catch(function (err) {
+                reject(err);
+            });
+    })
 }
 
 function locationRequest(options: any) {
     return new Promise(function (fulfill, reject) {
         let rawData = '';
-        let request = http.get(options, (res) => {
+        http.get(options, (res: any) => {
             let error;
             if (error) {
                 console.log(error);
@@ -651,12 +664,11 @@ function locationRequest(options: any) {
                 return;
             }
             res.setEncoding('utf8');
-            res.on('data', (chunk) => rawData += chunk);
+            res.on('data', (chunk: string) => rawData += chunk);
             res.on('end', () => {
-                console.log(rawData);
                 fulfill(rawData);
              });
-        }).on('error', (e) => {
+        }).on('error', (e: any) => {
             reject(e);
         });
     });
