@@ -21,7 +21,7 @@ describe.only("d2Spec", function () {
 
 //Before anything exists in cache
 
-    it("Remove Data , not found in cache", function (done) {
+/*    it("Remove Data , not found in cache", function (done) {
         insightFacade.removeDataset("rooms")
             .then(function (response) {
                 expect.fail();
@@ -59,12 +59,12 @@ describe.only("d2Spec", function () {
                 expect.fail();
                 done();
             })
-    });
+    });*/
 
     //Testing addDataset functions
 
     it("Dataset didn't exist; added courses successfully", function (done) {
-        fs.unlinkSync('./cache.json');
+        //fs.unlinkSync('./cache.json');
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -77,6 +77,7 @@ describe.only("d2Spec", function () {
     });
 
     it.only("Dataset didn't exist; added rooms successfully", function (done) {
+        //fs.unlinkSync('./cache.json');
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);

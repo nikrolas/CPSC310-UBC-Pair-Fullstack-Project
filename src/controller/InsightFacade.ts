@@ -618,39 +618,46 @@ function helperRecursion (roomData:any) {
         fileObject["rooms_href"] = rooms_href;
     }
     // Get lat lon
-    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20");
+    let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
     let options = {
-        host: "http://skaha.cs.ubc.ca:11316/api/v1/team5/",
-        path: formattedAddr,
-        json: true
+        host: "skaha.cs.ubc.ca",
+        port: 11316,
+        path: "/api/v1/team5/" + formattedAddr
     };
-    locationRequest(options, function (data) {
-        let test = JSON.parse(data);
-    });
-    return fileObject;
+    locationRequest(options)
+        .then(function (loc) {
+            return JSON.parse(loc);
+        })
+        .then(function (jsonLoc) {
+            fileObject["rooms_lat"] = jsonLoc["lat"];
+            fileObject["rooms_lon"] = jsonLoc["lon"];
+        })
+        .then(function () {
+            return fileObject;
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
 }
 
-function locationRequest(options: any, callback: any) {
-    let request = http.get(options, (response: any) =>
-    {
-        let body: string = "";
-        response.setEncoding('utf8');
-        response.on('response', function (response: any) {
-            response.on('data', function (chunk: any) {
-                body += chunk;
-            });
-            response.on('end', () => {
-                try {
-                    let parsedData = JSON.parse(body);
-                    console.log(parsedData);
-                } catch (e) {
-                    console.log(e.message);
-                }
-            });
-            response.on('error', function (err: any) {
-                console.log(err);
-            });
-        })
+function locationRequest(options: any) {
+    return new Promise(function (fulfill, reject) {
+        let rawData = '';
+        let request = http.get(options, (res) => {
+            let error;
+            if (error) {
+                console.log(error);
+                res.resume();
+                return;
+            }
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => rawData += chunk);
+            res.on('end', () => {
+                console.log(rawData);
+                fulfill(rawData);
+             });
+        }).on('error', (e) => {
+            reject(e);
+        });
     });
-    callback(request);
 }
