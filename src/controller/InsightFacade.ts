@@ -717,7 +717,7 @@ function locationRequest(options: any) {
             res.setEncoding('utf8');
             res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {
-                console.log(rawData);
+                //console.log(rawData);
                 fulfill(rawData);
              });
         }).on('error', (e: any) => {
