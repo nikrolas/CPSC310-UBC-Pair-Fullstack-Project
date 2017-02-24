@@ -680,7 +680,7 @@ function helperRecursion (roomData:any) {
             fileObject["rooms_href"] = rooms_href;
         }
         // Get lat lon
-        let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim(); //Split potentialyl undefined
+        let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
         let options = {
             host: "skaha.cs.ubc.ca",
             port: 11316,
@@ -717,6 +717,7 @@ function locationRequest(options: any) {
             res.setEncoding('utf8');
             res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {
+                console.log(rawData);
                 fulfill(rawData);
              });
         }).on('error', (e: any) => {

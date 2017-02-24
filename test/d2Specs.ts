@@ -139,7 +139,6 @@ describe.only("d2Spec", function () {
     });
 
     //Perform Query Test valid
-
     it("Room_name WildCard Test", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
