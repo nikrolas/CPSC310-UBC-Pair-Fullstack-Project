@@ -210,10 +210,11 @@ function addDatasetRooms(arrayOfJSONString: any) {
 
 
 function promiseCollectorForRoomsDataset(roomsData: any) {
-    let allPromises = [];
+    let allPromises = [];                               //TODO
+    var allowable = allowableRooms(p5.parse(roomsData[(roomsData.length-1)]));
     for (let i = 0; i < roomsData.length - 1; i++) {
         let parsedHTML = p5.parse(roomsData[i]);
-        allPromises.push(formatHTMLData(parsedHTML));
+        allPromises.push(formatHTMLData(parsedHTML,allowable));
     }
     return allPromises;
 }
@@ -372,7 +373,12 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData: any = [];
         let modifiableDataset: any = dataset;
         for (let operand of request.AND) {
-            modifiableDataset = filterData(modifiableDataset, operand);
+            if (notflag == null || notflag == false) {
+                modifiableDataset = filterData(modifiableDataset, operand, false);
+            }
+            else {
+                modifiableDataset = filterData(modifiableDataset, operand, true);
+            }
         }
         filteredData = filteredData.concat(modifiableDataset);
         return filteredData;
@@ -383,7 +389,12 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         }
         let filteredData :any = [];
         for (let operand of request.OR) {
-            filteredData = filteredData.concat(filterData(dataset, operand));
+            if (notflag == null || notflag == false) {
+                filteredData = filteredData.concat(filterData(dataset, operand, false));
+            }
+            else {
+                filteredData = filteredData.concat(filterData(dataset, operand, true));
+            }
         }
         return filteredData;
     }
@@ -565,33 +576,38 @@ function reWriteJSONFile(jsonObject: any) {
     fs.writeFile(("./cache.json"), JSON.stringify(jsonObject));
 }
 
-function formatHTMLData(data: any) {
+function formatHTMLData(data: any,allowable:any) {
     return new Promise(function (fulfill, reject) {
         let builtHTMLjson:any = [];
         helperRecursion (data)
             .then(function (room_object: any) {
-            if (room_object["rooms_number"] != null) {
-                let roomNumberObject: any = {};
-                for (let i = 0; i < room_object["rooms_number"].length; i++) {
-                    roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
-                    roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
-                    roomNumberObject["rooms_address"] = room_object["rooms_address"];
-                    roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
-                    roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
-                    roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
-                    roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
-                    roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
-                    roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
-                    roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
-                    roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
-                    builtHTMLjson.push(roomNumberObject);
-                    roomNumberObject = {};
+                if(allowable[room_object["rooms_shortname"]] != 1) {
+                    fulfill();
                 }
-            }
-            else {
-                builtHTMLjson.push(room_object);
-            }
-            fulfill(builtHTMLjson);
+                else {
+                    if (room_object["rooms_number"] != null) {
+                        let roomNumberObject: any = {};
+                        for (let i = 0; i < room_object["rooms_number"].length; i++) {
+                            roomNumberObject["rooms_fullname"] = room_object["rooms_fullname"];
+                            roomNumberObject["rooms_shortname"] = room_object["rooms_shortname"];
+                            roomNumberObject["rooms_address"] = room_object["rooms_address"];
+                            roomNumberObject["rooms_lat"] = room_object["rooms_lat"];
+                            roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
+                            roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
+                            roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
+                            roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
+                            roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
+                            roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
+                            roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
+                            builtHTMLjson.push(roomNumberObject);
+                            roomNumberObject = {};
+                        }
+                    }
+                    else {
+                        builtHTMLjson.push(room_object);
+                    }
+                    fulfill(builtHTMLjson);
+                }
         })
             .catch(function (err) {
                 reject(err);
@@ -664,7 +680,7 @@ function helperRecursion (roomData:any) {
             fileObject["rooms_href"] = rooms_href;
         }
         // Get lat lon
-        let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
+        let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim(); //Split potentialyl undefined
         let options = {
             host: "skaha.cs.ubc.ca",
             port: 11316,
@@ -701,11 +717,45 @@ function locationRequest(options: any) {
             res.setEncoding('utf8');
             res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {
-                console.log(rawData);
                 fulfill(rawData);
              });
         }).on('error', (e: any) => {
             reject(e);
         });
     });
+}
+
+//Allowable rooms from index.html
+
+function allowableRooms (index : any) {
+    let queue: any  =[];
+    let fileObject:any ={};
+
+    queue.push(index);
+
+    while (queue.length != 0){
+        let i = queue.shift();
+        //Perform analysis here
+        if(i.attrs != null) {
+            if (i.attrs.length != 0) {
+                for (let attr of i.attrs) {         //Not sure if should hard cod or not
+                    if(i.tagName == "td" && attr.value == "views-field views-field-field-building-code") {
+                        fileObject[(i.childNodes[0].value.trim())] = 1;
+                    }
+                }
+                //End of analysis
+            }
+        }
+
+        if (i.childNodes == null) {
+            continue;
+        }
+        else {
+            for (let child of i.childNodes) {
+                queue.push(child);
+            }
+        }
+
+    }
+    return fileObject;
 }

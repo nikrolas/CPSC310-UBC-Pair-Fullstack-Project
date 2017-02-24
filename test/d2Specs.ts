@@ -12,7 +12,7 @@ describe.only("d2Spec", function () {
     var insightFacade: InsightFacade = null;
     var fs = require("fs");
 
-    var dataRooms = fs.readFileSync("./rooms_small.zip");
+    var dataRooms = fs.readFileSync("./rooms.zip");
     var dataCourses = fs.readFileSync("./courses.zip");
 
     beforeEach(function () {
@@ -64,7 +64,7 @@ describe.only("d2Spec", function () {
     //Testing addDataset functions
 
     it("Dataset didn't exist; added courses successfully", function (done) {
-        fs.unlinkSync('./cache.json');
+        fs.unlinkSync("./cache.json");
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -273,8 +273,8 @@ describe.only("d2Spec", function () {
     it("Rooms_lat Test", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
-                IS: {
-                    "rooms_lat": "filler"//TODO
+                EQ: {
+                    "rooms_lat": 49.26826
                 }
             },
             OPTIONS: {
@@ -299,8 +299,8 @@ describe.only("d2Spec", function () {
     it("Rooms_lon Test", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
-                IS: {
-                    "rooms_lon": "filler"//TODO
+                EQ: {
+                    "rooms_lon": -123.2531
                 }
             },
             OPTIONS: {
@@ -686,6 +686,89 @@ describe.only("d2Spec", function () {
                 done();
             })
     });
+
+    it("Helper for piazzatest 1", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "rooms_name": "DMP_*"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_lat","rooms_lon","rooms_name"
+                ],
+                ORDER: "rooms_name",
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
+
+    it("Not test Piazza Test 1", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                NOT: {
+                    AND: [{
+                      GT: {
+                        "rooms_lat": 49.2612
+                    }
+                     },
+                      {
+                          LT: {
+                                "rooms_lat": 49.26129
+                        }
+                    },
+                    {
+                        LT: {
+                            "rooms_lon": -123.2480
+                        }
+                    },
+                    {
+                        GT: {
+                            "rooms_lon": -123.24809
+                        }
+                    }
+                ]
+            }
+        },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_fullname",
+                    "rooms_shortname",
+                    "rooms_number",
+                    "rooms_name",
+                    "rooms_address",
+                    "rooms_type",
+                    "rooms_furniture",
+                    "rooms_href",
+                    "rooms_lat",
+                    "rooms_lon",
+                    "rooms_seats"
+                ],
+                ORDER: "rooms_name",
+                FORM: "TABLE"
+            }
+
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function (err) {
+                expect.fail();
+                done();
+            })
+    });
     //Perform query invalid tests
 
     it("Rooms failing Test", function (done) {
@@ -713,6 +796,8 @@ describe.only("d2Spec", function () {
                 done();
             })
     });
+
+
 
     it("Two data set call failure", function (done) {
         let qr : QueryRequest =  {
