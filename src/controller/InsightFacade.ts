@@ -174,8 +174,14 @@ function addDatasetRooms(arrayOfJSONString: any) {
         Promise.all(promiseCollectorForRoomsDataset(arrayOfJSONString))
             .then(function (data) {
                 let result = [];
-                for (let rooms of data) {
-                    result.push(JSON.stringify({result: rooms, rank: 0}));
+                for (let rooms = 0; rooms < data.length ; rooms ++) {
+                    if(typeof data[rooms] != "undefined") {
+                        if (Object.keys(data[rooms]).length > 0 ) {
+                            result.push(JSON.stringify({result: data[rooms], rank: 0}));
+                            console.log(data[rooms]);
+                            console.log(rooms);
+                        }
+                    }
                 }
                 return result;
             })
@@ -603,9 +609,9 @@ function formatHTMLData(data: any,allowable:any) {
                             roomNumberObject = {};
                         }
                     }
-                    else {
-                        builtHTMLjson.push(room_object);
-                    }
+                    // else {
+                    //     builtHTMLjson.push(room_object);
+                    // }
                     fulfill(builtHTMLjson);
                 }
         })

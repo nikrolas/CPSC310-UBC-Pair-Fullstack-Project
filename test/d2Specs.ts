@@ -64,7 +64,6 @@ describe.only("d2Spec", function () {
     //Testing addDataset functions
 
     it("Dataset didn't exist; added courses successfully", function (done) {
-        fs.unlinkSync("./cache.json");
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
