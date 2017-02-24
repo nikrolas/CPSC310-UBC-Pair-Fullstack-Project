@@ -21,6 +21,9 @@ export default class InsightFacade implements IInsightFacade {
 
     addDataset(id: string, content: any): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
+            if(!(id == "rooms" || id == "courses")) {
+                return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+            }
             let zip = new JSZip();
             zip.loadAsync(content, {base64: true})
                 .then(function(zipContent: any) {
@@ -72,7 +75,12 @@ export default class InsightFacade implements IInsightFacade {
 
     removeDataset(id: string): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
-            datasetHash = JSON.parse(fs.readFileSync('./cache.json'));              //Assumes that there is a cache. Cant assume that
+            if (fs.existsSync("./cache.json")) {
+                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+            }
+            else {
+                return reject(insightResponseConstructor(404, {"missing":[id]}));
+            }
             if(id in datasetHash){
                 delete datasetHash[id];
                 reWriteJSONFile(datasetHash);
@@ -108,10 +116,16 @@ export default class InsightFacade implements IInsightFacade {
             if(form == "undefined" || form != "TABLE") {
                 return reject(insightResponseConstructor(400, {"error": "Options is invalid"}));
             }
-
-            datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-
             let setID = columns[0].split('_')[0];
+
+            if (fs.existsSync("./cache.json")) {
+                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+            }
+            else {
+                return reject(insightResponseConstructor(424, {"missing":[setID]}));
+            }
+
+
 
             // Checks if cached dataset has the given ID, query invalid if it does not exist
             if (typeof datasetHash[setID] == "undefined") {
@@ -174,12 +188,12 @@ function addDatasetRooms(arrayOfJSONString: any) {
         Promise.all(promiseCollectorForRoomsDataset(arrayOfJSONString))
             .then(function (data) {
                 let result = [];
+                let total =0 ;
                 for (let rooms = 0; rooms < data.length ; rooms ++) {
                     if(typeof data[rooms] != "undefined") {
                         if (Object.keys(data[rooms]).length > 0 ) {
                             result.push(JSON.stringify({result: data[rooms], rank: 0}));
-                            console.log(data[rooms]);
-                            console.log(rooms);
+                            total += Object.keys(data[rooms]).length;
                         }
                     }
                 }
@@ -686,6 +700,11 @@ function helperRecursion (roomData:any) {
             fileObject["rooms_href"] = rooms_href;
         }
         // Get lat lon
+        // if (typeof fileObject["rooms_address"] == "undefined") {
+        //     console.log ("this is where it breaks")
+        //     console.log(fileObject);
+        //
+        // }
         let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
         let options = {
             host: "skaha.cs.ubc.ca",

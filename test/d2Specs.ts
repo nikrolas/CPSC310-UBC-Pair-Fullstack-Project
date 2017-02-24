@@ -21,8 +21,9 @@ describe.only("d2Spec", function () {
 
 //Before anything exists in cache
 
-/*    it("Remove Data , not found in cache", function (done) {
-        insightFacade.removeDataset("rooms")
+  it("Remove Data , not found in cache", function (done) {
+//      fs.unlinkSync("./cache.json");
+      insightFacade.removeDataset("rooms")
             .then(function (response) {
                 expect.fail();
                 done();
@@ -54,12 +55,23 @@ describe.only("d2Spec", function () {
                 done();
             })
             .catch(function (err) {
-                expect(err.code).is.equal(400);
-
-                expect.fail();
+                expect(err.code).is.equal(424);
                 done();
             })
-    });*/
+    });
+
+    it("Add invalid Dataset didn't exist; added courses successfully", function (done) {
+        insightFacade.addDataset("cdrses", dataCourses.toString( 'base64'))
+            .then(function (response) {
+                expect(response.code).is.equal(204);;
+                expect.fail()
+                done();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);;
+                done();
+            })
+    });
 
     //Testing addDataset functions
 
@@ -797,39 +809,39 @@ describe.only("d2Spec", function () {
 
 
 
-    it("Two data set call failure", function (done) {
-        let qr : QueryRequest =  {
-            WHERE: {
-                AND: [
-                    {
-                        GT:{
-                            "courses_avg":90
-                        }
-                    },
-                    {
-                        EQ:{
-                            "rooms_seats":70
-                        }
-                    }
-                ]
-            },
-            OPTIONS: {
-                COLUMNS: [
-                    "rooms_name"
-                ],
-                ORDER: "rooms_name",
-                FORM: "TABLE"
-            }
-        };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect.fail();
-                done();
-            })
-            .catch(function (err) {
-                expect(err.code).is.equal(400);
-                done();
-            })
-    });
+    // it("Two data set call failure", function (done) {
+    //     let qr : QueryRequest =  {
+    //         WHERE: {
+    //             AND: [
+    //                 {
+    //                     GT:{
+    //                         "courses_avg":90
+    //                     }
+    //                 },
+    //                 {
+    //                     EQ:{
+    //                         "rooms_seats":70
+    //                     }
+    //                 }
+    //             ]
+    //         },
+    //         OPTIONS: {
+    //             COLUMNS: [
+    //                 "rooms_name"
+    //             ],
+    //             ORDER: "rooms_name",
+    //             FORM: "TABLE"
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect.fail();
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect(err.code).is.equal(400);
+    //             done();
+    //         })
+    // });
 
 });
