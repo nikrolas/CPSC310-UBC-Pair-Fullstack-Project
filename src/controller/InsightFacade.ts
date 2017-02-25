@@ -219,11 +219,11 @@ export default class InsightFacade implements IInsightFacade {
                 for (let eachClass of filteredData) {
                     let row: any = {};
                     for (let column of columns) {
-                        if (column == "courses_year") {
-                            row[column] = parseInt(eachClass[correspondingJSON(column)]);
+                        if (validNumericKeys(column)) {
+                            row[column] = parseFloat(eachClass[correspondingJSONKey(column)]);
                         }
                         else {
-                            row[column] = eachClass[correspondingJSON(column)];
+                            row[column] = eachClass[correspondingJSONKey(column)];
                         }
                     }
                     finalArray.push(row);
@@ -232,11 +232,11 @@ export default class InsightFacade implements IInsightFacade {
                 let sortOrder = order;
 
                 if(typeof sortOrder != "undefined") {
-                    if(correspondingNumber(sortOrder)) {
+                    if(validSortableKeys(sortOrder)) {
                         finalArray = sortByNum(finalArray, sortOrder);
                     }
                     else {
-                        finalArray = sortByChar(finalArray, correspondingJSON(sortOrder));
+                        finalArray = sortByChar(finalArray, correspondingJSONKey(sortOrder));
                     }
                 }
                 finalFilteredData["result"] = finalArray;
@@ -289,7 +289,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData = [];
         let key = Object.keys(request.LT)[0];
         let value = request.LT[key];
-        let translatedKey:string = correspondingJSON(key);
+        let translatedKey:string = correspondingJSONKey(key);
 
         if (typeof value != "number") {
             throw new Error("Value for less than must be a number");
@@ -326,7 +326,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData = [];
         let key = Object.keys(request.GT)[0];
         let value = request.GT[key];
-        let translatedKey:string = correspondingJSON(key);
+        let translatedKey:string = correspondingJSONKey(key);
 
         if (typeof value != "number") {
             throw new Error("Value for greater than must be a number");
@@ -363,7 +363,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let filteredData = [];
         let key = Object.keys(request.EQ)[0];
         let value = request.EQ[key];
-        let translatedKey:string = correspondingJSON(key);
+        let translatedKey:string = correspondingJSONKey(key);
 
         if (typeof value != "number") {
             throw new Error("Value for equals must be a number");
@@ -401,7 +401,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         let key = Object.keys(request.IS)[0];
         let value = request.IS[key];
         let regexFlag = value.includes("*");
-        let translatedKey:string = correspondingJSON(key);
+        let translatedKey:string = correspondingJSONKey(key);
 
         if (translatedKey == "Invalid") {
             throw new Error("Invalid Key");
@@ -491,8 +491,8 @@ function regexChecker(valueToBeChecked: any, rule: string) {
 
 function sortByNum(data: any, order: string) {
     data.sort(function (a: any, b: any) {
-        if (order == "courses_uuid") {
-            let dataA = parseInt(a[order]), dataB = parseInt(b[order]);
+        if (order == "courses_uuid" || "courses_id") {
+            let dataA = parseFloat(a[order]), dataB = parseFloat(b[order]);
             return dataA-dataB;
         }
         else {
@@ -513,40 +513,20 @@ function sortByChar(data: any, order: string) {
     return data;
 }
 
-function correspondingNumber(string : string) {
-    if (string == 'courses_avg') { //number
-        return true;
-    }
-    if (string == 'courses_pass') { //number
-        return true;
-    }
-    if (string == 'courses_fail') { //number
-        return true;
-    }
-    if (string == 'courses_audit') { //number
-        return true;
-    }
-    // Special case of courses_uuid, we treat it as number
-    if (string == 'courses_uuid') {
-        return true;
-    }
-    if (string == 'courses_year') {
-        return true;
-    }
-    if(string == 'rooms_seats'){
-        return true;
-    }
-    if (string == 'rooms_lat') {
-        return true;
-    }
-    if (string == 'rooms_lon') {
-        return true;
-    }
-    return false;
+function validNumericKeys(string : string) {
+    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit',
+        'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
+    return validNumKeySet.has(string);
 }
 
-function correspondingJSON(given_string: string) {
-    let roomsValidKeys = new Set(["rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
+function validSortableKeys(string : string) {
+    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit', 'courses_uuid',
+        'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon', 'courses_id']);
+    return validNumKeySet.has(string);
+}
+
+function correspondingJSONKey(given_string: string) {
+    let validRoomKeySet = new Set(["rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
         "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"]);
     if (given_string == 'courses_dept') {
         return "Subject";
@@ -578,7 +558,7 @@ function correspondingJSON(given_string: string) {
     if (given_string == 'courses_year') {
         return "Year";
     }
-    if (roomsValidKeys.has(given_string)) {
+    if (validRoomKeySet.has(given_string)) {
         return given_string;
     }
     return "Invalid";
