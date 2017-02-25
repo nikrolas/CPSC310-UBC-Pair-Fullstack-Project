@@ -30,9 +30,8 @@ export default class InsightFacade implements IInsightFacade {
                     .then(function (zipContent: any) {
                         zipContent.file("index.htm").async("string")
                             .then(function(data:any) {
-                            var arrayofrefs:any = hrefLinks(p5.parse(data));
-                            return arrayofrefs;
-                        })
+                                return hrefLinks(p5.parse(data));
+                            })
                             .then(function (arrayofrefs: any[]) {
                                 let arrayofrefpromises = [];
                                 for (let hrefs of arrayofrefs) {
@@ -75,13 +74,16 @@ export default class InsightFacade implements IInsightFacade {
                                                 return reject(err);
                                             })
                                     })
-                                    .catch(function (err: any) {
+                                    .catch(function () {
                                         return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
 
                                     })
                             })
+                            .catch(function () {
+                                return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                            })
                     })
-                    .catch(function (err: any) {
+                    .catch(function () {
                         return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                     });
             }
@@ -100,7 +102,7 @@ export default class InsightFacade implements IInsightFacade {
                                         .then(function () {
                                             return fulfill(insightResponseConstructor(204, {}));
                                         })
-                                        .catch(function (err) {
+                                        .catch(function () {
                                             return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                                         })
                                 }
@@ -121,12 +123,12 @@ export default class InsightFacade implements IInsightFacade {
                                 }
 
                             })
-                            .catch(function (err: any) {
+                            .catch(function () {
                                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
 
                             })
                     })
-                    .catch(function (err: any) {
+                    .catch(function () {
                         return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                     });
             }
@@ -185,7 +187,7 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 else {
                     return reject(insightResponseConstructor(424, {"missing":[setID]}));
-                    }
+                }
             }
             else {
                 return reject(insightResponseConstructor(424, {"missing":[setID]}));
@@ -198,7 +200,7 @@ export default class InsightFacade implements IInsightFacade {
 
 
             let dataToFilter = datasetHash[setID];
-            let finalFilteredData = {render: form, result: <any>[]};
+            let finalFilteredData = {"render": form, "result": <any>[]};
             let storage:any = [];
             let finalArray:any = [];
 
@@ -211,19 +213,18 @@ export default class InsightFacade implements IInsightFacade {
                     }
             }
             try {
-                let filteredData = null;
-                // Checks if WHERE is an empty object
-                if(where == {}) {
-                    filteredData = storage;
-                }
-                else {
-                    filteredData = filterData(storage, where);
-                }
+                let filteredData = filterData(storage, where);
+
                 // Show only desired columns
                 for (let eachClass of filteredData) {
                     let row: any = {};
                     for (let column of columns) {
-                        row[column] = eachClass[correspondingJSON(column)];
+                        if (column == "courses_year") {
+                            row[column] = parseInt(eachClass[correspondingJSON(column)]);
+                        }
+                        else {
+                            row[column] = eachClass[correspondingJSON(column)];
+                        }
                     }
                     finalArray.push(row);
                 }
@@ -239,7 +240,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                console.log (finalFilteredData); //Is it different for courses vs rooms?!?!?
+                //console.log (finalFilteredData); //Is it different for courses vs rooms?!?!?
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -260,7 +261,7 @@ function addDatasetRooms(formattedData: any) {
                 .then(function () {
                     return fulfill(insightResponseConstructor(204, {}));
                 })
-                .catch(function (err) {
+                .catch(function () {
                     return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                 })
         }
@@ -281,17 +282,6 @@ function addDatasetRooms(formattedData: any) {
         }
     })
 }
-
-
-// function promiseCollectorForRoomsDataset(roomsData: any) {
-//     let allPromises = [];
-//     var allowable = allowableRooms(p5.parse(roomsData[(roomsData.length-1)]));
-//     for (let i = 0; i < roomsData.length - 1; i++) {
-//         let parsedHTML = p5.parse(roomsData[i]);
-//         allPromises.push(formatHTMLData(parsedHTML,allowable));
-//     }
-//     return allPromises;
-// }
 
 function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
     // Base cases
@@ -785,14 +775,12 @@ function locationRequest(options: any) {
         http.get(options, (res: any) => {
             let error;
             if (error) {
-                console.log(error);
                 res.resume();
                 return;
             }
             res.setEncoding('utf8');
             res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {
-                //console.log(rawData);
                 fulfill(rawData);
              });
         }).on('error', (e: any) => {

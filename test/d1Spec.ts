@@ -9,11 +9,11 @@ import {QueryRequest} from "../src/controller/IInsightFacade";
 
 describe("d1Spec", function () {
 
-    var insightFacade: InsightFacade = null;
-    var fs = require("fs");
+    let insightFacade: InsightFacade = null;
+    let fs = require("fs");
 
-    var data = fs.readFileSync("./courses.zip");
-    var data1 = fs.readFileSync("./test3.zip");
+    let data = fs.readFileSync("./courses.zip");
+    let data1 = fs.readFileSync("./test3.zip");
 
     beforeEach(function () {
         insightFacade = new InsightFacade();
@@ -26,16 +26,16 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(204);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
     });
 
     it("Adding invalid dataset", function (done) {
-        var data = fs.readFileSync("./README.md");
+        let data = fs.readFileSync("./README.md");
         insightFacade.addDataset("invalidData", data.toString('base64'))
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -46,9 +46,9 @@ describe("d1Spec", function () {
     });
 
     it("Adding valid zip, no real data", function (done) {
-        var data = fs.readFileSync("./emptyText.zip");
+        let data = fs.readFileSync("./emptyText.zip");
         insightFacade.addDataset("noData", data.toString('base64'))
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -60,7 +60,7 @@ describe("d1Spec", function () {
 
     it("remove dataset that is not in the set, error thrown", function (done) {
         insightFacade.removeDataset("blah")
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -76,7 +76,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(204);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -88,7 +88,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(204);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -100,7 +100,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(201);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -112,7 +112,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(204);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -124,7 +124,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(204);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -136,7 +136,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(204);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -148,7 +148,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(201);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -175,7 +175,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -198,7 +198,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -229,7 +229,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -252,7 +252,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -282,7 +282,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -305,7 +305,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -346,7 +346,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -373,7 +373,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -408,7 +408,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -443,7 +443,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -480,7 +480,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -522,7 +522,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -558,7 +558,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -609,7 +609,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -660,7 +660,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -695,7 +695,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -730,7 +730,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -752,7 +752,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -777,7 +777,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -806,7 +806,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -827,7 +827,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -861,7 +861,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -884,7 +884,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -905,7 +905,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -930,7 +930,7 @@ describe("d1Spec", function () {
                 }
             };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -942,7 +942,7 @@ describe("d1Spec", function () {
         let qr: QueryRequest = {
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
             })
             .catch(function (err) {
@@ -967,7 +967,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });*/
@@ -1000,7 +1000,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -1032,7 +1032,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -1075,7 +1075,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -1100,7 +1100,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -1125,7 +1125,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -1150,7 +1150,7 @@ describe("d1Spec", function () {
             .then(function (response) {
                 expect(response.code).is.equal(200);
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
             })
     });
@@ -1188,7 +1188,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -1224,7 +1224,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -1251,7 +1251,7 @@ describe("d1Spec", function () {
                 expect(response.code).is.equal(200);
                 done();
             })
-            .catch(function (err) {
+            .catch(function () {
                 expect.fail();
                 done();
             })
@@ -1274,7 +1274,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
@@ -1320,7 +1320,7 @@ describe("d1Spec", function () {
             }
         };
         insightFacade.performQuery(qr)
-            .then(function (response) {
+            .then(function () {
                 expect.fail();
                 done();
             })
