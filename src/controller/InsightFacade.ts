@@ -24,53 +24,114 @@ export default class InsightFacade implements IInsightFacade {
             if(!(id == "rooms" || id == "courses")) {
                 return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
             }
-            let zip = new JSZip();
-            zip.loadAsync(content, {base64: true})
-                .then(function(zipContent: any) {
-                    Promise.all(filePromiseCollector(zipContent))
-                        .then(function(arrayOfJSONString) {
-                            // Tests for valid zip, not containing any information
-                            if (arrayOfJSONString[0] == "") {
-                                return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
-                            }
-                            if (id == "rooms") {
-                                return fulfill(addDatasetRooms(arrayOfJSONString));
-                            }
-                            if (!fs.existsSync("./cache.json")) {
-                                addToHashset(id, arrayOfJSONString)
-                                    .then(function () {
-                                        return fulfill(insightResponseConstructor(204, {}));
+            if (id == "rooms") {
+                let zip = new JSZip();
+                zip.loadAsync(content, {base64: true})
+                    .then(function (zipContent: any) {
+                        zipContent.file("index.htm").async("string")
+                            .then(function(data:any) {
+                            var arrayofrefs:any = hrefLinks(p5.parse(data));
+                            return arrayofrefs;
+                        })
+                            .then(function (arrayofrefs: any[]) {
+                                let arrayofrefpromises = [];
+                                for (let hrefs of arrayofrefs) {
+                                    let file = zipContent.file(hrefs.substring(2));
+                                    if (file){
+                                        arrayofrefpromises.push(file.async("string"));
+                                    }
+                                }
+                                return arrayofrefpromises;
+                            })
+                            .then(function (arrayofpromises: any) {
+                                Promise.all(arrayofpromises)
+                                    .then(function (arrayOfJSONString) {
+                                        let arrayOfParsedStrings = [];
+                                        for (let json of arrayOfJSONString) {
+                                            arrayOfParsedStrings.push(p5.parse(json));
+                                        }
+                                        // Tests for valid zip, not containing any information
+                                        if (arrayOfJSONString[0] == "") {
+                                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                                        }
+                                        let arrayOfPromises = [];
+                                        for (let parsedString of arrayOfParsedStrings) {
+                                            arrayOfPromises.push(formatHTMLData(parsedString));
+                                        }
+                                        return arrayOfPromises;
                                     })
-                                    .catch(function (err) {
+                                    .then(function (arrayOfPromises:any) {
+                                        return Promise.all(arrayOfPromises)
+                                            .then(function (formattedData) {
+                                                let finalarray:any =[];
+                                                for (let buildings of formattedData) {
+                                                    if (typeof buildings != "undefined") {
+                                                        finalarray.push(buildings);
+                                                    }
+                                                }
+                                                return fulfill(addDatasetRooms(finalarray));
+                                            })
+                                            .catch(function (err) {
+                                                return reject(err);
+                                            })
+                                    })
+                                    .catch(function (err: any) {
                                         return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+
                                     })
-                            }
-                            else {
-                                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-                                if (datasetHash[id] == null) {
-                                    fs.unlinkSync('./cache.json');
-                                    datasetHash[id] = arrayOfJSONString;
-                                    reWriteJSONFile(datasetHash);
-                                    return fulfill(insightResponseConstructor(204, {}));
+                            })
+                    })
+                    .catch(function (err: any) {
+                        return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                    });
+            }
+            else {
+                let zip = new JSZip();
+                zip.loadAsync(content, {base64: true})
+                    .then(function (zipContent: any) {
+                        Promise.all(filePromiseCollector(zipContent))
+                            .then(function (arrayOfJSONString) {
+                                // Tests for valid zip, not containing any information
+                                if (arrayOfJSONString[0] == "") {
+                                    return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
                                 }
-                                else if (id in datasetHash) {
-                                    fs.unlinkSync('./cache.json');
-                                    datasetHash[id] = arrayOfJSONString;
-                                    reWriteJSONFile(datasetHash);
-                                    return fulfill(insightResponseConstructor(201, {}));
+                                if (!fs.existsSync("./cache.json")) {
+                                    addToHashset(id, arrayOfJSONString)
+                                        .then(function () {
+                                            return fulfill(insightResponseConstructor(204, {}));
+                                        })
+                                        .catch(function (err) {
+                                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                                        })
                                 }
-                            }
+                                else {
+                                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+                                    if (datasetHash[id] == null) {
+                                        fs.unlinkSync('./cache.json');
+                                        datasetHash[id] = arrayOfJSONString;
+                                        reWriteJSONFile(datasetHash);
+                                        return fulfill(insightResponseConstructor(204, {}));
+                                    }
+                                    else if (id in datasetHash) {
+                                        fs.unlinkSync('./cache.json');
+                                        datasetHash[id] = arrayOfJSONString;
+                                        reWriteJSONFile(datasetHash);
+                                        return fulfill(insightResponseConstructor(201, {}));
+                                    }
+                                }
 
-                        })
-                        .catch(function(err: any) {
-                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                            })
+                            .catch(function (err: any) {
+                                return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
 
-                        })
-                })
-                .catch(function(err: any) {
-                    return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
-                });
+                            })
+                    })
+                    .catch(function (err: any) {
+                        return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                    });
+            }
         });
+
     }
 
     removeDataset(id: string): Promise<InsightResponse> {
@@ -119,18 +180,22 @@ export default class InsightFacade implements IInsightFacade {
             let setID = columns[0].split('_')[0];
 
             if (fs.existsSync("./cache.json")) {
-                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+                if (fs.statSync("./cache.json").size != 0){
+                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+                }
+                else {
+                    return reject(insightResponseConstructor(424, {"missing":[setID]}));
+                    }
             }
             else {
                 return reject(insightResponseConstructor(424, {"missing":[setID]}));
             }
 
-
-
             // Checks if cached dataset has the given ID, query invalid if it does not exist
             if (typeof datasetHash[setID] == "undefined") {
                 return reject(insightResponseConstructor(424, {"missing": [setID]}));
             }
+
 
             let dataToFilter = datasetHash[setID];
             let finalFilteredData = {render: form, result: <any>[]};
@@ -183,61 +248,50 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function addDatasetRooms(arrayOfJSONString: any) {
+function addDatasetRooms(formattedData: any) {
     return new Promise(function (fulfill, reject) {
-        Promise.all(promiseCollectorForRoomsDataset(arrayOfJSONString))
-            .then(function (data) {
-                let result = [];
-                let total =0 ;
-                for (let rooms = 0; rooms < data.length ; rooms ++) {
-                    if(typeof data[rooms] != "undefined") {
-                        if (Object.keys(data[rooms]).length > 0 ) {
-                            result.push(JSON.stringify({result: data[rooms], rank: 0}));
-                            total += Object.keys(data[rooms]).length;
-                        }
-                    }
-                }
-                return result;
-            })
-            .then(function (result) {
-                if (!fs.existsSync("./cache.json")) {
-                    addToHashset("rooms", result)
-                        .then(function () {
-                            return fulfill(insightResponseConstructor(204, {}));
-                        })
-                        .catch(function (err) {
-                            return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
-                        })
-                }
-                else {
-                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-                    if (datasetHash["rooms"] == null) {
-                        fs.unlinkSync('./cache.json');
-                        datasetHash["rooms"] = result;
-                        reWriteJSONFile(datasetHash);
-                        return fulfill(insightResponseConstructor(204, {}));
-                    }
-                    else if ("rooms" in datasetHash) {
-                        fs.unlinkSync('./cache.json');
-                        datasetHash["rooms"] = result;
-                        reWriteJSONFile(datasetHash);
-                        return fulfill(insightResponseConstructor(201, {}));
-                    }
-                }
-            })
+        let result =[];
+        for (let rooms = 0; rooms < formattedData.length ; rooms ++) {
+            result.push(JSON.stringify({result:formattedData[rooms],rank:0}));
+        }
+
+        if (!fs.existsSync("./cache.json")) {
+            addToHashset("rooms", result)
+                .then(function () {
+                    return fulfill(insightResponseConstructor(204, {}));
+                })
+                .catch(function (err) {
+                    return reject(insightResponseConstructor(400, {"error": "Invalid Dataset"}));
+                })
+        }
+        else {
+            datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
+            if (datasetHash["rooms"] == null) {
+                fs.unlinkSync('./cache.json');
+                datasetHash["rooms"] = result;
+                reWriteJSONFile(datasetHash);
+                return fulfill(insightResponseConstructor(204, {}));
+            }
+            else if ("rooms" in datasetHash) {
+                fs.unlinkSync('./cache.json');
+                datasetHash["rooms"] = result;
+                reWriteJSONFile(datasetHash);
+                return fulfill(insightResponseConstructor(201, {}));
+            }
+        }
     })
 }
 
 
-function promiseCollectorForRoomsDataset(roomsData: any) {
-    let allPromises = [];                               //TODO
-    var allowable = allowableRooms(p5.parse(roomsData[(roomsData.length-1)]));
-    for (let i = 0; i < roomsData.length - 1; i++) {
-        let parsedHTML = p5.parse(roomsData[i]);
-        allPromises.push(formatHTMLData(parsedHTML,allowable));
-    }
-    return allPromises;
-}
+// function promiseCollectorForRoomsDataset(roomsData: any) {
+//     let allPromises = [];
+//     var allowable = allowableRooms(p5.parse(roomsData[(roomsData.length-1)]));
+//     for (let i = 0; i < roomsData.length - 1; i++) {
+//         let parsedHTML = p5.parse(roomsData[i]);
+//         allPromises.push(formatHTMLData(parsedHTML,allowable));
+//     }
+//     return allPromises;
+// }
 
 function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
     // Base cases
@@ -596,15 +650,11 @@ function reWriteJSONFile(jsonObject: any) {
     fs.writeFile(("./cache.json"), JSON.stringify(jsonObject));
 }
 
-function formatHTMLData(data: any,allowable:any) {
+function formatHTMLData(data: any) {
     return new Promise(function (fulfill, reject) {
         let builtHTMLjson:any = [];
         helperRecursion (data)
             .then(function (room_object: any) {
-                if(allowable[room_object["rooms_shortname"]] != 1) {
-                    fulfill();
-                }
-                else {
                     if (room_object["rooms_number"] != null) {
                         let roomNumberObject: any = {};
                         for (let i = 0; i < room_object["rooms_number"].length; i++) {
@@ -620,14 +670,14 @@ function formatHTMLData(data: any,allowable:any) {
                             roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
                             roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
                             builtHTMLjson.push(roomNumberObject);
+
                             roomNumberObject = {};
                         }
-                    }
-                    // else {
-                    //     builtHTMLjson.push(room_object);
-                    // }
-                    fulfill(builtHTMLjson);
+                        fulfill(builtHTMLjson);
                 }
+                else {
+                        fulfill();
+                    }
         })
             .catch(function (err) {
                 reject(err);
@@ -753,9 +803,9 @@ function locationRequest(options: any) {
 
 //Allowable rooms from index.html
 
-function allowableRooms (index : any) {
+function hrefLinks (index : any) {
     let queue: any  =[];
-    let fileObject:any ={};
+    let fileObject:any =[];
 
     queue.push(index);
 
@@ -765,8 +815,8 @@ function allowableRooms (index : any) {
         if(i.attrs != null) {
             if (i.attrs.length != 0) {
                 for (let attr of i.attrs) {         //Not sure if should hard cod or not
-                    if(i.tagName == "td" && attr.value == "views-field views-field-field-building-code") {
-                        fileObject[(i.childNodes[0].value.trim())] = 1;
+                    if(i.tagName == "td" && attr.value == "views-field views-field-title") {
+                        fileObject.push(i.childNodes[1].attrs[0].value);
                     }
                 }
                 //End of analysis
