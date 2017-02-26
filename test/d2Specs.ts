@@ -22,7 +22,7 @@ describe.only("d2Spec", function () {
 //Before anything exists in cache
 
   it("Remove Data before cache exists, not found in cache", function (done) {
-      fs.unlinkSync("./cache.json");
+     // fs.unlinkSync("./cache.json");
       insightFacade.removeDataset("rooms")
             .then(function () {
                 expect.fail();
