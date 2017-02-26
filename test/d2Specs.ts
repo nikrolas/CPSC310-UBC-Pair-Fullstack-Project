@@ -21,8 +21,8 @@ describe.only("d2Spec", function () {
 
 //Before anything exists in cache
 
-  it("Remove Data , not found in cache", function (done) {
-      //fs.unlinkSync("./cache.json");
+  it("Remove Data before cache exists, not found in cache", function (done) {
+      fs.unlinkSync("./cache.json");
       insightFacade.removeDataset("rooms")
             .then(function () {
                 expect.fail();
@@ -73,6 +73,19 @@ describe.only("d2Spec", function () {
     });
 
     //Testing addDataset functions
+
+    it("Dataset didn't exist; added rooms successfully", function (done) {
+        //fs.unlinkSync("./cache.json");
+        insightFacade.addDataset("kmsad", dataRooms.toString( 'base64'))
+            .then(function (response) {
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);
+                done();
+            })
+    });
 
     it("Dataset didn't exist; added courses successfully", function (done) {
         //fs.unlinkSync("./cache.json");
@@ -125,37 +138,37 @@ describe.only("d2Spec", function () {
             })
     });
 
-    // it("Check non existent id in cache", function (done) {
-    //     let qr : QueryRequest =  {
-    //         WHERE: {
-    //             IS: {
-    //                 "rooms_name": "DMP_*"
-    //             }
-    //         },
-    //         OPTIONS: {
-    //             COLUMNS: [
-    //                 "rooms_name"
-    //             ],
-    //             ORDER: "rooms_name",
-    //             FORM: "TABLE"
-    //         }
-    //     };
-    //     insightFacade.performQuery(qr)
-    //         .then(function () {
-    //             expect.fail();
-    //             done();
-    //         })
-    //         .catch(function (err) {
-    //             expect(err.code).is.equal(424);
-    //             done();
-    //         })
-    // });
+    it("Check non existent id in cache", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "rooms_name": "DMP_*"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_name"
+                ],
+                ORDER: "rooms_name",
+                FORM: "TABLE"
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function () {
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(424);
+                done();
+            })
+    });
 
 
-    it("Dataset did exist; added courses successfully", function (done) {
+    it("Dataset did not exist; added courses successfully", function (done) {
         insightFacade.addDataset("courses", dataCourses.toString('base64'))
             .then(function (response) {
-                expect(response.code).is.equal(201);
+                expect(response.code).is.equal(204);
                 done();
             })
             .catch(function () {

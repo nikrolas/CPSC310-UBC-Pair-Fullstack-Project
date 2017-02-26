@@ -146,8 +146,14 @@ export default class InsightFacade implements IInsightFacade {
             }
             if(id in datasetHash){
                 delete datasetHash[id];
-                reWriteJSONFile(datasetHash);
-                return fulfill(insightResponseConstructor(204, {}));
+                if(isEmptyObject(datasetHash)) {
+                    reWriteJSONFile(datasetHash);
+                    return fulfill(insightResponseConstructor(204, {}));
+                }
+                else {
+                    fs.unlinkSync("./cache.json");
+                    return fulfill(insightResponseConstructor(204, {}));
+                }
             }
             else {
                 return reject(insightResponseConstructor(404, {"missing": id}));                 //POTENTIAL ERROR?
@@ -182,12 +188,7 @@ export default class InsightFacade implements IInsightFacade {
             let setID = columns[0].split('_')[0];
 
             if (fs.existsSync("./cache.json")) {
-                if (fs.statSync("./cache.json").size != 0){
-                    datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-                }
-                else {
-                    return reject(insightResponseConstructor(424, {"missing":[setID]}));
-                }
+                datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
             }
             else {
                 return reject(insightResponseConstructor(424, {"missing":[setID]}));
@@ -803,3 +804,7 @@ function hrefLinks (index : any) {
     }
     return fileObject;
 }
+
+function isEmptyObject(obj:any) {
+    return !Object.keys(obj).length;
+};
