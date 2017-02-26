@@ -147,6 +147,7 @@ export default class InsightFacade implements IInsightFacade {
             if(id in datasetHash){
                 delete datasetHash[id];
                 if(!isEmptyObject(datasetHash)) {
+                    fs.unlinkSync("./cache.json");
                     reWriteJSONFile(datasetHash);
                     return fulfill(insightResponseConstructor(204, {}));
                 }
