@@ -146,7 +146,8 @@ export default class InsightFacade implements IInsightFacade {
             }
             if(id in datasetHash){
                 delete datasetHash[id];
-                if(isEmptyObject(datasetHash)) {
+                if(!isEmptyObject(datasetHash)) {
+                    fs.unlinkSync("./cache.json");
                     reWriteJSONFile(datasetHash);
                     return fulfill(insightResponseConstructor(204, {}));
                 }
@@ -440,6 +441,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
         for (let operand of request.AND) {
             if (notflag == null || notflag == false) {
                 modifiableDataset = filterData(modifiableDataset, operand, false);
+
             }
             else {
                 modifiableDataset = filterData(modifiableDataset, operand, true);
