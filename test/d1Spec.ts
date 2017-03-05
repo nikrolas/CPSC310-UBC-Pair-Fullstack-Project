@@ -20,7 +20,7 @@ describe("d1Spec", function () {
     });
 
     it("Dataset didn't exist; added successfully", function (done) {
-       // fs.unlinkSync("./cache.json");
+       fs.unlinkSync("./cache.json");
        insightFacade.addDataset("courses", data.toString( 'base64'))
            .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -106,29 +106,6 @@ describe("d1Spec", function () {
             })
     });
 
-    it("Dataset does not exist in cache; added successfully", function (done) {
-        insightFacade.addDataset("pow", data1.toString('base64'))
-            .then(function (response) {
-                expect(response.code).is.equal(204);
-                done();
-            })
-            .catch(function () {
-                expect.fail();
-                done();
-            })
-    });
-
-    it("remove dataset that is in the set again", function (done) {
-        insightFacade.removeDataset("pow")
-            .then(function (response) {
-                expect(response.code).is.equal(204);
-                done();
-            })
-            .catch(function () {
-                expect.fail();
-                done();
-            })
-    });
 
 /*    it("remove second dataset that is in the set", function (done) {
         insightFacade.removeDataset("courses")

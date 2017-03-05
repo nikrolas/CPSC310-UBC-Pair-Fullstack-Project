@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe("d2Spec", function () {
+describe.only("d2Spec", function () {
 
     let insightFacade: InsightFacade = null;
     let fs = require("fs");
@@ -22,7 +22,7 @@ describe("d2Spec", function () {
 //Before anything exists in cache
 
   it("Remove Data before cache exists, not found in cache", function (done) {
-      //fs.unlinkSync("./cache.json")
+      fs.unlinkSync("./cache.json")
       insightFacade.removeDataset("rooms")
             .then(function () {
                 expect.fail();
@@ -112,9 +112,9 @@ describe("d2Spec", function () {
                 done();
             })
     });
-
-    it("Dataset didn't exist; added rooms successfully", function (done) {
-        //fs.unlinkSync("./cache.json");
+//TODO: Working on transformation
+    it.only("Dataset didn't exist; added rooms successfully", function (done) {
+        fs.unlinkSync("./cache.json");
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -125,6 +125,40 @@ describe("d2Spec", function () {
                 done();
             })
     });
+
+    it.only("Transformation Grouping ", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "rooms_furniture", "maxSeats"
+                ],
+                ORDER: "rooms_furniture",
+                FORM: "TABLE"
+            },
+            TRANSFORMATIONS: {
+                GROUP: ["rooms_furniture"],
+                APPLY: [{
+                    "maxSeats" : {
+                        MAX: "rooms_seats"
+                    }
+                }]
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                expect(response.body).to.deep.equal({"render":"TABLE","result":[{"rooms_name":"DMP_101"},{"rooms_name":"DMP_110"},{"rooms_name":"DMP_201"},{"rooms_name":"DMP_301"},{"rooms_name":"DMP_310"}]});
+                done();
+            })
+            .catch(function () {
+                expect.fail();
+                done();
+            })
+    });
+
+
 
  //   Remove dataset from  existing cache
     it("Remove Data , not found in cache", function (done) {

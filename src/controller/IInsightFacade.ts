@@ -13,13 +13,21 @@ export interface QueryRequest {
     // you can define your own structure that complies with the EBNF here
     WHERE ?: FilterInterface;                     //BODY     ::= 'WHERE:' FILTER
     OPTIONS ?: OptionInterface;
+    TRANSFORMATIONS ?: TransformationInterface;
 }
 
 export interface OptionInterface {
     COLUMNS ?: string[];                          //COLUMNS  ::= 'COLUMNS:[' key ( ',' key )* ']'
-    ORDER ?: string;                           //( 'ORDER:' key ', ' )?
+    ORDER ?: OrderInterface|string;                           //( 'ORDER:' key ', ' )?
     FORM ?: string;                             //'FORM : TABLE'
 }
+
+export interface OrderInterface {
+    dir ?: string;
+    keys ?: string[];
+
+}
+
 export interface FilterInterface {
     // you can define your own structure that complies with the EBNF here
     AND ?: FilterInterface[];                   //LOGIC ':[{' FILTER ( '}, {' FILTER )* '}]'
@@ -31,6 +39,7 @@ export interface FilterInterface {
     NOT ?: FilterInterface;                     //NEGATION ::'NOT :{' FILTER '}'
 }
 
+
 export interface NumberFilter {
     [key: string] : any;
 }
@@ -38,6 +47,28 @@ export interface NumberFilter {
 export interface SCOMPARISON {
     [key: string]: string;
 }
+
+export interface TransformationInterface {
+    // you can define your own structure that complies with the EBNF here
+    GROUP ?: string [];
+    APPLY ?: ApplyKeyInterface [];
+
+}
+
+export interface ApplyKeyInterface {
+    // you can define your own structure that complies with the EBNF here
+    [key:string] : ApplyToken;
+}
+
+export interface ApplyToken {
+    // you can define your own structure that complies with the EBNF here
+    MAX ?: string;
+    MIN ?: string;
+    AVG ?: string;
+    COUNT ?: string;
+    SUM ?: string;
+}
+
 
 export interface IInsightFacade {
 

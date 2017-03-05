@@ -166,6 +166,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill,reject) {
             let where = query.WHERE;
             let options = query.OPTIONS;
+            let transformations = query.TRANSFORMATIONS;
             let columns = options.COLUMNS;
             let form = options.FORM;
             let order = options.ORDER;
@@ -175,7 +176,7 @@ export default class InsightFacade implements IInsightFacade {
                 return reject(insightResponseConstructor(400, {"error": "invalid request"}));
             }
             // Checks if ORDER is contained in columns; query invalid if it is not
-            if(typeof order != "undefined" && !columns.includes(order)) {
+            if(typeof order != "undefined" && !columns.includes(order)) {                                           //TODO: new exception to consider the fact that order can be object
                 return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}));
             }
             // Checks for empty COLUMNS array or missing COLUMNS array
@@ -217,6 +218,14 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let filteredData = filterData(storage, where);
 
+                //TODO: Adding in transformations if they exist
+                if (typeof transformations != "undefined") {
+                    //TODO: check if all columns is in group or apply
+                    let combinedGroups: any = groupFilterData(filteredData,transformations,columns);
+                    let combinedApply: any = applyFilterData(combinedGroups, transformations.APPLY,columns);
+
+                }
+
                 // Show only desired columns
                 for (let eachClass of filteredData) {
                     let row: any = {};
@@ -233,7 +242,7 @@ export default class InsightFacade implements IInsightFacade {
                 // Sort by column
                 let sortOrder = order;
 
-                if(typeof sortOrder != "undefined") {
+                if(typeof sortOrder != "undefined") {                                           //TODO Create a new sort function ontop of this
                     if(validSortableKeys(sortOrder)) {
                         finalArray = sortByNum(finalArray, sortOrder);
                     }
@@ -249,6 +258,130 @@ export default class InsightFacade implements IInsightFacade {
             }
         });
     }
+}
+
+function applyFilterData(dataset:any, request:any, columns:any) :any {
+    for (let filterTerms of request) {
+        //TODO: Columns equal to name Object.keys(filterTerms)[0] == Columns
+
+        if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "MAX") {
+            let numerickey = filterTerms[Object.keys(filterTerms)[0]].MAX;
+            if (validNumericKeys(numerickey)){ //Check if is valid number
+                for (let groups in dataset) {
+                    let maxValue = 0;
+
+                    for(let rooms of dataset[groups]) {
+                        let x = +rooms[numerickey]              //Convert string to number
+                        if (x > maxValue) {
+                            maxValue = x;
+                        }
+                    }
+                    let variablename:string = Object.keys(filterTerms)[0];
+                    (dataset[groups][0])[variablename] = maxValue;
+                }
+            }
+            else {
+                //TODO return error
+            }
+        }
+        else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "MIN") {
+            let numerickey = filterTerms[Object.keys(filterTerms)[0]].MIN;
+
+            if (validNumericKeys(numerickey)){
+                for (let groups in dataset) {
+                    let minvalue = 10000;
+
+                    for(let rooms of dataset[groups]) {
+                        let x = +rooms[numerickey]              //Convert string to number
+                        if (x < minvalue) {
+                            minvalue = x;
+                        }
+                    }
+                    let variablename:string = Object.keys(filterTerms)[0];
+                    (dataset[groups][0])[variablename] = minvalue;
+                }
+            }
+            else {
+                //TODO return error
+            }
+        }
+        else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "AVG") {
+            let numerickey = filterTerms[Object.keys(filterTerms)[0]].AVG;
+            if (validNumericKeys(numerickey)){
+                for (let groups in dataset) {
+                    let avg = 0;
+                    for(let rooms of dataset[groups]) {
+                        let x = +rooms[numerickey]              //Convert string to number
+                        avg += x;
+                    }
+                    let variablename:string = Object.keys(filterTerms)[0];
+                    (dataset[groups][0])[variablename] = avg/dataset[groups].length;
+                }
+            }
+            else {
+                //TODO return error
+            }
+        }
+        else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "COUNT") {
+            let numerickey = filterTerms[Object.keys(filterTerms)[0]].COUNT;
+            if (validNumericKeys(numerickey)){
+                for (let groups in dataset) {
+                    let variablename:string = Object.keys(filterTerms)[0];
+                    (dataset[groups][0])[variablename] = dataset[groups].length;
+                }
+            }
+            else {
+                //TODO return error
+            }
+        }
+
+        else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "SUM") {
+            let numerickey = filterTerms[Object.keys(filterTerms)[0]].SUM;
+            if (validNumericKeys(numerickey)){                for (let groups in dataset) {
+                let sum = 0;
+                for(let rooms of dataset[groups]) {
+                    let x = +rooms[numerickey]              //Convert string to number
+                    sum += x;
+                }
+                let variablename:string = Object.keys(filterTerms)[0];
+                (dataset[groups][0])[variablename] = sum;
+            }
+            }
+            else {
+                //TODO return error
+            }
+        }
+        else {
+            //TODO Throw an error
+        }
+    }
+    return dataset;
+
+}
+
+function groupFilterData(dataset: any, request: any, columns:any): any {
+    let finalGroups:any = {};
+    let finalGroupsStringID: string = "";
+    let groupings: any = request.GROUP;
+        for (let objects of dataset) {                      //Going through all the objects in the filtered dataset
+            for (let groupingsId of groupings) {            //Checking every critera of the group to make sure they are combined properly
+                if (groupingsId == "rooms_lat" || groupingsId == "rooms_lon") {         //TODO: temp placeholder, needs to be more robust for all numbers
+                    finalGroupsStringID = finalGroupsStringID.concat(objects[groupingsId].toString);
+                }
+                else {
+                    finalGroupsStringID =finalGroupsStringID.concat(objects[groupingsId]);
+                }
+            }
+            if (typeof finalGroups[finalGroupsStringID] == "undefined") {
+                finalGroups[finalGroupsStringID] = [];
+                finalGroups[finalGroupsStringID].push(objects);
+            }
+            else {
+                finalGroups[finalGroupsStringID].push(objects);
+            }
+            finalGroupsStringID = "";
+        }
+    return finalGroups;
 }
 
 function addDatasetRooms(formattedData: any) {
@@ -287,7 +420,10 @@ function addDatasetRooms(formattedData: any) {
 
 function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
     // Base cases
-    if (Object.keys(request)[0] == "LT") {
+    if (isEmptyObject(request)) {
+        return dataset;
+    }
+    else if (Object.keys(request)[0] == "LT") {
         let filteredData = [];
         let key = Object.keys(request.LT)[0];
         let value = request.LT[key];
@@ -477,7 +613,7 @@ function filterData(dataset: any, request: any, notflag ?: boolean): any[] {
 
         return filteredData;
     }
-    else {
+    else{
         throw new Error("Invalid key");
     }
 }
@@ -516,11 +652,18 @@ function sortByChar(data: any, order: string) {
     return data;
 }
 
+function numberConverter(string:string) {
+    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit',
+        'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
+    return validNumKeySet.has(string);
+}
+
 function validNumericKeys(string : string) {
     let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit',
         'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
     return validNumKeySet.has(string);
 }
+
 
 function validSortableKeys(string : string) {
     let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit', 'courses_uuid',
