@@ -221,8 +221,13 @@ export default class InsightFacade implements IInsightFacade {
                 //TODO: Adding in transformations if they exist
                 if (typeof transformations != "undefined") {
                     //TODO: check if all columns is in group or apply
+                    let building_storage:any = [];
                     let combinedGroups: any = groupFilterData(filteredData,transformations,columns);
                     let combinedApply: any = applyFilterData(combinedGroups, transformations.APPLY,columns);
+                    for (let buildings in combinedApply) {
+                        building_storage.push(combinedApply[buildings][0]);
+                    }
+                    filteredData = building_storage;
 
                 }
 
@@ -230,7 +235,7 @@ export default class InsightFacade implements IInsightFacade {
                 for (let eachClass of filteredData) {
                     let row: any = {};
                     for (let column of columns) {
-                        if (validNumericKeys(column)) {
+                        if (validNumericKeys(column)) {                             //TODO: need more robust filter to handle cases where it is anything (ie maxSeats) b/c corresponding
                             row[column] = parseFloat(eachClass[correspondingJSONKey(column)]);
                         }
                         else {
