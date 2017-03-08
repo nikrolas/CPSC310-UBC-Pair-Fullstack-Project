@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe.only("d2Spec", function () {
+describe("d2Spec", function () {
 
     let insightFacade: InsightFacade = null;
     let fs = require("fs");
@@ -112,9 +112,9 @@ describe.only("d2Spec", function () {
                 done();
             })
     });
-//TODO: Working on transformation
-    it.only("Dataset didn't exist; added rooms successfully", function (done) {
-        fs.unlinkSync("./cache.json");
+
+    it("Dataset didn't exist; added rooms successfully", function (done) {
+       // fs.unlinkSync("./cache.json");
         insightFacade.addDataset("rooms", dataRooms.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -126,37 +126,6 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Transformation Grouping ", function (done) {
-        let qr : QueryRequest =  {
-            WHERE: {
-            },
-            OPTIONS: {
-                COLUMNS: [
-                    "rooms_furniture", "maxSeats"
-                ],
-                ORDER: "rooms_furniture",
-                FORM: "TABLE"
-            },
-            TRANSFORMATIONS: {
-                GROUP: ["rooms_furniture"],
-                APPLY: [{
-                    "maxSeats" : {
-                        MAX: "rooms_seats"
-                    }
-                }]
-            }
-        };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect(response.code).is.equal(200);
-                expect(response.body).to.deep.equal({"render":"TABLE","result":[{"rooms_name":"DMP_101"},{"rooms_name":"DMP_110"},{"rooms_name":"DMP_201"},{"rooms_name":"DMP_301"},{"rooms_name":"DMP_310"}]});
-                done();
-            })
-            .catch(function () {
-                expect.fail();
-                done();
-            })
-    });
 
 
 

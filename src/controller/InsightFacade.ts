@@ -176,9 +176,28 @@ export default class InsightFacade implements IInsightFacade {
                 return reject(insightResponseConstructor(400, {"error": "invalid request"}));
             }
             // Checks if ORDER is contained in columns; query invalid if it is not
-            if(typeof order != "undefined" && !columns.includes(order)) {                                           //TODO: new exception to consider the fact that order can be object
-                return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}));
+            if(typeof order != "undefined") {
+                if (typeof order == 'string') {
+                    if (!columns.includes(order)) {
+                        return reject(insightResponseConstructor(400, {"error": "Order is not contained in columns"}));
+                    }
+                }
+                else if (typeof order == 'object'){
+                    if (typeof order['dir'] == "undefined") {
+                        return reject(insightResponseConstructor(400, {"error": "Order dir is undefined"}));
+                    }
+                    else if (typeof order['keys'] == "undefined") {
+                        return reject(insightResponseConstructor(400, {"error": "Order keys is undefined"}));
+                    }
+                }
+                else {
+                    return reject(insightResponseConstructor(400, {"error": "Order must be either a object with dir and keys or a string contained in columns"}));
+                }
             }
+            else {
+                return reject(insightResponseConstructor(400, {"error": "Order is empty"}));
+            }
+
             // Checks for empty COLUMNS array or missing COLUMNS array
             if(columns.length == 0 || typeof columns == "undefined") {
                 return reject(insightResponseConstructor(400, {"error": "Columns missing or empty"}));
@@ -218,45 +237,81 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let filteredData = filterData(storage, where);
 
-                //TODO: Adding in transformations if they exist
                 if (typeof transformations != "undefined") {
-                    //TODO: check if all columns is in group or apply
+                    let columngroup:string[]=[];
+                    let columnapply:string[]=[];
+                    let groupcheck: string[]=[];
+                    let applycheck:string[]=[];
+
+                    for (let columnstrings of columns) {
+                        if(columnstrings.indexOf('_') > -1) {           //http://stackoverflow.com/questions/4444477/how-to-tell-if-a-string-contains-a-certain-character-in-javascript
+                            columngroup.push(columnstrings);
+                        } else {
+                            columnapply.push(columnstrings);
+                        }
+                    }
+                    for (let i = 0; i < transformations.GROUP.length; i++) {
+                        groupcheck.push(transformations.GROUP[i]);
+                    }
+                    for (let objects of transformations.APPLY) {
+                        applycheck.push(Object.keys(objects)[0]);
+                    }
+                    if(!arraysEqual(columnapply,applycheck)) {
+                        return reject(insightResponseConstructor(400, {"error": "Everything in Columns must be in either group or apply"}));
+                    }
+
+                    if(!arraysEqual(columngroup,groupcheck)) {
+                        return reject(insightResponseConstructor(400, {"error": "Everything in Columns must be in either group or apply"}));
+                    }
+
                     let building_storage:any = [];
-                    let combinedGroups: any = groupFilterData(filteredData,transformations,columns);
-                    let combinedApply: any = applyFilterData(combinedGroups, transformations.APPLY,columns);
+                    let combinedGroups: any = groupFilterData(filteredData,transformations);
+                    let combinedApply: any = applyFilterData(combinedGroups, transformations.APPLY);
                     for (let buildings in combinedApply) {
                         building_storage.push(combinedApply[buildings][0]);
                     }
                     filteredData = building_storage;
-
-                }
-
-                // Show only desired columns
-                for (let eachClass of filteredData) {
-                    let row: any = {};
-                    for (let column of columns) {
-                        if (validNumericKeys(column)) {                             //TODO: need more robust filter to handle cases where it is anything (ie maxSeats) b/c corresponding
-                            row[column] = parseFloat(eachClass[correspondingJSONKey(column)]);
+                    for (let eachClass of filteredData) {
+                        let row: any = {};
+                        for (let column of columns) {
+                            row[column] = eachClass[column];
                         }
-                        else {
-                            row[column] = eachClass[correspondingJSONKey(column)];
-                        }
+                        finalArray.push(row);
                     }
-                    finalArray.push(row);
                 }
+                else {
+                    for (let eachClass of filteredData) {
+                        let row: any = {};
+                        for (let column of columns) {
+                            if (validNumericKeys(column)) {
+                                row[column] = parseFloat(eachClass[correspondingJSONKey(column)]);
+                            }
+                            else {
+                                row[column] = eachClass[correspondingJSONKey(column)];
+                            }
+                        }
+                        finalArray.push(row);
+                    }
+                }
+
                 // Sort by column
                 let sortOrder = order;
 
-                if(typeof sortOrder != "undefined") {                                           //TODO Create a new sort function ontop of this
-                    if(validSortableKeys(sortOrder)) {
-                        finalArray = sortByNum(finalArray, sortOrder);
+                if(typeof sortOrder != "undefined") {
+                    if (typeof sortOrder == 'object') {
+                           finalArray= sortTransformData(finalArray,sortOrder);
                     }
                     else {
-                        finalArray = sortByChar(finalArray, correspondingJSONKey(sortOrder));
+                        if(validSortableKeys(sortOrder)) {
+                            finalArray = sortByNum(finalArray, sortOrder);
+                        }
+                        else {
+                            finalArray = sortByChar(finalArray, correspondingJSONKey(sortOrder));
+                        }
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                //console.log (finalFilteredData); //Is it different for courses vs rooms?!?!?
+                console.log (finalFilteredData); //Is it different for courses vs rooms?!?!?
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -265,10 +320,8 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function applyFilterData(dataset:any, request:any, columns:any) :any {
+function applyFilterData(dataset:any, request:any) :any {
     for (let filterTerms of request) {
-        //TODO: Columns equal to name Object.keys(filterTerms)[0] == Columns
-
         if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "MAX") {
             let numerickey = filterTerms[Object.keys(filterTerms)[0]].MAX;
             if (validNumericKeys(numerickey)){ //Check if is valid number
@@ -286,7 +339,7 @@ function applyFilterData(dataset:any, request:any, columns:any) :any {
                 }
             }
             else {
-                //TODO return error
+                throw new Error("Must be a numeric key");
             }
         }
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "MIN") {
@@ -307,7 +360,7 @@ function applyFilterData(dataset:any, request:any, columns:any) :any {
                 }
             }
             else {
-                //TODO return error
+                throw new Error("Must be a numeric key");
             }
         }
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "AVG") {
@@ -317,61 +370,71 @@ function applyFilterData(dataset:any, request:any, columns:any) :any {
                     let avg = 0;
                     for(let rooms of dataset[groups]) {
                         let x = +rooms[numerickey]              //Convert string to number
+                        x = x * 10;
+                        x = Number(x.toFixed(0));
                         avg += x;
                     }
+                    avg = avg / dataset[groups].length ;
+                    avg = avg / 10;
+                    avg = Number(avg.toFixed(2))
                     let variablename:string = Object.keys(filterTerms)[0];
-                    (dataset[groups][0])[variablename] = avg/dataset[groups].length;
+                    (dataset[groups][0])[variablename] = avg;
                 }
             }
             else {
-                //TODO return error
+                throw new Error("Must be a numeric key");
             }
         }
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "COUNT") {
             let numerickey = filterTerms[Object.keys(filterTerms)[0]].COUNT;
             if (validNumericKeys(numerickey)){
                 for (let groups in dataset) {
+                    let count:any = {}
+                    for(let groupobject of dataset[groups]) {
+                        count[groupobject[numerickey]] = 1 + (count[groupobject[numerickey]] || 0);
+                    }
                     let variablename:string = Object.keys(filterTerms)[0];
-                    (dataset[groups][0])[variablename] = dataset[groups].length;
+                    (dataset[groups][0])[variablename] = Object.keys(count).length;
                 }
             }
             else {
-                //TODO return error
+                throw new Error("Must be a numeric key");
             }
         }
 
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "SUM") {
             let numerickey = filterTerms[Object.keys(filterTerms)[0]].SUM;
-            if (validNumericKeys(numerickey)){                for (let groups in dataset) {
-                let sum = 0;
-                for(let rooms of dataset[groups]) {
-                    let x = +rooms[numerickey]              //Convert string to number
-                    sum += x;
+            if (validNumericKeys(numerickey)){
+                for (let groups in dataset) {
+                    let sum = 0;
+                    for(let rooms of dataset[groups]) {
+                        let x = +rooms[numerickey]              //Convert string to number
+                        sum += x;
+                    }
+                    let variablename:string = Object.keys(filterTerms)[0];
+                    (dataset[groups][0])[variablename] = sum;
                 }
-                let variablename:string = Object.keys(filterTerms)[0];
-                (dataset[groups][0])[variablename] = sum;
-            }
             }
             else {
-                //TODO return error
+                throw new Error("Must be a numeric key");
             }
         }
         else {
-            //TODO Throw an error
+            throw new Error("Command must be MIN,MAX,SUM,COUNT, or AVG");
         }
     }
     return dataset;
 
 }
 
-function groupFilterData(dataset: any, request: any, columns:any): any {
+function groupFilterData(dataset: any, request: any): any {
     let finalGroups:any = {};
     let finalGroupsStringID: string = "";
     let groupings: any = request.GROUP;
         for (let objects of dataset) {                      //Going through all the objects in the filtered dataset
             for (let groupingsId of groupings) {            //Checking every critera of the group to make sure they are combined properly
-                if (groupingsId == "rooms_lat" || groupingsId == "rooms_lon") {         //TODO: temp placeholder, needs to be more robust for all numbers
-                    finalGroupsStringID = finalGroupsStringID.concat(objects[groupingsId].toString);
+                if (validNumericKeys(groupingsId)) {
+                    finalGroupsStringID = finalGroupsStringID.concat(objects[groupingsId].toString());
                 }
                 else {
                     finalGroupsStringID =finalGroupsStringID.concat(objects[groupingsId]);
@@ -633,9 +696,29 @@ function regexChecker(valueToBeChecked: any, rule: string) {
     }
 }
 
+function sortTransformData(data: Object[], order: any) {
+    data.sort(function (a: any, b: any) {
+        let dir: number = (order.dir == "DOWN") ? -1 : 1;
+        let keys: string[] = order["keys"];
+        let recursion = function (a: any, b: any, keynum: any): number {
+            if (a[keys[keynum]] > b [keys[keynum]]) {
+                return 1;
+            }
+            else if (a[keys[keynum]] < b [keys[keynum]]) {
+                return -1;
+            }
+
+            else
+                (keys[keynum + 1]) ? recursion(a, b, keynum + 1) : 0;
+        }
+        return dir *recursion(a,b,0)
+    });
+    return data;
+}
+
 function sortByNum(data: any, order: string) {
     data.sort(function (a: any, b: any) {
-        if (order == "courses_uuid" || "courses_id") {
+        if (order == "courses_uuid" || "courses_id" || "rooms_lat" || "rooms_lon") {
             let dataA = parseFloat(a[order]), dataB = parseFloat(b[order]);
             return dataA-dataB;
         }
@@ -657,12 +740,6 @@ function sortByChar(data: any, order: string) {
     return data;
 }
 
-function numberConverter(string:string) {
-    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit',
-        'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
-    return validNumKeySet.has(string);
-}
-
 function validNumericKeys(string : string) {
     let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit',
         'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
@@ -672,7 +749,7 @@ function validNumericKeys(string : string) {
 
 function validSortableKeys(string : string) {
     let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit', 'courses_uuid',
-        'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon', 'courses_id']);
+        'courses_year', 'rooms_lat', 'rooms_lon', 'courses_id']);
     return validNumKeySet.has(string);
 }
 
@@ -786,7 +863,7 @@ function formatHTMLData(data: any) {
                             roomNumberObject["rooms_lon"] = room_object["rooms_lon"];
                             roomNumberObject["rooms_name"] = room_object["rooms_name"][i];
                             roomNumberObject["rooms_number"] = room_object["rooms_number"][i];
-                            roomNumberObject["rooms_seats"] = room_object["rooms_seats"][i];
+                            roomNumberObject["rooms_seats"] = parseInt(room_object["rooms_seats"][i]);
                             roomNumberObject["rooms_type"] = room_object["rooms_type"][i];
                             roomNumberObject["rooms_furniture"] = room_object["rooms_furniture"][i];
                             roomNumberObject["rooms_href"] = room_object["rooms_href"][i];
@@ -957,4 +1034,18 @@ function hrefLinks (index : any) {
 
 function isEmptyObject(obj:any) {
     return !Object.keys(obj).length;
+};
+
+function arraysEqual(a:any, b:any) {                //http://stackoverflow.com/questions/3115982/how-to-check-if-two-arrays-are-equal-with-javascript
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+
+    a = a.sort();
+    b = b.sort();
+
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 };
