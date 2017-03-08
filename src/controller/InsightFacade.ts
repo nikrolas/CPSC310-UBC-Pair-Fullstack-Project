@@ -191,12 +191,10 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 else {
-                    return reject(insightResponseConstructor(400, {"error": "Order must be either a object with dir and keys or a string contained in columns"}));
+                    return reject(insightResponseConstructor(400, {"error": "Order keys must either be a string or object"}));
                 }
             }
-            else {
-                return reject(insightResponseConstructor(400, {"error": "Order is empty"}));
-            }
+
 
             // Checks for empty COLUMNS array or missing COLUMNS array
             if(columns.length == 0 || typeof columns == "undefined") {
