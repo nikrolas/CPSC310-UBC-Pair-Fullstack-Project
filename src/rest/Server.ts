@@ -7,6 +7,7 @@ import restify = require('restify');
 
 import Log from "../Util";
 import {InsightResponse} from "../controller/IInsightFacade";
+import InsightFacade from "../controller/InsightFacade";
 
 /**
  * This configures the REST endpoints for the server.
@@ -45,6 +46,7 @@ export default class Server {
      * @returns {Promise<boolean>}
      */
     public start(): Promise<boolean> {
+        let insightFacade = new InsightFacade();
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -54,6 +56,7 @@ export default class Server {
                     name: 'insightUBC'
                 });
 
+                that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
                 that.rest.get('/', function (req: restify.Request, res: restify.Response, next: restify.Next) {
                     res.send(200);
                     return next();
@@ -64,6 +67,51 @@ export default class Server {
                 that.rest.get('/echo/:msg', Server.echo);
 
                 // Other endpoints will go here
+                //Put endpoint
+                that.rest.put('/dataset/:id', function (req: restify.Request, res: restify.Response,
+                                                        next: restify.Next) {
+                    let dataStr = new Buffer(req.params.body).toString('base64');
+
+                    insightFacade.addDataset(req.params.id, dataStr)
+                        .then(function (responseFromInsight) {
+                            res.json(responseFromInsight.code, responseFromInsight.body);
+                        })
+                        .catch(function (err) {
+                            res.json(err.code, err.body);
+                        });
+
+                    return next();
+                });
+
+                //Delete endpoint
+                that.rest.del('/dataset/:id', function (req: restify.Request, res: restify.Response,
+                                                        next: restify.Next) {
+
+                    insightFacade.removeDataset(req.params.id)
+                        .then(function (responseFromInsight) {
+                            res.json(responseFromInsight.code, responseFromInsight.body);
+                        })
+                        .catch(function (err) {
+                            res.json(err.code, err.body);
+                        });
+
+                    return next();
+                });
+
+                //Post endpoint
+                that.rest.post('/query', function (req: restify.Request, res: restify.Response,
+                                                   next: restify.Next) {
+
+                    insightFacade.performQuery(req.body)
+                        .then(function (responseFromInsight) {
+                            res.json(responseFromInsight.code, responseFromInsight.body);
+                        })
+                        .catch(function (err) {
+                            res.json(err.code, err.body);
+                        });
+
+                    return next();
+                });
 
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);

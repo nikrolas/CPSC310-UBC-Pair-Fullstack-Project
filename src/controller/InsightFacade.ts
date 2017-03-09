@@ -153,6 +153,7 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 else {
                     fs.unlinkSync("./cache.json");
+                    reWriteJSONFile(datasetHash);
                     return fulfill(insightResponseConstructor(204, {}));
                 }
             }

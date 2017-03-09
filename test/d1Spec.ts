@@ -203,6 +203,7 @@ describe("d1Spec", function () {
         };
         insightFacade.performQuery(qr)
             .then(function (response) {
+                expect(response.body).to.deep.equal({"render":"TABLE","result":[{"courses_dept":"math","courses_avg":99.78},{"courses_dept":"math","courses_avg":99.78}]});
                 expect(response.code).is.equal(200);
                 done();
             })
