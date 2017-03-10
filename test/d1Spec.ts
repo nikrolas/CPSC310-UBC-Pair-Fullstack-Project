@@ -15,12 +15,29 @@ describe("d1Spec", function () {
     let data = fs.readFileSync("./courses.zip");
     let data1 = fs.readFileSync("./test3.zip");
 
+    before(function () {
+        if (fs.existsSync("./cache.json")) {
+            fs.unlinkSync("./cache.json");
+        }
+    });
+
     beforeEach(function () {
         insightFacade = new InsightFacade();
     });
 
-    it("Dataset didn't exist; added successfully", function (done) {
-      // fs.unlinkSync("./cache.json");
+    it("Remove dataset before cache is created", function (done) {
+        insightFacade.removeDataset("courses")
+            .then(function () {
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(404);
+                done();
+            })
+    });
+
+    it("Add dataset that didn't exist", function (done) {
        insightFacade.addDataset("courses", data.toString( 'base64'))
            .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -32,7 +49,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it("Adding invalid dataset", function (done) {
+    it("Add invalid dataset", function (done) {
         let data = fs.readFileSync("./README.md");
         insightFacade.addDataset("invalidData", data.toString('base64'))
             .then(function () {
@@ -45,7 +62,19 @@ describe("d1Spec", function () {
             })
     });
 
-    it("Adding valid zip, no real data", function (done) {
+    it("Add dataset with invalid ID", function (done) {
+        insightFacade.addDataset("cdrses", data.toString( 'base64'))
+            .then(function () {
+                expect.fail();
+                done();
+            })
+            .catch(function (err) {
+                expect(err.code).is.equal(400);
+                done();
+            })
+    });
+
+    it("Add valid zip with no data", function (done) {
         let data = fs.readFileSync("./emptyText.zip");
         insightFacade.addDataset("noData", data.toString('base64'))
             .then(function () {
@@ -58,7 +87,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it("remove dataset that is not in the set, error thrown", function (done) {
+    it("Remove non-existent dataset", function (done) {
         insightFacade.removeDataset("blah")
             .then(function () {
                 expect.fail();
@@ -70,7 +99,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it("remove dataset that is in the set", function (done) {
+    it("Remove valid dataset", function (done) {
         insightFacade.removeDataset("courses")
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -94,7 +123,7 @@ describe("d1Spec", function () {
             })
     });
 
-    it("Dataset exist; replaced successfully ", function (done) {
+    it("Add dataset that exists; replace data", function (done) {
         insightFacade.addDataset("courses", data1.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(201);
@@ -105,19 +134,6 @@ describe("d1Spec", function () {
                 done();
             })
     });
-
-
-/*    it("remove second dataset that is in the set", function (done) {
-        insightFacade.removeDataset("courses")
-            .then(function (response) {
-                expect(response.code).is.equal(204);
-                done();
-            })
-            .catch(function () {
-                expect.fail();
-                done();
-            })
-    });*/
 
     it("Dataset does not exist; added successfully for filter tests ", function (done) {
         insightFacade.addDataset("courses", data.toString('base64'))

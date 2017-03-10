@@ -140,12 +140,17 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill, reject) {
             if (fs.existsSync("./cache.json")) {
                 datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
-            }
-            else {
+                if (id in datasetHash) {
+                    delete datasetHash[id];
+                    fs.unlinkSync("./cache.json");
+                    reWriteJSONFile(datasetHash);
+                    return fulfill(insightResponseConstructor(204, {}));
+                }
                 return reject(insightResponseConstructor(404, {"missing":[id]}));
             }
-            if(id in datasetHash){
-                delete datasetHash[id];
+/*            else {
+                return reject(insightResponseConstructor(404, {"missing":[id]}));
+            }
                 if(!isEmptyObject(datasetHash)) {
                     fs.unlinkSync("./cache.json");
                     reWriteJSONFile(datasetHash);
@@ -153,10 +158,9 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 else {
                     fs.unlinkSync("./cache.json");
-                    reWriteJSONFile(datasetHash);
                     return fulfill(insightResponseConstructor(204, {}));
                 }
-            }
+            }*/
             else {
                 return reject(insightResponseConstructor(404, {"missing": id}));                 //POTENTIAL ERROR?
             }
@@ -310,7 +314,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                console.log (finalFilteredData); //Is it different for courses vs rooms?!?!?
+                //console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -709,7 +713,7 @@ function sortTransformData(data: Object[], order: any) {
 
             else
                 (keys[keynum + 1]) ? recursion(a, b, keynum + 1) : 0;
-        }
+        };
         return dir *recursion(a,b,0)
     });
     return data;
@@ -906,7 +910,6 @@ function helperRecursion (roomData:any) {
                         if (attr.value == "canonical") {
                             fileObject["rooms_shortname"] = i.attrs[1].value;                          //room_shortname
                         }
-
                         if(i.tagName == "td" && attr.value == "views-field views-field-field-room-number") {
                             rooms_number.push(i.childNodes[1].childNodes[0].value);
                             rooms_href.push(i.childNodes[1].attrs[0].value);
@@ -980,11 +983,11 @@ function locationRequest(options: any) {
     return new Promise(function (fulfill, reject) {
         let rawData = '';
         http.get(options, (res: any) => {
-            let error;
+/*            let error;
             if (error) {
                 res.resume();
                 return;
-            }
+            }*/
             res.setEncoding('utf8');
             res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {
@@ -997,7 +1000,6 @@ function locationRequest(options: any) {
 }
 
 //Allowable rooms from index.html
-
 function hrefLinks (index : any) {
     let queue: any  =[];
     let fileObject:any =[];
@@ -1033,9 +1035,10 @@ function hrefLinks (index : any) {
 
 function isEmptyObject(obj:any) {
     return !Object.keys(obj).length;
-};
+}
 
-function arraysEqual(a:any, b:any) {                //http://stackoverflow.com/questions/3115982/how-to-check-if-two-arrays-are-equal-with-javascript
+//http://stackoverflow.com/questions/3115982/how-to-check-if-two-arrays-are-equal-with-javascript
+function arraysEqual(a:any, b:any) {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (a.length != b.length) return false;
@@ -1043,8 +1046,8 @@ function arraysEqual(a:any, b:any) {                //http://stackoverflow.com/q
     a = a.sort();
     b = b.sort();
 
-    for (var i = 0; i < a.length; ++i) {
+    for (let i = 0; i < a.length; ++i) {
         if (a[i] !== b[i]) return false;
     }
     return true;
-};
+}

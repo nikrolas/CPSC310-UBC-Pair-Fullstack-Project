@@ -14,6 +14,12 @@ describe("d3Spec", function () {
 
     let dataRooms = fs.readFileSync("./rooms.zip");
 
+    before(function () {
+        if (fs.existsSync("./cache.json")) {
+            fs.unlinkSync("./cache.json");
+        }
+    });
+
     beforeEach(function () {
         insightFacade = new InsightFacade();
     });
@@ -21,7 +27,6 @@ describe("d3Spec", function () {
 
 //TODO: Working on transformation
     it("Dataset didn't exist; added rooms successfully", function (done) {
-        fs.unlinkSync("./cache.json");
         insightFacade.addDataset("rooms", dataRooms.toString('base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
