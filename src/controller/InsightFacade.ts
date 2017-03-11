@@ -277,7 +277,7 @@ export default class InsightFacade implements IInsightFacade {
                     for (let eachClass of filteredData) {
                         let row: any = {};
                         for (let column of columns) {
-                            row[column] = eachClass[column];
+                            row[column] = eachClass[correspondingJSONKeyApply(column)];
                         }
                         finalArray.push(row);
                     }
@@ -287,10 +287,10 @@ export default class InsightFacade implements IInsightFacade {
                         let row: any = {};
                         for (let column of columns) {
                             if (validNumericKeys(column)) {
-                                row[column] = parseFloat(eachClass[correspondingJSONKey(column)]);
+                                row[column] = parseFloat(eachClass[correspondingJSONKeyApply(column)]);
                             }
                             else {
-                                row[column] = eachClass[correspondingJSONKey(column)];
+                                row[column] = eachClass[correspondingJSONKeyApply(column)];
                             }
                         }
                         finalArray.push(row);
@@ -302,19 +302,28 @@ export default class InsightFacade implements IInsightFacade {
 
                 if(typeof sortOrder != "undefined") {
                     if (typeof sortOrder == 'object') {
-                           finalArray= sortTransformData(finalArray,sortOrder);
+                        let column_object:any = {};
+                        for (let column_names of columns) {
+                            column_object[column_names]= 1;
+                        }
+                        for(let order_keys of sortOrder.keys) {
+                            if (!(order_keys in column_object)) {
+                                return reject(insightResponseConstructor(400, {"error": "Order keys need to be included in columns"}));
+                            }
+                        }
+                        finalArray= sortTransformData(finalArray,sortOrder);
                     }
                     else {
                         if(validSortableKeys(sortOrder)) {
-                            finalArray = sortByNum(finalArray, sortOrder);
+                            finalArray = sortByChar(finalArray, correspondingJSONKey(sortOrder));
                         }
                         else {
-                            finalArray = sortByChar(finalArray, correspondingJSONKey(sortOrder));
+                            finalArray = sortByNum(finalArray, sortOrder);
                         }
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                //console.log (finalFilteredData);
+                console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -437,10 +446,10 @@ function groupFilterData(dataset: any, request: any): any {
         for (let objects of dataset) {                      //Going through all the objects in the filtered dataset
             for (let groupingsId of groupings) {            //Checking every critera of the group to make sure they are combined properly
                 if (validNumericKeys(groupingsId)) {
-                    finalGroupsStringID = finalGroupsStringID.concat(objects[groupingsId].toString());
+                    finalGroupsStringID = finalGroupsStringID.concat(objects[correspondingJSONKeyApply(groupingsId)].toString());
                 }
                 else {
-                    finalGroupsStringID =finalGroupsStringID.concat(objects[groupingsId]);
+                    finalGroupsStringID =finalGroupsStringID.concat(objects[correspondingJSONKeyApply(groupingsId)]);
                 }
             }
             if (typeof finalGroups[finalGroupsStringID] == "undefined") {
@@ -701,8 +710,18 @@ function regexChecker(valueToBeChecked: any, rule: string) {
 
 function sortTransformData(data: Object[], order: any) {
     data.sort(function (a: any, b: any) {
-        let dir: number = (order.dir == "DOWN") ? -1 : 1;
+        let dir: number;
         let keys: string[] = order["keys"];
+        if (order.dir == "DOWN") {
+            dir = -1;
+        }
+        else if (order.dir == "UP") {
+            dir = 1;
+        }
+        else{
+            throw new Error("Dir needs to be either UP or DOWN");
+        }
+
         let recursion = function (a: any, b: any, keynum: any): number {
             if (a[keys[keynum]] > b [keys[keynum]]) {
                 return 1;
@@ -712,8 +731,9 @@ function sortTransformData(data: Object[], order: any) {
             }
 
             else
-                (keys[keynum + 1]) ? recursion(a, b, keynum + 1) : 0;
+                return (keys[keynum + 1]) ? recursion(a, b, keynum + 1) : 0;
         };
+
         return dir *recursion(a,b,0)
     });
     return data;
@@ -744,15 +764,15 @@ function sortByChar(data: any, order: string) {
 }
 
 function validNumericKeys(string : string) {
-    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit',
+    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit','courses_uuid',
         'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
     return validNumKeySet.has(string);
 }
 
 
 function validSortableKeys(string : string) {
-    let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit', 'courses_uuid',
-        'courses_year', 'rooms_lat', 'rooms_lon', 'courses_id']);
+    let validNumKeySet = new Set(['courses_dept', 'courses_instructor','courses_title','rooms_fullname','rooms_shortname',
+        'rooms_number','rooms_name', 'rooms_address', 'rooms_type', 'rooms_furniture', 'rooms_href','courses_id']);
     return validNumKeySet.has(string);
 }
 
@@ -793,6 +813,41 @@ function correspondingJSONKey(given_string: string) {
         return given_string;
     }
     return "Invalid";
+}
+
+function correspondingJSONKeyApply(given_string: string) {
+    if (given_string == 'courses_dept') {
+        return "Subject";
+    }
+    if (given_string == 'courses_id') {
+        return "Course";
+    }
+    if (given_string == 'courses_avg') { //number
+        return "Avg";
+    }
+    if (given_string == 'courses_instructor') {
+        return "Professor";
+    }
+    if (given_string == 'courses_title') {
+        return "Title";
+    }
+    if (given_string == 'courses_pass') { //number
+        return "Pass";
+    }
+    if (given_string == 'courses_fail') { //number
+        return "Fail";
+    }
+    if (given_string == 'courses_audit') { //number
+        return "Audit";
+    }
+    if (given_string == 'courses_uuid') { //STRING, special case
+        return "id";
+    }
+    if (given_string == 'courses_year') {
+        return "Year";
+    }
+    return given_string;
+
 }
 
 function insightResponseConstructor(c : number, b: Object) {
