@@ -206,10 +206,16 @@ export default class InsightFacade implements IInsightFacade {
                 return reject(insightResponseConstructor(400, {"error": "Columns missing or empty"}));
             }
             // Checks for invalid OPTIONS
-            if(form == "undefined" || form != "TABLE") {
+            if(typeof form == "undefined" || form != "TABLE") {
                 return reject(insightResponseConstructor(400, {"error": "Options is invalid"}));
             }
-            let setID = columns[0].split('_')[0];
+            let setID:string;
+
+            if (typeof transformations != "undefined") {
+                 setID = transformations.GROUP[0].split('_')[0];
+            } else {
+                 setID = columns[0].split('_')[0];
+            }
 
             if (fs.existsSync("./cache.json")) {
                 datasetHash = JSON.parse(fs.readFileSync("./cache.json"));
@@ -218,7 +224,7 @@ export default class InsightFacade implements IInsightFacade {
                 return reject(insightResponseConstructor(424, {"missing":[setID]}));
             }
 
-            // Checks if cached dataset has the given ID, query invalid if it does not exist
+        //    Checks if cached dataset has the given ID, query invalid if it does not exist
             if (typeof datasetHash[setID] == "undefined") {
                 return reject(insightResponseConstructor(424, {"missing": [setID]}));
             }
