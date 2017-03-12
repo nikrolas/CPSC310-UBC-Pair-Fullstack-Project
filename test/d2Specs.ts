@@ -970,43 +970,43 @@ describe("d2Spec", function () {
             })
     });
 
-    it("Filter by courses year 1900; 4 courses", function (done) {
-        let qr : QueryRequest =
-            {
-                WHERE: {
-                    AND:[
-                        {
-                            EQ: {
-                                "courses_year": 1900
-                            }
-                        },
-                        {
-                            GT: {
-                                "courses_avg": 98.7
-                            }
-                        }
-                    ]
-                },
-                OPTIONS: {
-                    COLUMNS: [
-                        "courses_dept",
-                        "courses_id"
-                    ],
-                    ORDER: "courses_id",
-                    FORM: "TABLE"
-                }
-            };
-        insightFacade.performQuery(qr)
-            .then(function (response) {
-                expect(response.code).is.equal(200);
-                expect(response.body).to.deep.equal({"render":"TABLE","result":[{"courses_dept":"spph","courses_id":"300"},{"courses_dept":"epse","courses_id":"449"},{"courses_dept":"nurs","courses_id":"509"},{"courses_dept":"math","courses_id":"527"},{"courses_dept":"eece","courses_id":"541"}]});
-                done();
-            })
-            .catch(function () {
-                expect.fail();
-                done();
-            })
-    });
+    // it("Filter by courses year 1900; 4 courses", function (done) {
+    //     let qr : QueryRequest =
+    //         {
+    //             WHERE: {
+    //                 AND:[
+    //                     {
+    //                         EQ: {
+    //                             "courses_year": 1900
+    //                         }
+    //                     },
+    //                     {
+    //                         GT: {
+    //                             "courses_avg": 98.7
+    //                         }
+    //                     }
+    //                 ]
+    //             },
+    //             OPTIONS: {
+    //                 COLUMNS: [
+    //                     "courses_dept",
+    //                     "courses_id"
+    //                 ],
+    //                 ORDER: "courses_id",
+    //                 FORM: "TABLE"
+    //             }
+    //         };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect(response.code).is.equal(200);
+    //             expect(response.body).to.deep.equal({"render":"TABLE","result":[{"courses_dept":"spph","courses_id":"300"},{"courses_dept":"epse","courses_id":"449"},{"courses_dept":"nurs","courses_id":"509"},{"courses_dept":"math","courses_id":"527"},{"courses_dept":"eece","courses_id":"541"}]});
+    //             done();
+    //         })
+    //         .catch(function () {
+    //             expect.fail();
+    //             done();
+    //         })
+    // });
 
     it("Finding years a specific course was offered; 1 class", function (done) {
         let qr : QueryRequest =

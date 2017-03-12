@@ -323,7 +323,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                console.log (finalFilteredData);
+                //console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
