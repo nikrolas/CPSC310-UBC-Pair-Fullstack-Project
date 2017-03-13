@@ -51,36 +51,89 @@ describe("d3Spec", function () {
             })
     });
 
-    // Failing Tests
-    // it("advanced test", function (done) {
-    //     let qr: QueryRequest ={
-    //         WHERE:{EQ: {"courses_avg":70}
-    //         },
-    //         OPTIONS: {
-    //             COLUMNS: [
-    //                 "courses_pass","jack","coursesavg","courses_fail"
-    //             ],
-    //             ORDER:{
-    //                 "dir": "DOWN",
-    //                 "keys": ["coursesavg","courses_pass"]
-    //             },
-    //             FORM: "TABLE"
-    //         },
-    //         TRANSFORMATIONS: {
-    //             GROUP: ["courses_fail","courses_pass"],
-    //             APPLY: [{"coursesavg": {MAX :"courses_avg"}},{"jack":{AVG:"courses_audit"}}]
-    //         }
-    //     };
-    //     insightFacade.performQuery(qr)
-    //         .then(function (response) {
-    //             expect(response.body).to.deep.equal({"render":"TABLE","result":[{"courses_fail":66,"courses_pass":1087,"coursesavg":70,"jack":3},{"courses_fail":11,"courses_pass":304,"coursesavg":70,"jack":0},{"courses_fail":31,"courses_pass":218,"coursesavg":70,"jack":1},{"courses_fail":22,"courses_pass":199,"coursesavg":70,"jack":1},{"courses_fail":15,"courses_pass":189,"coursesavg":70,"jack":0},{"courses_fail":4,"courses_pass":141,"coursesavg":70,"jack":2},{"courses_fail":6,"courses_pass":107,"coursesavg":70,"jack":0},{"courses_fail":6,"courses_pass":87,"coursesavg":70,"jack":0},{"courses_fail":7,"courses_pass":78,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":60,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":54,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":53,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":46,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":46,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":45,"coursesavg":70,"jack":1.5},{"courses_fail":1,"courses_pass":41,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":40,"coursesavg":70,"jack":0},{"courses_fail":2,"courses_pass":39,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":38,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":38,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":33,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":33,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":32,"coursesavg":70,"jack":0},{"courses_fail":2,"courses_pass":30,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":30,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":28,"coursesavg":70,"jack":0},{"courses_fail":2,"courses_pass":25,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":24,"coursesavg":70,"jack":0},{"courses_fail":6,"courses_pass":23,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":22,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":20,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":16,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":15,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":14,"coursesavg":70,"jack":3},{"courses_fail":1,"courses_pass":13,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":9,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":6,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":5,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":5,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":4,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":3,"coursesavg":70,"jack":1},{"courses_fail":0,"courses_pass":2,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":1,"coursesavg":70,"jack":0}]});
-    //             done();
-    //         })
-    //         .catch(function (err) {
-    //             expect.fail();
-    //             done();
-    //         })
-    // });
+
+    // Shotgun Apply and COUNT Tests
+    it("Count Speicfic ", function (done) {
+        let qr: QueryRequest = {
+            WHERE: {},
+            OPTIONS: {
+                COLUMNS: [
+                    "avgSeats",
+                    "count",
+                    "rooms_fullname"
+                ],
+                ORDER: {
+                    dir: "DOWN",
+                    keys: [
+                        "avgSeats"
+                    ]
+                },
+                FORM: "TABLE"
+            },
+            TRANSFORMATIONS: {
+                GROUP: [
+                    "rooms_fullname"
+                ],
+                APPLY: [
+                    {
+                        "avgSeats": {
+                            AVG: "rooms_seats"
+                        }
+                    },
+                    {
+                        "count": {
+                            COUNT: "rooms_fullname"
+                        }
+                    }
+                ]
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                expect(response.body).to.deep.equal({"render":"TABLE","result":[{"rooms_fullname":"Centre for Interactive  Research on Sustainability","avgSeats":426,"count":1},{"rooms_fullname":"Student Recreation Centre","avgSeats":299,"count":1},{"rooms_fullname":"Life Sciences Centre","avgSeats":275,"count":1},{"rooms_fullname":"Wesbrook","avgSeats":213.5,"count":1},{"rooms_fullname":"Earth Sciences Building","avgSeats":193.33,"count":1},{"rooms_fullname":"Robert F. Osborne Centre","avgSeats":173.67,"count":1},{"rooms_fullname":"Friedman Building","avgSeats":160,"count":1},{"rooms_fullname":"Chemistry","avgSeats":152.17,"count":1},{"rooms_fullname":"Aquatic Ecosystems Research Laboratory","avgSeats":144,"count":1},{"rooms_fullname":"Hebb","avgSeats":134.25,"count":1},{"rooms_fullname":"Leonard S. Klinck (also known as CSCI)","avgSeats":126.25,"count":1},{"rooms_fullname":"Chemical and Biological Engineering Building","avgSeats":118,"count":1},{"rooms_fullname":"Hennings","avgSeats":109.67,"count":1},{"rooms_fullname":"Mathematics Annex","avgSeats":106,"count":1},{"rooms_fullname":"Hugh Dempster Pavilion","avgSeats":88,"count":1},{"rooms_fullname":"Biological Sciences","avgSeats":84,"count":1},{"rooms_fullname":"MacLeod","avgSeats":83.83,"count":1},{"rooms_fullname":"Woodward (Instructional Resources Centre-IRC)","avgSeats":81.06,"count":1},{"rooms_fullname":"Geography","avgSeats":77.38,"count":1},{"rooms_fullname":"Iona Building","avgSeats":75,"count":1},{"rooms_fullname":"West Mall Swing Space","avgSeats":64.59,"count":1},{"rooms_fullname":"Forest Sciences Centre","avgSeats":62.1,"count":1},{"rooms_fullname":"Mathematics","avgSeats":61.88,"count":1},{"rooms_fullname":"Henry Angus","avgSeats":55.21,"count":1},{"rooms_fullname":"Frederic Lasserre","avgSeats":54.17,"count":1},{"rooms_fullname":"Buchanan","avgSeats":52.3,"count":1},{"rooms_fullname":"Earth and Ocean Sciences - Main","avgSeats":50,"count":1},{"rooms_fullname":"Pharmaceutical Sciences Building","avgSeats":48.91,"count":1},{"rooms_fullname":"Civil and Mechanical Engineering","avgSeats":48.17,"count":1},{"rooms_fullname":"Frank Forward","avgSeats":47.33,"count":1},{"rooms_fullname":"Brock Hall Annex","avgSeats":47,"count":1},{"rooms_fullname":"Anthropology and Sociology","avgSeats":46.5,"count":1},{"rooms_fullname":"Neville Scarfe","avgSeats":45.64,"count":1},{"rooms_fullname":"Allard Hall (LAW)","avgSeats":45.6,"count":1},{"rooms_fullname":"Food, Nutrition and Health","avgSeats":43.83,"count":1},{"rooms_fullname":"The Leon and Thea Koerner University Centre","avgSeats":40.75,"count":1},{"rooms_fullname":"War Memorial Gymnasium","avgSeats":32.5,"count":1},{"rooms_fullname":"Irving K Barber Learning Centre","avgSeats":31.56,"count":1},{"rooms_fullname":"Orchard Commons","avgSeats":31.52,"count":1},{"rooms_fullname":"MacMillan","avgSeats":30.16,"count":1},{"rooms_fullname":"Ponderosa Commons: Oak House","avgSeats":30,"count":1},{"rooms_fullname":"Jack Bell Building for the School of Social Work","avgSeats":28.71,"count":1},{"rooms_fullname":"School of Population and Public Health","avgSeats":27.67,"count":1},{"rooms_fullname":"Auditorium Annex","avgSeats":20.5,"count":1}]});
+                done();
+            })
+            .catch(function () {
+                expect.fail();
+                done();
+            })
+    });
+
+
+    it("Transformation Grouping COUNT ", function (done) {
+        let qr: QueryRequest = {
+            WHERE:{ EQ :{ "courses_avg": 70}
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "coursesfailcount", "courses_fail"
+                ],
+                ORDER:{
+                    dir: "DOWN",
+                    keys: ["courses_fail"]
+                },
+                FORM: "TABLE"
+            },
+            TRANSFORMATIONS: {
+                GROUP: ["courses_fail"],
+                APPLY: [{"coursesfailcount": {COUNT :"courses_pass"}}]
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                expect(response.body).to.deep.equal({"render":"TABLE","result":[{"courses_fail":66,"coursesfailcount":1},{"courses_fail":31,"coursesfailcount":1},{"courses_fail":22,"coursesfailcount":1},{"courses_fail":15,"coursesfailcount":1},{"courses_fail":11,"coursesfailcount":1},{"courses_fail":7,"coursesfailcount":1},{"courses_fail":6,"coursesfailcount":3},{"courses_fail":5,"coursesfailcount":4},{"courses_fail":4,"coursesfailcount":1},{"courses_fail":3,"coursesfailcount":4},{"courses_fail":2,"coursesfailcount":3},{"courses_fail":1,"coursesfailcount":11},{"courses_fail":0,"coursesfailcount":11}]});
+                done();
+            })
+            .catch(function () {
+                expect.fail();
+                done();
+            })
+    });
+
+
+    //End of tests
 
     it("Tie Breaker", function (done) {
         let qr: QueryRequest = {

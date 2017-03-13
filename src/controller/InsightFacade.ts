@@ -219,6 +219,23 @@ export default class InsightFacade implements IInsightFacade {
             let setID:string;
 
             if (typeof transformations != "undefined") {
+                if (typeof transformations.APPLY == "undefined"){
+                    return reject(insightResponseConstructor(400, {"error": "Apply is undefined"}));
+                }
+                if (typeof transformations.GROUP == "undefined") {
+                    return reject(insightResponseConstructor(400, {"error": "Group is undefined"}));
+                }
+                if (transformations.APPLY.length > 1) {
+                    let objectchecker:any = [];
+                    for (let applyobject of transformations.APPLY) {
+                        let keyname = Object.keys(applyobject)[0];
+                        if (objectchecker.includes(keyname) ) {
+                            return reject(insightResponseConstructor(400, {"error": "Must be unique name"}));
+                        }
+                        objectchecker.push(keyname);
+                    }
+                }
+
                 if (transformations.GROUP.length == 0) {
                     return reject(insightResponseConstructor(400, {"error": "Group cannot be empty"}));
                 }
@@ -335,7 +352,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-//                console.log (finalFilteredData);
+                //console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -411,7 +428,6 @@ function applyFilterData(dataset:any, request:any) :any {
         }
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "COUNT") {
             let numerickey = filterTerms[Object.keys(filterTerms)[0]].COUNT;
-            if (validNumericKeys(numerickey)){
                 for (let groups in dataset) {
                     let count:any = {}
                     for(let groupobject of dataset[groups]) {
@@ -420,10 +436,6 @@ function applyFilterData(dataset:any, request:any) :any {
                     let variablename:string = Object.keys(filterTerms)[0];
                     (dataset[groups][0])[variablename] = Object.keys(count).length;
                 }
-            }
-            else {
-                throw new Error("Must be a numeric key");
-            }
         }
 
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "SUM") {
