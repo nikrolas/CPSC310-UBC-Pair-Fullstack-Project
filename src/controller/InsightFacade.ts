@@ -426,6 +426,7 @@ function applyFilterData(dataset:any, request:any) :any {
                 throw new Error("Must be a numeric key");
             }
         }
+        
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "COUNT") {
             let numerickey = filterTerms[Object.keys(filterTerms)[0]].COUNT;
                 for (let groups in dataset) {
