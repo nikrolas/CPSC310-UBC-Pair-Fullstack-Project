@@ -180,7 +180,7 @@ export default class InsightFacade implements IInsightFacade {
             if(typeof where == "undefined" || typeof options == "undefined") {
                 return reject(insightResponseConstructor(400, {"error": "invalid request"}));
             }
-            // Checks if ORDER is contained in columns; query invalid if it is not
+            // Checks if ORDER is an object an object or a string. If object, check if it is proper format
             if(typeof order != "undefined") {
                 if (typeof order == 'string') {
                     if (!columns.includes(order)) {
@@ -191,15 +191,22 @@ export default class InsightFacade implements IInsightFacade {
                     if (typeof order['dir'] == "undefined") {
                         return reject(insightResponseConstructor(400, {"error": "Order dir is undefined"}));
                     }
-                    else if (typeof order['keys'] == "undefined") {
+                    if (typeof order['keys'] == "undefined") {
                         return reject(insightResponseConstructor(400, {"error": "Order keys is undefined"}));
+                    }
+                    if (order['dir'] != "DOWN" && order['dir'] != "UP") {
+                        return reject(insightResponseConstructor(400, {"error": "dir: must be either UP or DOWN"}));
+                    }
+                    for (let keyitems of order['keys']) {
+                        if (!columns.includes(keyitems)) {
+                            return reject(insightResponseConstructor(400, {"error": "keys must be in columns"}));
+                        }
                     }
                 }
                 else {
                     return reject(insightResponseConstructor(400, {"error": "Order keys must either be a string or object"}));
                 }
             }
-
 
             // Checks for empty COLUMNS array or missing COLUMNS array
             if(columns.length == 0 || typeof columns == "undefined") {
@@ -212,7 +219,12 @@ export default class InsightFacade implements IInsightFacade {
             let setID:string;
 
             if (typeof transformations != "undefined") {
-                 setID = transformations.GROUP[0].split('_')[0];
+                if (transformations.GROUP.length == 0) {
+                    return reject(insightResponseConstructor(400, {"error": "Group cannot be empty"}));
+                }
+                else {
+                    setID = transformations.GROUP[0].split('_')[0];
+                }
             } else {
                  setID = columns[0].split('_')[0];
             }
@@ -282,8 +294,11 @@ export default class InsightFacade implements IInsightFacade {
                     filteredData = building_storage;
                     for (let eachClass of filteredData) {
                         let row: any = {};
-                        for (let column of columns) {
-                            row[column] = eachClass[correspondingJSONKeyApply(column)];
+                        for (let groupname of groupcheck) {
+                            row[groupname] = eachClass[correspondingJSONKeyApply(groupname)];
+                        }
+                        for (let applyname of applycheck) {
+                            row[applyname] = eachClass[correspondingJSONKeyApply(applyname)];
                         }
                         finalArray.push(row);
                     }
@@ -308,15 +323,6 @@ export default class InsightFacade implements IInsightFacade {
 
                 if(typeof sortOrder != "undefined") {
                     if (typeof sortOrder == 'object') {
-                        let column_object:any = {};
-                        for (let column_names of columns) {
-                            column_object[column_names]= 1;
-                        }
-                        for(let order_keys of sortOrder.keys) {
-                            if (!(order_keys in column_object)) {
-                                return reject(insightResponseConstructor(400, {"error": "Order keys need to be included in columns"}));
-                            }
-                        }
                         finalArray= sortTransformData(finalArray,sortOrder);
                     }
                     else {
@@ -329,7 +335,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                //console.log (finalFilteredData);
+//                console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -347,7 +353,7 @@ function applyFilterData(dataset:any, request:any) :any {
                     let maxValue = 0;
 
                     for(let rooms of dataset[groups]) {
-                        let x = +rooms[numerickey]              //Convert string to number
+                        let x = rooms[correspondingJSONKeyApply(numerickey)]              //Convert string to number
                         if (x > maxValue) {
                             maxValue = x;
                         }
@@ -368,7 +374,7 @@ function applyFilterData(dataset:any, request:any) :any {
                     let minvalue = 10000;
 
                     for(let rooms of dataset[groups]) {
-                        let x = +rooms[numerickey]              //Convert string to number
+                        let x = rooms[correspondingJSONKeyApply(numerickey)]              //Convert string to number
                         if (x < minvalue) {
                             minvalue = x;
                         }
@@ -387,7 +393,7 @@ function applyFilterData(dataset:any, request:any) :any {
                 for (let groups in dataset) {
                     let avg = 0;
                     for(let rooms of dataset[groups]) {
-                        let x = +rooms[numerickey]              //Convert string to number
+                        let x = rooms[correspondingJSONKeyApply(numerickey)]              //Convert string to number
                         x = x * 10;
                         x = Number(x.toFixed(0));
                         avg += x;
@@ -409,7 +415,7 @@ function applyFilterData(dataset:any, request:any) :any {
                 for (let groups in dataset) {
                     let count:any = {}
                     for(let groupobject of dataset[groups]) {
-                        count[groupobject[numerickey]] = 1 + (count[groupobject[numerickey]] || 0);
+                        count[groupobject[correspondingJSONKeyApply(numerickey)]] = 1 + (count[groupobject[correspondingJSONKeyApply(numerickey)]] || 0);
                     }
                     let variablename:string = Object.keys(filterTerms)[0];
                     (dataset[groups][0])[variablename] = Object.keys(count).length;
@@ -426,7 +432,7 @@ function applyFilterData(dataset:any, request:any) :any {
                 for (let groups in dataset) {
                     let sum = 0;
                     for(let rooms of dataset[groups]) {
-                        let x = +rooms[numerickey]              //Convert string to number
+                        let x = rooms[correspondingJSONKeyApply(numerickey)]              //Convert string to number
                         sum += x;
                     }
                     let variablename:string = Object.keys(filterTerms)[0];

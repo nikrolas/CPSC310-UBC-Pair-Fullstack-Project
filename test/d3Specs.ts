@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe("d3Spec", function () {
+describe.only("d3Spec", function () {
 
     let insightFacade: InsightFacade = null;
     let fs = require("fs");
@@ -52,6 +52,36 @@ describe("d3Spec", function () {
     });
 
     // Failing Tests
+    // it("advanced test", function (done) {
+    //     let qr: QueryRequest ={
+    //         WHERE:{EQ: {"courses_avg":70}
+    //         },
+    //         OPTIONS: {
+    //             COLUMNS: [
+    //                 "courses_pass","jack","coursesavg","courses_fail"
+    //             ],
+    //             ORDER:{
+    //                 "dir": "DOWN",
+    //                 "keys": ["coursesavg","courses_pass"]
+    //             },
+    //             FORM: "TABLE"
+    //         },
+    //         TRANSFORMATIONS: {
+    //             GROUP: ["courses_fail","courses_pass"],
+    //             APPLY: [{"coursesavg": {MAX :"courses_avg"}},{"jack":{AVG:"courses_audit"}}]
+    //         }
+    //     };
+    //     insightFacade.performQuery(qr)
+    //         .then(function (response) {
+    //             expect(response.body).to.deep.equal({"render":"TABLE","result":[{"courses_fail":66,"courses_pass":1087,"coursesavg":70,"jack":3},{"courses_fail":11,"courses_pass":304,"coursesavg":70,"jack":0},{"courses_fail":31,"courses_pass":218,"coursesavg":70,"jack":1},{"courses_fail":22,"courses_pass":199,"coursesavg":70,"jack":1},{"courses_fail":15,"courses_pass":189,"coursesavg":70,"jack":0},{"courses_fail":4,"courses_pass":141,"coursesavg":70,"jack":2},{"courses_fail":6,"courses_pass":107,"coursesavg":70,"jack":0},{"courses_fail":6,"courses_pass":87,"coursesavg":70,"jack":0},{"courses_fail":7,"courses_pass":78,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":60,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":54,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":53,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":46,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":46,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":45,"coursesavg":70,"jack":1.5},{"courses_fail":1,"courses_pass":41,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":40,"coursesavg":70,"jack":0},{"courses_fail":2,"courses_pass":39,"coursesavg":70,"jack":0},{"courses_fail":5,"courses_pass":38,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":38,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":33,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":33,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":32,"coursesavg":70,"jack":0},{"courses_fail":2,"courses_pass":30,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":30,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":28,"coursesavg":70,"jack":0},{"courses_fail":2,"courses_pass":25,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":24,"coursesavg":70,"jack":0},{"courses_fail":6,"courses_pass":23,"coursesavg":70,"jack":0},{"courses_fail":3,"courses_pass":22,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":20,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":16,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":15,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":14,"coursesavg":70,"jack":3},{"courses_fail":1,"courses_pass":13,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":9,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":6,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":5,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":5,"coursesavg":70,"jack":0},{"courses_fail":1,"courses_pass":4,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":3,"coursesavg":70,"jack":1},{"courses_fail":0,"courses_pass":2,"coursesavg":70,"jack":0},{"courses_fail":0,"courses_pass":1,"coursesavg":70,"jack":0}]});
+    //             done();
+    //         })
+    //         .catch(function (err) {
+    //             expect.fail();
+    //             done();
+    //         })
+    // });
+
     it("Tie Breaker", function (done) {
         let qr: QueryRequest = {
             WHERE:{
@@ -218,7 +248,7 @@ describe("d3Spec", function () {
                 done();
             })
     });
-    it("Should be able to querty with more than one apply key ", function (done) {
+    it("Should be able to query with more than one apply key ", function (done) {
         let qr: QueryRequest = {
             WHERE: {},
             OPTIONS: {
