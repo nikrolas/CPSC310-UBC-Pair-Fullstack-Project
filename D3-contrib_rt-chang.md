@@ -1,6 +1,6 @@
-For deliverable d3, this commit received a grade of 81%.
+For deliverable d3, this commit received a grade of 89%.
 
-Test summary: 78% (47 passing, 13 failing, 0 skipped)
+Test summary: 88% (53 passing, 7 failing, 0 skipped)
 Line coverage: 88%
 
 Tested and implemented the REST functionality for the project. Updated previous test files to test lingering bugs and raise coverage. Fixed previous addDataset issues. 
