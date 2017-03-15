@@ -1,4 +1,6 @@
 src/*.js
+!src/rest/app/component/main.js
+!src/rest/public/bundle.js
 src/*.map
 src/**/*.js
 src/**/*.map
