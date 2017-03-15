@@ -438,6 +438,7 @@ function applyFilterData(dataset:any, request:any) :any {
                     (dataset[groups][0])[variablename] = Object.keys(count).length;
                 }
         }
+        
 
         else if (Object.keys(filterTerms[Object.keys(filterTerms)[0]])[0] == "SUM") {
             let numerickey = filterTerms[Object.keys(filterTerms)[0]].SUM;
