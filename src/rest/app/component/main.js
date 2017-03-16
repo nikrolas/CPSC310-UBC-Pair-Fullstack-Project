@@ -1,7 +1,8 @@
 
+
 var React = require("react");
 var ReactDOM = require("react-dom");
-
+var FormData = require("react-form-data");
 /*
  * Components
  */
@@ -37,17 +38,23 @@ var ReactDOM = require("react-dom");
    },
 
    render: function() {
-     var oldContact = this.props.value;
+     var oldQuery = this.props.value;
      var onChange = this.props.onChange;
+     var AND_array = [];
+     var OR_array = []
 
      return (
-       React.createElement('form', {className: 'ContactForm'},
+       React.createElement('form', {
+         className: 'ContactForm',
+     },
          React.createElement('input', {
            type: 'text',
            placeholder: 'Section Size',
            value: this.props.value.courses,
-           onChange: function(e) {
-             onChange(Object.assign({}, oldContact, {courses_size: e.target.value}));  //TODO: not sure what section size is
+           onSubmit: function(e) {
+               onSubmit(AND_array.push({courses_size: e.target.value}));
+
+
            },
          }),
          React.createElement('input', {
@@ -55,14 +62,14 @@ var ReactDOM = require("react-dom");
            placeholder: 'Department',
            value: this.props.value.email,
            onChange: function(e) {
-             onChange(Object.assign({}, oldContact, {courses_dept: e.target.value}));
+             onChange(Object.assign(oldQuery, {courses_dept: e.target.value}));
            },
          }),
          React.createElement('input', {
            placeholder: 'Course Number',
            value: this.props.value.description,
            onChange: function(e) {
-             onChange(Object.assign({}, oldContact, {courses_id: e.target.value}));
+             onChange(Object.assign(oldQuery, {courses_id: e.target.value}));
            },
          }),
          React.createElement('input', {
@@ -70,7 +77,7 @@ var ReactDOM = require("react-dom");
            placeholder: 'Instructor',
            value: this.props.value.description,
            onChange: function(e) {
-             onChange(Object.assign({}, oldContact, {courses_instructor: e.target.value}));
+             onChange(Object.assign(oldQuery, {courses_instructor: e.target.value}));
            },
          }),
          React.createElement('input', {
@@ -78,10 +85,15 @@ var ReactDOM = require("react-dom");
            placeholder: 'Title',
            value: this.props.value.description,
            onChange: function(e) {
-             onChange(Object.assign({}, oldContact, {courses_title: e.target.value}));
+             onChange(Object.assign(oldQuery, {courses_title: e.target.value}));
            },
          }),
-         React.createElement('button', {type: 'submit'}, "Submit")
+         React.createElement('button', {
+           type: 'submit',
+           formMethod: 'post',
+           formAction: 'http://localhost:4321'
+
+         }, "Submit")
        )
      );
    },
@@ -110,7 +122,7 @@ var ReactDOM = require("react-dom");
 
 
 
- var newQuery = { WHERE: {courses_id: "", courses_dept: ""}};
+ var newQuery = {WHERE: {}, OPTIONS : {COLUMNS:[],FORM:"TABLE"}};
 
 
  /*
