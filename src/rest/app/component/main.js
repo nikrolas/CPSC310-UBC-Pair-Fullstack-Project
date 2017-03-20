@@ -1,128 +1,143 @@
 
 
-var React = require("react");
-var ReactDOM = require("react-dom");
-var FormData = require("react-form-data");
-/*
- * Components
- */
+let React = require("react");
+let ReactDOM = require("react-dom");
+
+import './main.css';
 
  /*
   * Components
   */
 
- var ContactItem = React.createClass({
-   propTypes: {
-     courses_id: React.PropTypes.string,
-     courses_dept: React.PropTypes.string,
-     courses_size: React.PropTypes.string, //might be number
-     courses_instructor: React.PropTypes.string,
-     courses_title: React.PropTypes.string,
-   },
-
-   render: function() {
-     return (
-       React.createElement('li', {className: 'ContactItem'},
-         React.createElement('h2', {className: 'ContactItem-name'}, this.props.courses_id),
-         React.createElement('a', {className: 'ContactItem-email', href: 'mailto:'+this.props.email}, this.props.courses_dept),
-         React.createElement('div', {className: 'ContactItem-description'}, this.props.description)
-       )
-     );
-   },
- });
-
- var ContactForm = React.createClass({
-   propTypes: {
-     value: React.PropTypes.object.isRequired,
-     onChange: React.PropTypes.func.isRequired,
-   },
-
-   render: function() {
-     var oldQuery = this.props.value;
-     var onChange = this.props.onChange;
-     var AND_array = [];
-     var OR_array = []
-
-     return (
-       React.createElement('form', {
-         className: 'ContactForm',
-     },
-         React.createElement('input', {
-           type: 'text',
-           placeholder: 'Section Size',
-           value: this.props.value.courses,
-           onSubmit: function(e) {
-               onSubmit(AND_array.push({courses_size: e.target.value}));
-
-
-           },
-         }),
-         React.createElement('input', {
-           type: 'text',
-           placeholder: 'Department',
-           value: this.props.value.email,
-           onChange: function(e) {
-             onChange(Object.assign(oldQuery, {courses_dept: e.target.value}));
-           },
-         }),
-         React.createElement('input', {
-           placeholder: 'Course Number',
-           value: this.props.value.description,
-           onChange: function(e) {
-             onChange(Object.assign(oldQuery, {courses_id: e.target.value}));
-           },
-         }),
-         React.createElement('input', {
-           type: 'text',
-           placeholder: 'Instructor',
-           value: this.props.value.description,
-           onChange: function(e) {
-             onChange(Object.assign(oldQuery, {courses_instructor: e.target.value}));
-           },
-         }),
-         React.createElement('input', {
-           type: 'text',
-           placeholder: 'Title',
-           value: this.props.value.description,
-           onChange: function(e) {
-             onChange(Object.assign(oldQuery, {courses_title: e.target.value}));
-           },
-         }),
-         React.createElement('button', {
-           type: 'submit',
-           formMethod: 'post',
-           formAction: 'http://localhost:4321'
-
-         }, "Submit")
-       )
-     );
-   },
- });
-
- var ContactView = React.createClass({
-   propTypes: {
-     newQuery: React.PropTypes.object.isRequired,
-   },
-
-   render: function() {
-
-     return (
-         React.createElement(ContactForm, {
-           value: this.props.newQuery,
-           onChange: function(query) { console.log(query); },
-         })
-       )
-   },
- });
-
-
- /*
-  * Model
-  */
 
 
 
- var newQuery = {WHERE: {}, OPTIONS : {COLUMNS:[],FORM:"TABLE"}};
+class Form extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            courses_id: "",
+            courses_dept: "",
+            courses_size: "",
+            courses_instructor: "",
+            courses_title: "",
+            data: "temp",
+        };
+
+        this.handleInputChange = this.handleInputChange.bind(this);
+        this.organizeObject = this.organizeObject.bind(this);
+    }
+
+    handleInputChange(event) {
+        const target = event.target;
+        const name = target.name;
+        const value = target.value;
+        this.setState({
+            [name]: value
+        });
+        console.log(this.state);
+    }
+
+    organizeObject() {
+        let newQuery = {
+            WHERE: {},
+            OPTIONS: {
+                COLUMNS:[],
+                FORM:"TABLE"
+            }
+        }
+        let oldObject = this.state;
+        let newColumn = [];
+        for (let i in oldObject) {
+            if(oldObject[i] === "") {
+                delete oldObject[i];
+            }
+            else {
+                newColumn.push({IS:oldObject[i]})
+                console.log ("hit");
+            }
+        }
+        newQuery.OPTIONS.COLUMNS = newColumn;
+        fetch('',
+            { method: "POST",
+                body: newQuery})
+            .then(response => response.json())
+            .then(json => {
+                console.log(json);
+                this.setState({
+                    data: json
+                });
+            });
+            // .catch(function(error) {
+            //     return console.error(error);
+            // });
+    }
+
+    render() {
+        return (
+            <form>
+                <label>
+                    courses_id:
+                    <br />
+
+                    <input
+                        name ="courses_id"
+                        type="text"
+                        value ={this.state.courses_id}
+                        onChange={this.handleInputChange} />
+                </label>
+                <br />
+                <label>
+                    courses_dept:
+                    <br />
+
+                    <input
+                        name ="courses_dept"
+                        type="text"
+                        value={this.state.courses_dept}
+                        onChange={this.handleInputChange} />
+                </label>
+                <br />
+                <label>
+                    courses_instructor:
+                    <br />
+
+                    <input
+                        name ="courses_instructor"
+                        type="text"
+                        value ={this.state.courses_instructor}
+                        onChange={this.handleInputChange} />
+                </label>
+                <br />
+                <label>
+                    courses_size:
+                    <br />
+
+                    <input
+                        name ="courses_size"
+                        type="text"
+                        value ={this.state.courses_size}
+                        onChange={this.handleInputChange} />
+                </label>
+                <br />
+                <label>
+
+                    courses_title:
+                    <br />
+
+                    <input
+                        name ="courses_title"
+                        type="text"
+                        value ={this.state.courses_title}
+                        onChange={this.handleInputChange} />
+                </label>
+                <br />
+                <button type="button" onClick={this.organizeObject}> Compile </button>
+            </form>
+        );
+    }
+}
 
 
  /*
@@ -130,8 +145,6 @@ var FormData = require("react-form-data");
   */
 
  ReactDOM.render(
-   React.createElement(ContactView, {
-     newQuery: newQuery,
-   }),
+     <Form/>,
    document.getElementById('app')
  );
