@@ -2,6 +2,7 @@
 
 let React = require("react");
 let ReactDOM = require("react-dom");
+let fetch = require('node-fetch');
 
 import './main.css';
 
@@ -54,26 +55,28 @@ class Form extends React.Component {
                 delete oldObject[i];
             }
             else {
-                newColumn.push({IS:oldObject[i]})
+                newColumn.push("courses_id")
                 console.log ("hit");
             }
         }
         newQuery.OPTIONS.COLUMNS = newColumn;
-        fetch('',
+        fetch('http://localhost:4321/query',
             { method: "POST",
-                body: newQuery})
-            .then(response => response.json())
-            .then(json => {
+                headers: {
+                    'Accept' : 'application/json',
+                    'Content-type': 'application/json'
+                },
+                mode:'no-cors',
+                body: JSON.stringify(newQuery)})
+            .then((response) => response.json())
+            .then((json) => {
                 console.log(json);
-                this.setState({
-                    data: json
-                });
+                return json;
+            })
+            .catch((error) => {
+                console.error(error);
             });
-            // .catch(function(error) {
-            //     return console.error(error);
-            // });
     }
-
     render() {
         return (
             <form>
