@@ -148,21 +148,8 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 return reject(insightResponseConstructor(404, {"missing":[id]}));
             }
-/*            else {
-                return reject(insightResponseConstructor(404, {"missing":[id]}));
-            }
-                if(!isEmptyObject(datasetHash)) {
-                    fs.unlinkSync("./cache.json");
-                    reWriteJSONFile(datasetHash);
-                    return fulfill(insightResponseConstructor(204, {}));
-                }
-                else {
-                    fs.unlinkSync("./cache.json");
-                    return fulfill(insightResponseConstructor(204, {}));
-                }
-            }*/
             else {
-                return reject(insightResponseConstructor(404, {"missing": id}));                 //POTENTIAL ERROR?
+                return reject(insightResponseConstructor(404, {"missing": id}));
             }
         });
     }
