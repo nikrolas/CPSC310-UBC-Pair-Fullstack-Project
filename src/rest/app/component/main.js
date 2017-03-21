@@ -23,7 +23,6 @@ class Form extends React.Component {
             courses_size: "",
             courses_instructor: "",
             courses_title: "",
-            data: "temp",
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -41,6 +40,7 @@ class Form extends React.Component {
     }
 
     organizeObject() {
+        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery = {
             WHERE: {},
             OPTIONS: {
@@ -49,17 +49,31 @@ class Form extends React.Component {
             }
         }
         let oldObject = this.state;
+        //Format object according to state
+        //Creating new columns for newQuery
         let newColumn = [];
+
         for (let i in oldObject) {
             if(oldObject[i] === "") {
                 delete oldObject[i];
             }
             else {
-                newColumn.push("courses_id")
+                newColumn.push(i);
                 console.log ("hit");
             }
         }
+        //Creating and adding options for where
+        let newAND = {AND:{}};
+        let newOR = {OR:{}};
+        let newIS = {IS:{}};
+        let newGT = {GT:{}};
+        let newLT = {LT:{}};
+        let newEQ = {EQ:{}};
+        //Adding all to new query
+
         newQuery.OPTIONS.COLUMNS = newColumn;
+
+        console.log(newQuery);
         fetch('http://localhost:4321/query',
             { method: "POST",
                 headers: {
@@ -76,6 +90,7 @@ class Form extends React.Component {
             .catch((error) => {
                 console.error(error);
             });
+
     }
     render() {
         return (
