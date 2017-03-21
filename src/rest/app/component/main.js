@@ -2,6 +2,7 @@
 
 let React = require("react");
 let ReactDOM = require("react-dom");
+let bs = require('react-bootstrap');
 let fetch = require('node-fetch');
 
 import './main.css';
@@ -23,6 +24,9 @@ class Form extends React.Component {
             courses_size: "",
             courses_instructor: "",
             courses_title: "",
+            GT: false,
+            EQ:false,
+            LT:false
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -39,6 +43,32 @@ class Form extends React.Component {
         console.log(this.state);
     }
 
+    handleSizeParam(event) {
+        const target = event.target;
+        const name = target.name;
+        if (name == "LT") {
+            this.setState({
+                [name]: true,
+                GT: false,
+                EQ: false
+            });
+        }
+        else if (name == "GT") {
+            this.setState({
+                [name]: true,
+                LT: false,
+                EQ: false
+            })
+        }
+        else if (name == "EQ") {
+            this.setState({
+                [name]: true,
+                LT: false,
+                GT: false
+            });
+        }
+    }
+
     organizeObject() {
         //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery = {
@@ -47,7 +77,7 @@ class Form extends React.Component {
                 COLUMNS:[],
                 FORM:"TABLE"
             }
-        }
+        };
         let oldObject = this.state;
         //Format object according to state
         //Creating new columns for newQuery
@@ -63,8 +93,8 @@ class Form extends React.Component {
             }
         }
         //Creating and adding options for where
-        let newAND = {AND:{}};
-        let newOR = {OR:{}};
+        let newAND = {AND:[]};
+        let newOR = {OR:[]};
         let newIS = {IS:{}};
         let newGT = {GT:{}};
         let newLT = {LT:{}};
@@ -131,16 +161,19 @@ class Form extends React.Component {
                 <label>
                     courses_size:
                     <br />
-
                     <input
                         name ="courses_size"
                         type="text"
                         value ={this.state.courses_size}
                         onChange={this.handleInputChange} />
                 </label>
+                    <select onChange={this.handleSizeParam}>
+                        <option name="GT">Greater Than</option>
+                        <option name="LT">Less Than</option>
+                        <option name="EQ">Equal To</option>
+                    </select>
                 <br />
                 <label>
-
                     courses_title:
                     <br />
 
@@ -151,6 +184,7 @@ class Form extends React.Component {
                         onChange={this.handleInputChange} />
                 </label>
                 <br />
+
                 <button type="button" onClick={this.organizeObject}> Compile </button>
             </form>
         );
