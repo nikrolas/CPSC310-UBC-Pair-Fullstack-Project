@@ -94,7 +94,7 @@ class Form extends React.Component {
         let newQuery = {
             WHERE: {},
             OPTIONS: {
-                COLUMNS:["courses_size","courses_instructor","courses_pass","courses_fail", "courses_dept","courses_id"],
+                COLUMNS:["courses_size","courses_instructor", "courses_dept","courses_id","courses_uuid"],
                 FORM:"TABLE"
             }
         };
@@ -105,26 +105,37 @@ class Form extends React.Component {
         let newAND = {};
         let newOR = {};
         let newIS = {};
-        let newGT = {GT:{}};
-        let newLT = {LT:{}};
-        let newEQ = {EQ:{}};
+        let newGT = {};
+        let newLT = {};
+        let newEQ = {};
         let oldObject = this.state;
 
        // let oldObject = this.state;
         let objectHolder = [];
         //Format object according to state
-        let counter = 0;
         for (let i in oldObject) {
             if (typeof oldObject[i] == "string" && oldObject[i].length != 0) {
-                counter ++;
                 if(i != "courses_size") {
                     newIS["IS"] = {[i]:oldObject[i].toLowerCase()};
                     objectHolder.push(newIS);
                 }
-                //TODO Secondary filter on frontend if courses_size is filled in
+                else {
+                    if(this.state.GT){
+                        newGT["GT"] = {[i]:Number(oldObject[i])};
+                        objectHolder.push(newGT);
+                    }
+                    else if(this.state.EQ){
+                        newEQ["EQ"] = {[i]:Number(oldObject[i])};
+                        objectHolder.push(newEQ);
+                    }
+                    else if(this.state.LT){
+                        newLT["LT"] = {[i]:Number(oldObject[i])};
+                        objectHolder.push(newLT);
+                    }
+                }
             }
         }
-        if (counter > 1) {
+        if (objectHolder.length > 1) {
             if(this.state.AND) {
                 newAND["AND"] = objectHolder
                 newQuery.WHERE = newAND;
@@ -137,7 +148,7 @@ class Form extends React.Component {
             }
         }
         else {
-            newQuery.WHERE = newIS;
+            newQuery.WHERE = objectHolder[0];
 
         }
         console.log(newQuery);

@@ -255,6 +255,8 @@ export default class InsightFacade implements IInsightFacade {
                     let json = JSON.parse(eachItem);
                     if (json["result"].length != 0) {
                         for (let courseSection of json["result"]) {
+                            //Adding Size - part of D4
+                            courseSection['Size'] = courseSection["Pass"] + courseSection["Fail"];
                             storage.push(courseSection);
                         }
                     }
@@ -754,7 +756,7 @@ function sortTransformData(data: Object[], order: any) {
 
 function sortByNum(data: any, order: string) {
     data.sort(function (a: any, b: any) {
-        if (order == "courses_uuid" || "courses_id" || "rooms_lat" || "rooms_lon") {
+        if (order == "courses_uuid" || "courses_id" || "rooms_lat" || "rooms_lon"||"courses_size") { //Part of D4
             let dataA = parseFloat(a[order]), dataB = parseFloat(b[order]);
             return dataA-dataB;
         }
@@ -778,7 +780,7 @@ function sortByChar(data: any, order: string) {
 
 function validNumericKeys(string : string) {
     let validNumKeySet = new Set(['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit','courses_uuid',
-        'courses_year', 'rooms_seats', 'rooms_lat', 'rooms_lon']);
+        'courses_year','courses_size', 'rooms_seats', 'rooms_lat', 'rooms_lon']);//Part of D4
     return validNumKeySet.has(string);
 }
 
@@ -822,6 +824,10 @@ function correspondingJSONKey(given_string: string) {
     if (given_string == 'courses_year') {
         return "Year";
     }
+    //Part of D4
+    if (given_string == 'courses_size') {
+        return "Size";
+    }
     if (validRoomKeySet.has(given_string)) {
         return given_string;
     }
@@ -858,6 +864,10 @@ function correspondingJSONKeyApply(given_string: string) {
     }
     if (given_string == 'courses_year') {
         return "Year";
+    }
+    //Part of D4
+    if (given_string == 'courses_size') {
+        return "Size";
     }
     return given_string;
 
