@@ -26,84 +26,122 @@ class Form extends React.Component {
             courses_title: "",
             GT: false,
             EQ:false,
-            LT:false
+            LT:false,
+            AND: true,
+            OR: false,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleBooleanParam = this.handleBooleanParam.bind(this);
         this.organizeObject = this.organizeObject.bind(this);
     }
 
     handleInputChange(event) {
         const target = event.target;
+        console.log(target);
+
         const name = target.name;
         const value = target.value;
         this.setState({
             [name]: value
         });
-        console.log(this.state);
     }
 
-    handleSizeParam(event) {
+    handleBooleanParam(event) {
         const target = event.target;
-        const name = target.name;
-        if (name == "LT") {
+        const value = target.value;
+        console.log(target);
+        console.log(value);
+        if (value == "LT") {
             this.setState({
-                [name]: true,
+                [value]: true,
                 GT: false,
                 EQ: false
             });
         }
-        else if (name == "GT") {
+        else if (value == "GT") {
             this.setState({
-                [name]: true,
+                [value]: true,
                 LT: false,
                 EQ: false
             })
         }
-        else if (name == "EQ") {
+        else if (value == "EQ") {
             this.setState({
-                [name]: true,
+                [value]: true,
                 LT: false,
                 GT: false
             });
         }
+        else if (value == "AND") {
+            this.setState({
+                [value]: true,
+                OR: false
+
+            });
+        }
+        else if (value == "OR") {
+            this.setState({
+                [value]: true,
+                AND: false
+            });
+        }
     }
+
 
     organizeObject() {
         //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery = {
             WHERE: {},
             OPTIONS: {
-                COLUMNS:[],
+                COLUMNS:["courses_size","courses_instructor","courses_pass","courses_fail", "courses_dept","courses_id"],
                 FORM:"TABLE"
             }
         };
-        let oldObject = this.state;
         //Format object according to state
-        //Creating new columns for newQuery
-        let newColumn = [];
 
-        for (let i in oldObject) {
-            if(oldObject[i] === "") {
-                delete oldObject[i];
-            }
-            else {
-                newColumn.push(i);
-                console.log ("hit");
-            }
-        }
         //Creating and adding options for where
-        let newAND = {AND:[]};
-        let newOR = {OR:[]};
-        let newIS = {IS:{}};
+
+        let newAND = {};
+        let newOR = {};
+        let newIS = {};
         let newGT = {GT:{}};
         let newLT = {LT:{}};
         let newEQ = {EQ:{}};
-        //Adding all to new query
+        let oldObject = this.state;
 
-        newQuery.OPTIONS.COLUMNS = newColumn;
+       // let oldObject = this.state;
+        let objectHolder = [];
+        //Format object according to state
+        let counter = 0;
+        for (let i in oldObject) {
+            if (typeof oldObject[i] == "string" && oldObject[i].length != 0) {
+                counter ++;
+                if(i != "courses_size") {
+                    newIS["IS"] = {[i]:oldObject[i].toLowerCase()};
+                    objectHolder.push(newIS);
+                }
+                //TODO Secondary filter on frontend if courses_size is filled in
+            }
+        }
+        if (counter > 1) {
+            if(this.state.AND) {
+                newAND["AND"] = objectHolder
+                newQuery.WHERE = newAND;
 
+            }
+            else if(this.state.OR){
+                newOR["OR"] = objectHolder
+                newQuery.WHERE = newOR;
+
+            }
+        }
+        else {
+            newQuery.WHERE = newIS;
+
+        }
         console.log(newQuery);
+        //Adding all to new query
         fetch('http://localhost:4321/query',
             { method: "POST",
                 headers: {
@@ -120,6 +158,8 @@ class Form extends React.Component {
             .catch((error) => {
                 console.error(error);
             });
+
+        console.log(this.state);
 
     }
     render() {
@@ -167,10 +207,11 @@ class Form extends React.Component {
                         value ={this.state.courses_size}
                         onChange={this.handleInputChange} />
                 </label>
-                    <select onChange={this.handleSizeParam}>
-                        <option name="GT">Greater Than</option>
-                        <option name="LT">Less Than</option>
-                        <option name="EQ">Equal To</option>
+                //TODO: Display on fill
+                    <select onChange={this.handleBooleanParam} >
+                        <option value="GT">Greater Than</option>
+                        <option value="LT">Less Than</option>
+                        <option value="EQ">Equal To</option>
                     </select>
                 <br />
                 <label>
@@ -184,7 +225,13 @@ class Form extends React.Component {
                         onChange={this.handleInputChange} />
                 </label>
                 <br />
-
+                <select onChange={this.handleBooleanParam}>
+                    <option value="AND">AND</option>
+                    <option value="OR">OR</option>
+                </select>
+                <br/>
+                //TODO: Potential sort by button populated by filled in form w/ Ascending/Descending options
+                <br/>
                 <button type="button" onClick={this.organizeObject}> Compile </button>
             </form>
         );
