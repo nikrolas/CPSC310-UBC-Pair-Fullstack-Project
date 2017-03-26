@@ -2,7 +2,6 @@
 
 let React = require("react");
 let ReactDOM = require("react-dom");
-let bs = require('react-bootstrap');
 let fetch = require('node-fetch');
 let ReactTable = require('react-table').default;
 import 'react-table/react-table.css';

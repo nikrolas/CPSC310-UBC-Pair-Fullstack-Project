@@ -113,6 +113,20 @@ export default class Server {
                     return next();
                 });
 
+                that.rest.post('/distance', function (req: restify.Request, res: restify.Response,
+                                                   next: restify.Next) {
+
+                    insightFacade.getNearbyBuildings(req.body[0], req.body[1])
+                        .then(function (responseFromInsight) {
+                            res.json(responseFromInsight.code, responseFromInsight.body);
+                        })
+                        .catch(function (err) {
+                            res.json(err.code, err.body);
+                        });
+
+                    return next();
+                });
+
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);
                     fulfill(true);

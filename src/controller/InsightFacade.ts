@@ -13,10 +13,78 @@ var datasetHash: any = {};
 var p5 = require("parse5");
 var http = require("http");
 
+var buildings: any = {
+    "ALRD": [49.2699, -123.25318],
+    "ANSO": [49.26958, -123.25741],
+    "AERL": [49.26372, -123.25099],
+    "AUDX": [49.2666, -123.25655],
+    "BIOL": [49.26479, -123.25249],
+    "BRKX": [49.26862, -123.25237],
+    "BUCH": [49.26826, -123.25468],
+    "CIRS": [49.26207, -123.25314],
+    "CHBE": [49.26228, -123.24718],
+    "CHEM": [49.2659, 	-123.25308],
+    "CEME": [49.26273, -123.24894],
+    "EOSM": [49.26228, -123.25198],
+    "ESB": [49.26274, -123.25224],
+    "FNH": [49.26414, -123.24959],
+    "FSC": [49.26044, -123.24886],
+    "FORW": [49.26176, -123.25179],
+    "LASR": [49.26767, -123.25583],
+    "FRDM": [49.26541, -123.24608],
+    "GEOG": [49.26605, -123.25623],
+    "HEBB": [49.2661, 	-123.25165],
+    "HENN": [49.26627, -123.25374],
+    "ANGU": [49.26486, -123.25364],
+    "DMP": [49.26125, -123.24807],
+    "IONA": [49.27106, -123.25042],
+    "IBLC": [49.26766, -123.2521],
+    "SOWK": [49.2643, -123.25505],
+    "LSK": [49.26545, -123.25533],
+    "LSC": [49.26236, -123.24494],
+    "MCLD": [49.26176, -123.24935],
+    "MCML": [49.26114, -123.25027],
+    "MATH": [49.266463, -123.255534],
+    "SCRF": [49.26398, -123.2531],
+    "ORCH": [49.26048, -123.24944],
+    "PHRM": [49.26229, -123.24342],
+    "PCOH": [49.264, -123.2559],
+    "OSBO": [49.26047, -123.24467],
+    "SPPH": [49.2642, -123.24842],
+    "SRC": [49.2683, -123.24894],
+    "UCLL": [49.26867, -123.25692],
+    "MGYM": [49.2663, -123.2466],
+    "WESB": [49.26517, -123.24937],
+    "SWNG": [49.26293, -123.25431],
+    "WOOD": [49.26478, -123.24673]
+};
+
 export default class InsightFacade implements IInsightFacade {
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
+    }
+
+    getNearbyBuildings(fromBuilding: string, maxDistance: number): Promise<InsightResponse> {
+        return new Promise(function(fulfill, reject) {
+            let nearbyBuildings: any = [];
+            let startLat: number = buildings[fromBuilding][0];
+            let startLon: number = buildings[fromBuilding][1];
+
+            Object.keys(buildings).forEach(function(key) {
+                if (key != fromBuilding) {
+                    let endLat = buildings[key][0];
+                    let endLon = buildings[key][1];
+                    let distance = getDistanceFromLatLonInM(startLat, startLon, endLat, endLon);
+
+                    if (distance <= maxDistance) {
+                        nearbyBuildings.push(key);
+                    }
+                }
+            });
+
+            return fulfill(insightResponseConstructor(200, {nearbyBuildings}));
+        })
     }
 
     addDataset(id: string, content: any): Promise<InsightResponse> {
@@ -348,6 +416,25 @@ export default class InsightFacade implements IInsightFacade {
             }
         });
     }
+}
+
+//From http://stackoverflow.com/a/27943
+function getDistanceFromLatLonInM(lat1:any, lon1:any, lat2:any, lon2:any) {
+    let R = 6371000; // Radius of the earth in m
+    let dLat = deg2rad(lat2-lat1);  // deg2rad below
+    let dLon = deg2rad(lon2-lon1);
+    let a =
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon/2) * Math.sin(dLon/2)
+        ;
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    let d = R * c; // Distance in m
+    return d;
+}
+
+function deg2rad(deg:any) {
+    return deg * (Math.PI/180)
 }
 
 function applyFilterData(dataset:any, request:any) :any {
@@ -1027,12 +1114,6 @@ function helperRecursion (roomData:any) {
             fileObject["rooms_furniture"] = rooms_furniture;
             fileObject["rooms_href"] = rooms_href;
         }
-        // Get lat lon
-        // if (typeof fileObject["rooms_address"] == "undefined") {
-        //     console.log ("this is where it breaks")
-        //     console.log(fileObject);
-        //
-        // }
         let formattedAddr = fileObject["rooms_address"].split(" ").join("%20").trim();
         let options = {
             host: "skaha.cs.ubc.ca",
@@ -1061,11 +1142,6 @@ function locationRequest(options: any) {
     return new Promise(function (fulfill, reject) {
         let rawData = '';
         http.get(options, (res: any) => {
-/*            let error;
-            if (error) {
-                res.resume();
-                return;
-            }*/
             res.setEncoding('utf8');
             res.on('data', (chunk: any) => rawData += chunk);
             res.on('end', () => {

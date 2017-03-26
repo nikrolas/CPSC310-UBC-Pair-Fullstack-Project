@@ -9,7 +9,7 @@ var chai = require('chai');
 var chaihttp = require('chai-http');
 chai.use(chaihttp);
 
-describe("d3ServerSpec", function () {
+describe.only("d3ServerSpec", function () {
 
     let fs = require("fs");
     let server: Server;
@@ -50,7 +50,7 @@ describe("d3ServerSpec", function () {
             })
     });
 
-    it("PUT rooms.zip", function () {
+    it.only("PUT rooms.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/rooms')
             .attach("body", fs.readFileSync("./rooms.zip"), "rooms.zip")
@@ -70,6 +70,21 @@ describe("d3ServerSpec", function () {
                 expect(res.status).to.be.equal(201);
             })
             .catch(function () {
+                expect.fail();
+            });
+    });
+
+    it.only("Distance test", function () {
+        let distObject: any = ["DMP", 500];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
                 expect.fail();
             });
     });

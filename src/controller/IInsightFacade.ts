@@ -143,4 +143,6 @@ export interface IInsightFacade {
      *
      */
     performQuery(query: QueryRequest): Promise<InsightResponse>;
+
+    getNearbyBuildings(id: string, distance: number): Promise<InsightResponse>;
 }
