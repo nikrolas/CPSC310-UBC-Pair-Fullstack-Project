@@ -4,6 +4,8 @@ let React = require("react");
 let ReactDOM = require("react-dom");
 let bs = require('react-bootstrap');
 let fetch = require('node-fetch');
+let ReactTable = require('react-table').default;
+import 'react-table/react-table.css';
 
 import './main.css';
 
@@ -29,6 +31,23 @@ class Form extends React.Component {
             LT:false,
             AND: true,
             OR: false,
+            Data:[],
+            Columns: [{
+                header:'Course Title',
+                accessor: 'courses_title'
+            },{
+                header:'Course Instructor',
+                accessor: 'courses_instructor'
+            },{
+                header:'Course Department',
+                accessor: 'courses_dept'
+            },{
+                header:'Course Id',
+                accessor: 'courses_id'
+            },{
+                header:'Course Size',
+                accessor: 'courses_size'
+            }]
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -94,7 +113,7 @@ class Form extends React.Component {
         let newQuery = {
             WHERE: {},
             OPTIONS: {
-                COLUMNS:["courses_size","courses_instructor", "courses_dept","courses_id","courses_pass","courses_fail"],
+                COLUMNS:["courses_size","courses_instructor", "courses_dept","courses_id","courses_pass","courses_fail","courses_title"],
                 FORM:"TABLE"
             }
         };
@@ -167,13 +186,14 @@ class Form extends React.Component {
                 body: JSON.stringify(newQuery)})
             .then((response) => response.json())
             .then((json) => {
-                console.log(json);
-                return json;
+                this.setState({
+                    Data: json.result
+                });
+                console.log(this.state);
             })
             .catch((error) => {
                 console.error(error);
             });
-
         console.log(this.state);
 
     }
@@ -190,6 +210,7 @@ class Form extends React.Component {
         }
 
         return (
+            <div>
             <form>
                 <label>
                     courses_id:
@@ -255,7 +276,10 @@ class Form extends React.Component {
                 <br/>
                 <button type="button" onClick={this.organizeObject}> Compile </button>
             </form>
-        );
+            <ReactTable data={this.state.Data} columns={this.state.Columns} defaultPageSize={10}/>
+            </div>
+
+    );
     }
 }
 
