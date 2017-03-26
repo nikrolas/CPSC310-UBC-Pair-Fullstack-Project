@@ -24,7 +24,7 @@ class Form extends React.Component {
             courses_size: "",
             courses_instructor: "",
             courses_title: "",
-            GT: false,
+            GT: true,
             EQ:false,
             LT:false,
             AND: true,
@@ -94,7 +94,7 @@ class Form extends React.Component {
         let newQuery = {
             WHERE: {},
             OPTIONS: {
-                COLUMNS:["courses_size","courses_instructor", "courses_dept","courses_id","courses_uuid"],
+                COLUMNS:["courses_size","courses_instructor", "courses_dept","courses_id","courses_pass","courses_fail"],
                 FORM:"TABLE"
             }
         };
@@ -135,6 +135,7 @@ class Form extends React.Component {
                 }
             }
         }
+
         if (objectHolder.length > 1) {
             if(this.state.AND) {
                 newAND["AND"] = objectHolder
@@ -147,10 +148,13 @@ class Form extends React.Component {
 
             }
         }
-        else {
+        else if(objectHolder.length = 1){
             newQuery.WHERE = objectHolder[0];
-
+            if (typeof newQuery.WHERE == "undefined") {
+                newQuery.WHERE = {};
+            }
         }
+
         console.log(newQuery);
         //Adding all to new query
         fetch('http://localhost:4321/query',
@@ -174,6 +178,17 @@ class Form extends React.Component {
 
     }
     render() {
+        const isSizeFilled = this.state.courses_size;
+        let sizeDropdown = null;
+        if(isSizeFilled) {
+            sizeDropdown =
+                <select onChange={this.handleBooleanParam} >
+                <option value="GT">Greater Than</option>
+                <option value="LT">Less Than</option>
+                <option value="EQ">Equal To</option>
+            </select>
+        }
+
         return (
             <form>
                 <label>
@@ -218,12 +233,7 @@ class Form extends React.Component {
                         value ={this.state.courses_size}
                         onChange={this.handleInputChange} />
                 </label>
-                //TODO: Display on fill
-                    <select onChange={this.handleBooleanParam} >
-                        <option value="GT">Greater Than</option>
-                        <option value="LT">Less Than</option>
-                        <option value="EQ">Equal To</option>
-                    </select>
+                {sizeDropdown}
                 <br />
                 <label>
                     courses_title:
