@@ -74,8 +74,23 @@ describe.only("d3ServerSpec", function () {
             });
     });
 
-    it.only("Distance test", function () {
+    it("Distance test from DMP; 21 buildings", function () {
         let distObject: any = ["DMP", 500];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
+            });
+    });
+
+    it.only("Distance test from DMP", function () {
+        let distObject: any = ["DMP", 200];
         return chai.request("http://localhost:4321")
             .post('/distance')
             .send(distObject)

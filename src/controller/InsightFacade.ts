@@ -65,6 +65,19 @@ export default class InsightFacade implements IInsightFacade {
         Log.trace('InsightFacadeImpl::init()');
     }
 
+    getSchedule(conditions: any): Promise<InsightResponse> {
+        return new Promise(function(fulfill, reject) {
+            let dept = conditions["courses_dept"];
+            let id = conditions["courses_id"];
+            let room = conditions["rooms_shortname"];
+            let dist = conditions["rooms_dist"];
+
+            if (dept != null && id != null) {
+                let courseQuery = {AND:[{IS:{"courses_dept":dept}},{EQ:}
+            }
+        })
+    }
+
     getNearbyBuildings(fromBuilding: string, maxDistance: number): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
             let nearbyBuildings: any = [];
@@ -72,7 +85,7 @@ export default class InsightFacade implements IInsightFacade {
             let startLon: number = buildings[fromBuilding][1];
 
             Object.keys(buildings).forEach(function(key) {
-                if (key != fromBuilding) {
+                //if (key != fromBuilding) {
                     let endLat = buildings[key][0];
                     let endLon = buildings[key][1];
                     let distance = getDistanceFromLatLonInM(startLat, startLon, endLat, endLon);
@@ -80,7 +93,7 @@ export default class InsightFacade implements IInsightFacade {
                     if (distance <= maxDistance) {
                         nearbyBuildings.push(key);
                     }
-                }
+                //}
             });
 
             return fulfill(insightResponseConstructor(200, {nearbyBuildings}));

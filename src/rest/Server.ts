@@ -127,6 +127,20 @@ export default class Server {
                     return next();
                 });
 
+                that.rest.post('/schedule', function (req: restify.Request, res: restify.Response,
+                                                      next: restify.Next) {
+
+                    insightFacade.getSchedule(req.body)
+                        .then(function (responseFromInsight) {
+                            res.json(responseFromInsight.code, responseFromInsight.body);
+                        })
+                        .catch(function (err) {
+                            res.json(err.code, err.body);
+                        });
+
+                    return next();
+                });
+
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);
                     fulfill(true);
