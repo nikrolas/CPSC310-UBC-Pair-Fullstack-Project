@@ -65,18 +65,18 @@ export default class InsightFacade implements IInsightFacade {
         Log.trace('InsightFacadeImpl::init()');
     }
 
-    getSchedule(conditions: any): Promise<InsightResponse> {
-        return new Promise(function(fulfill, reject) {
-            let dept = conditions["courses_dept"];
-            let id = conditions["courses_id"];
-            let room = conditions["rooms_shortname"];
-            let dist = conditions["rooms_dist"];
-
-            if (dept != null && id != null) {
-                let courseQuery = {AND:[{IS:{"courses_dept":dept}},{EQ:}
-            }
-        })
-    }
+    // getSchedule(conditions: any): Promise<InsightResponse> {
+    //     return new Promise(function(fulfill, reject) {
+    //         let dept = conditions["courses_dept"];
+    //         let id = conditions["courses_id"];
+    //         let room = conditions["rooms_shortname"];
+    //         let dist = conditions["rooms_dist"];
+    //
+    //         if (dept != null && id != null) {
+    //             let courseQuery = {AND:[{IS:{"courses_dept":dept}},{EQ:}
+    //         }
+    //     })
+    // }
 
     getNearbyBuildings(fromBuilding: string, maxDistance: number): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
@@ -422,7 +422,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                //console.log (finalFilteredData);
+                console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
@@ -886,7 +886,7 @@ function validNumericKeys(string : string) {
 
 
 function validSortableKeys(string : string) {
-    let validNumKeySet = new Set(['courses_dept', 'courses_instructor','courses_title','rooms_fullname','rooms_shortname',
+    let validNumKeySet = new Set(['courses_dept', 'courses_instructor','courses_title','courses_section','rooms_fullname','rooms_shortname', //part of D4
         'rooms_number','rooms_name', 'rooms_address', 'rooms_type', 'rooms_furniture', 'rooms_href','courses_id']);
     return validNumKeySet.has(string);
 }
@@ -928,6 +928,9 @@ function correspondingJSONKey(given_string: string) {
     if (given_string == 'courses_size') {
         return "Size";
     }
+    if (given_string == 'courses_section') {
+        return "Section";
+    }
     if (validRoomKeySet.has(given_string)) {
         return given_string;
     }
@@ -968,6 +971,9 @@ function correspondingJSONKeyApply(given_string: string) {
     //Part of D4
     if (given_string == 'courses_size') {
         return "Size";
+    }
+    if (given_string == 'courses_section') {
+        return "Section";
     }
     return given_string;
 

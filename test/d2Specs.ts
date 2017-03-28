@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe("d2Spec", function () {
+describe.only("d2Spec", function () {
 
     let insightFacade: InsightFacade = null;
     let fs = require("fs");
@@ -76,7 +76,7 @@ describe("d2Spec", function () {
             })
     });
 
-    it("Dataset didn't exist; added courses successfully", function (done) {
+    it.only("Dataset didn't exist; added courses successfully", function (done) {
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -189,6 +189,44 @@ describe("d2Spec", function () {
     });
 
     //Perform Query Test valid
+
+    it.only("Testing", function (done) {
+        let qr : QueryRequest =  {
+            WHERE: {
+                IS: {
+                    "courses_dept": "cpsc"
+                }
+            },
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept","courses_id", "courses_section", "courseSize"
+                ],
+                ORDER: {
+                    dir:"DOWN",
+                    keys: ["courses_dept","courses_id", "courseSize"]
+                },
+                FORM: "TABLE"
+            },
+            TRANSFORMATIONS: {
+                GROUP: ["courses_dept","courses_id", "courses_section"],
+                APPLY: [{
+                    "courseSize": {
+                        MAX: "courses_size"
+                    }
+                }]
+            }
+        };
+        insightFacade.performQuery(qr)
+            .then(function (response) {
+                expect(response.code).is.equal(200);
+                done();
+            })
+            .catch(function () {
+                expect.fail();
+                done();
+            })
+    });
+
     it("Room_name WildCard Test", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
