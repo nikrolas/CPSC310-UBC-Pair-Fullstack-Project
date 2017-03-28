@@ -171,7 +171,7 @@ class Form extends React.Component {
         let objectHolder = [];
         //Format object according to state
         if(this.state.Transform) {
-            newQuery.WHERE = {IS:{courses_dept:this.state.courses_dept}};
+            newQuery.WHERE = {IS:{courses_dept:this.state.courses_dept.toLowerCase()}};
             newQuery["TRANSFORMATIONS"] = this.state.TRANSFORMATIONS;
             newQuery.OPTIONS.COLUMNS = ["courses_dept","courses_id",this.state.NewColumn]; //Setting columns for table
             this.setState({
@@ -196,15 +196,15 @@ class Form extends React.Component {
                     }
                     else {
                         if(this.state.GT){
-                            newGT["GT"] = {[i]:Number(oldObject[i])};
+                            newGT["GT"] = {[i]:parseInt(oldObject[i])};
                             objectHolder.push(newGT);
                         }
                         else if(this.state.EQ){
-                            newEQ["EQ"] = {[i]:Number(oldObject[i])};
+                            newEQ["EQ"] = {[i]:parseInt(oldObject[i])};
                             objectHolder.push(newEQ);
                         }
                         else if(this.state.LT){
-                            newLT["LT"] = {[i]:Number(oldObject[i])};
+                            newLT["LT"] = {[i]:parseInt(oldObject[i])};
                             objectHolder.push(newLT);
                         }
                     }
@@ -474,10 +474,25 @@ class Rooms extends React.Component {
 
     organizeObject() {
         //TODO: Order not specified for now - can add when we get around to it. Delete if not active
+        let newIS = {};
+        let newGT = {};
+        let newLT = {};
+        let newEQ = {};
+        let newORQuery= {};
+        let oldObject = this.state;
+        let ORObjectHolder = [];
+        let newQuery = {
+            WHERE: {},
+            OPTIONS: {
+                COLUMNS:[],
+                FORM:"TABLE"
+            }
+        };
+
         if(this.state.Distance != "" && this.state.rooms_shortname != "") {
             let newDistanceQuery = [];
             newDistanceQuery.push(this.state.rooms_shortname);
-            newDistanceQuery.push(Number(this.state.Distance));
+            newDistanceQuery.push(parseInt(this.state.Distance));
             fetch('http://localhost:4321/distance',
                 { method: "POST",
                     headers: {
@@ -488,118 +503,144 @@ class Rooms extends React.Component {
                     body: JSON.stringify(newDistanceQuery)})
                 .then((response) => response.json())
                 .then((json) => {
+                    console.log(json.nearbyBuildings);
                     this.setState({
                         DistanceQuery: json.nearbyBuildings
                     });
+                    for(let i in this.state.DistanceQuery) {
+                        let objectHolder = [];
+                        let newAND = {};
+                        let newOR = {};
+                        newIS = {IS: {rooms_shortname:this.state.DistanceQuery[i]}};
+                        objectHolder.push(newIS);
+                        for (let j in oldObject) {
+                            if (typeof oldObject[j] == "string" && oldObject[j].length != 0 && j != "Distance" && j!= "rooms_shortname") {
+                                if(j != "rooms_seats") {
+                                    newIS = {IS:{[j]:oldObject[j]}};
+                                    objectHolder.push(newIS);
+                                }
+                                else {
+                                    if(this.state.GT){
+                                        newGT["GT"] = {[j]:parseInt(oldObject[j])};
+                                        objectHolder.push(newGT);
+                                    }
+                                    else if(this.state.EQ){
+                                        newEQ["EQ"] = {[j]:parseInt(oldObject[j])};
+                                        objectHolder.push(newEQ);
+                                    }
+                                    else if(this.state.LT){
+                                        newLT["LT"] = {[j]:parseInt(oldObject[j])};
+                                        objectHolder.push(newLT);
+                                    }
+                                }
+                            }
+                        }
+                        if (objectHolder.length > 1) {
+                            if(this.state.AND) {
+                                newAND["AND"] = objectHolder;
+                                ORObjectHolder.push(newAND);
+                            }
+                            else if(this.state.OR){
+                                newOR["OR"] = objectHolder;
+                                ORObjectHolder.push(newOR);
+                            }
+                        }
+                        else if(objectHolder.length = 1){
+                            ORObjectHolder.push(objectHolder[0]);
+                        }
+                        console.log(ORObjectHolder);
+                    }
+                    newORQuery["OR"] = ORObjectHolder;
+                    newQuery.WHERE = newORQuery;
+                    newQuery.OPTIONS.COLUMNS = ["rooms_shortname","rooms_number", "rooms_seats","rooms_type","rooms_furniture"]; //Setting columns for table
+                    this.setState({
+                        Columns:[{
+                            header:'Building Name',
+                            accessor: 'rooms_shortname'
+                        },{
+                            header:'Number',
+                            accessor: 'rooms_number'
+                        },{
+                            header:'Size',
+                            accessor: 'rooms_seats'
+                        },{
+                            header:'Type',
+                            accessor: 'rooms_type'
+                        },{
+                            header:'Furniture',
+                            accessor: 'rooms_furniture'
+                        }]
+                    });
+
+                    //Adding all to new query
+                    fetch('http://localhost:4321/query',
+                        { method: "POST",
+                            headers: {
+                                'Accept' : 'application/json',
+                                'Content-type': 'application/json'
+                            },
+                            mode:'no-cors',
+                            body: JSON.stringify(newQuery)})
+                        .then((response) => response.json())
+                        .then((json) => {
+                            console.log(newQuery);
+                            this.setState({
+                                Data: json.result
+                            });
+                            console.log(json);
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                    this.setState({
+                        DisplayTable:true,
+                        DistanceQuery:[]
+                    });
+                    console.log(this.state);
                 })
                 .catch((error) => {
                     console.error(error);
                 });
         }
-
-
-        let newQuery = {
-            WHERE: {},
-            OPTIONS: {
-                COLUMNS:[],
-                FORM:"TABLE"
-            }
-        };
-        //Format object according to state
-
-        //Creating and adding options for where
-
-        let newAND = {};
-        let newOR = {};
-        let newIS = {};
-        let newGT = {};
-        let newLT = {};
-        let newEQ = {};
-        let oldObject = this.state;
-
-        // let oldObject = this.state;
-        let objectHolder = [];
-        let ORObjectHolder = [];
-        // Checking if optional distance field is filled
-        if(this.state.DistanceQuery.length >1) {
-            for(let i in this.state.DistanceQuery) {
-                for (let j in oldObject) {
-                    newIS = {IS:{rooms_shortname:i}};
-                    objectHolder.push(newIS);
-                    if (typeof oldObject[j] == "string" && oldObject[j].length != 0 && j != "Distance" && j!= "rooms_shortname") {
-                        if(j != "rooms_seats") {
-                            newIS = {IS:{[j]:oldObject[i].toUpperCase()}};
-                            objectHolder.push(newIS);
-                        }
-                        else {
-                            if(this.state.GT){
-                                newGT["GT"] = {[j]:Number(oldObject[j])};
-                                objectHolder.push(newGT);
-                            }
-                            else if(this.state.EQ){
-                                newEQ["EQ"] = {[j]:Number(oldObject[j])};
-                                objectHolder.push(newEQ);
-                            }
-                            else if(this.state.LT){
-                                newLT["LT"] = {[j]:Number(oldObject[j])};
-                                objectHolder.push(newLT);
-                            }
-                        }
-                    }
-                }
-                if (objectHolder.length > 1) {
-                    if(this.state.AND) {
-                        newAND["AND"] = objectHolder;
-                        ORObjectHolder.push(newAND);
-                    }
-                    else if(this.state.OR){
-                        newOR["OR"] = objectHolder;
-                        ORObjectHolder.push(newOR);
-                    }
-                }
-                else if(objectHolder.length = 1){
-                    ORObjectHolder.push(objectHolder);
-                }
-            }
-            console.log(ORObjectHolder);
-            newOR["OR"] = ORObjectHolder;
-            newQuery.WHERE = newOR;
-        }
-        //Format object according to state
+        else {
+            let objectHolder = [];
+            let newAND = {};
+            let newOR = {};
             for (let i in oldObject) {
                 if (typeof oldObject[i] == "string" && oldObject[i].length != 0 && i != "Distance") {
-                    if(i != "rooms_seats") {
-                        newIS = {IS:{[i]:oldObject[i].toUpperCase()}};
+                    console.log(i);
+                    if (i != "rooms_seats") {
+                        newIS = {IS: {[i]: oldObject[i]}};
                         objectHolder.push(newIS);
                     }
                     else {
-                        if(this.state.GT){
-                            newGT["GT"] = {[i]:Number(oldObject[i])};
+                        if (this.state.GT) {
+                            newGT["GT"] = {[i]: parseInt(oldObject[i])};
                             objectHolder.push(newGT);
                         }
-                        else if(this.state.EQ){
-                            newEQ["EQ"] = {[i]:Number(oldObject[i])};
+                        else if (this.state.EQ) {
+                            newEQ["EQ"] = {[i]: parseInt(oldObject[i])};
                             objectHolder.push(newEQ);
                         }
-                        else if(this.state.LT){
-                            newLT["LT"] = {[i]:Number(oldObject[i])};
+                        else if (this.state.LT) {
+                            newLT["LT"] = {[i]: parseInt(oldObject[i])};
                             objectHolder.push(newLT);
                         }
                     }
                 }
             }
             if (objectHolder.length > 1) {
-                if(this.state.AND) {
+                if (this.state.AND) {
                     newAND["AND"] = objectHolder;
                     newQuery.WHERE = newAND;
 
                 }
-                else if(this.state.OR){
+                else if (this.state.OR) {
                     newOR["OR"] = objectHolder;
                     newQuery.WHERE = newOR;
                 }
             }
-            else if(objectHolder.length = 1){
+            else if (objectHolder.length = 1) {
                 newQuery.WHERE = objectHolder[0];
                 if (typeof newQuery.WHERE == "undefined") {
                     newQuery.WHERE = {};
@@ -624,33 +665,34 @@ class Rooms extends React.Component {
                     accessor: 'rooms_furniture'
                 }]
             });
-        console.log(newQuery);
 
-        //Adding all to new query
-        fetch('http://localhost:4321/query',
-            { method: "POST",
-                headers: {
-                    'Accept' : 'application/json',
-                    'Content-type': 'application/json'
-                },
-                mode:'no-cors',
-                body: JSON.stringify(newQuery)})
-            .then((response) => response.json())
-            .then((json) => {
-                this.setState({
-                    Data: json.result
+            //Adding all to new query
+            fetch('http://localhost:4321/query',
+                { method: "POST",
+                    headers: {
+                        'Accept' : 'application/json',
+                        'Content-type': 'application/json'
+                    },
+                    mode:'no-cors',
+                    body: JSON.stringify(newQuery)})
+                .then((response) => response.json())
+                .then((json) => {
+                    console.log(newQuery);
+                    this.setState({
+                        Data: json.result
+                    });
+                    console.log(json);
+                })
+                .catch((error) => {
+                    console.error(error);
                 });
-                console.log(json);
-            })
-            .catch((error) => {
-                console.error(error);
+            this.setState({
+                DisplayTable:true,
+                DistanceQuery:[]
             });
-        this.setState({
-            DisplayTable:true,
-            DistanceQuery:[]
-        });
-        console.log(this.state);
+            console.log(this.state);
 
+        }
     }
     render() {
         const isSizeFilled = this.state.rooms_seats;
@@ -747,7 +789,7 @@ class Rooms extends React.Component {
                         <input
                             name ="rooms_furniture"
                             type="text"
-                            placeholder="ex: sftwr constructn"
+                            placeholder="ex: Classroom-Movable Tables & Chairs"
                             value ={this.state.rooms_furniture}
                             onChange={this.handleInputChange} />
                     </label>
@@ -757,10 +799,286 @@ class Rooms extends React.Component {
                         <option value="OR">OR</option>
                     </select>
                     <br/>
-                    //TODO: Location
+                    //TODO: Dropdown do not reset unless on click
                     <br/>
                     <br/>
                     //TODO: Make everything a dropdown except for number and size?
+                    <br/>
+                    <button type="button" onClick={this.organizeObject}> Compile </button>
+                </form>
+                {Table}
+            </div>
+
+        );
+    }
+}
+class Schedule extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            courses_id: "",
+            courses_dept: "",
+            rooms_shortname:"",
+            rooms_shortname_query:"",
+            Distance:"",
+            DistanceQuery:[],
+            EITHER_courses:true,
+            AND_courses: false,
+            EITHER_rooms:true,
+            AND_rooms: false,
+            Data:[],
+            Columns: [],
+            DisplayTable: false,
+        };
+
+        this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleBooleanParam = this.handleBooleanParam.bind(this);
+        this.organizeObject = this.organizeObject.bind(this);
+    }
+
+    handleInputChange(event) {
+        const target = event.target;
+        const name = target.name;
+        const value = target.value;
+        this.setState({
+            [name]: value
+        });
+    }
+
+    handleBooleanParam(event) {
+        const target = event.target;
+        const value = target.value;
+       if (value == "AND_courses") {
+            this.setState({
+                [value]: true,
+                EITHER_courses:false
+
+            });
+        }
+        else if (value == "AND_rooms") {
+            this.setState({
+                [value]: true,
+                EITHER_rooms:false
+
+            });
+        }
+
+       else if (value == "EITHER_courses") {
+           this.setState({
+               [value]: true,
+               AND_courses: false,
+           });
+       }
+       else if (value == "EITHER_rooms") {
+           this.setState({
+               [value]: true,
+               AND_rooms: false,
+           });
+       }
+       console.log(this.state);
+    }
+
+
+    organizeObject() {
+        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
+        let newQuery_courses = {
+            WHERE: {},
+            OPTIONS: {
+                COLUMNS:["courses_id", "courses_dept", "courses_uuid", "courseSize"],
+                ORDER: {dir: "DOWN", keys: ["courseSize"]},         //TODO: to be determined
+                FORM:"TABLE"
+            },
+            TRANSFORMATIONS:{
+                GROUP: ["courses_id", "courses_dept", "courses_section"],
+                APPLY: [{
+                    "courseSize": {
+                        "MAX": "courses_size"
+                    }
+                }]
+            }
+        }
+        ;
+        let newQuery_rooms = {
+            WHERE: {},
+            OPTIONS: {
+                COLUMNS:["rooms_seats", "rooms_shortname", "rooms_number"],
+                ORDER: {dir: "DOWN", keys: ["rooms_seats"]},              //TODO: to be determined
+                FORM:"TABLE"
+            }
+        };
+        //Format object according to state
+
+        //Creating and adding options for where
+
+        let newAND = {};
+        let newOR = {};
+        let oldObject = this.state;
+        let objectHolder =[];
+
+        // let oldObject = this.state;
+        //All things to do with courses
+        if(oldObject.EITHER_courses) {
+            if(oldObject.courses_id == "" && oldObject.courses_dept != "" ) {
+                newQuery_courses.WHERE = {IS: oldObject.courses_dept};
+            }
+            else if (oldObject.courses_id != "" && oldObject.courses_dept == "" ) {
+                newQuery_courses.WHERE = {IS: oldObject.courses_id};
+            }
+            else {
+                objectHolder.push({courses_id:oldObject.courses_id});
+                objectHolder.push({courses_dept:oldObject.courses_dept});
+                newOR["OR"] = objectHolder;
+                newQuery_courses.WHERE = newOR;
+            }
+            //TODO: Throw error?
+        }
+        else if(oldObject.AND_courses){
+            console.log("hit");
+            objectHolder.push({IS:{courses_dept:oldObject.courses_dept}});
+            objectHolder.push({IS:{courses_id:oldObject.courses_id}});
+            newAND["AND"] = objectHolder;
+            newQuery_courses.WHERE = newAND;
+        }
+        //All things to do with rooms
+        if(oldObject.rooms_shortname_query != "" && oldObject.Distance != "") {
+            fetch('http://localhost:4321/distance',
+                    { method: "POST",
+                        headers: {
+                            'Accept' : 'application/json',
+                            'Content-type': 'application/json'
+                        },
+                        mode:'no-cors',
+                        body: JSON.stringify([oldObject.rooms_shortname_query,parseInt(oldObject.Distance)])})
+                    .then((response) => response.json())
+                    .then((json) => {
+                        let objectHolder1 = [];
+                        this.setState({
+                            DistanceQuery: json.nearbyBuildings
+                        });
+                        for(let i in this.state.DistanceQuery) {
+                            let newIS = {};
+                            newIS = {IS: {rooms_shortname:this.state.DistanceQuery[i]}};
+                            objectHolder1.push(newIS);
+                        }
+                        if (oldObject.AND_rooms) {
+                            objectHolder.push({IS:{rooms_shortname:oldObject.rooms_shortname}});
+                            objectHolder.push({OR: objectHolder1});
+                            newAND["AND"] = objectHolder;
+                            newQuery_rooms.WHERE = newAND;
+                        }
+                        else if(oldObject.EITHER_rooms) {
+                            if (oldObject.rooms_shortname == "" && oldObject.rooms_shortname_query != "" && oldObject.Distance != "") {
+                                newQuery_rooms.WHERE = {OR:objectHolder1};
+                            }
+                            else {
+                                objectHolder.push({IS:oldObject.rooms_shortname});
+                                objectHolder.push({OR: objectHolder1});
+                                newOR["OR"] = objectHolder;
+                                newQuery_rooms.WHERE = newOR;
+                            }
+                        }
+
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+        }
+        else if(oldObject.rooms_shortname != "") {
+            newQuery_rooms.WHERE = {IS: {rooms_shortname: oldObject.rooms_shortname}};
+        }
+
+
+        console.log(newQuery_rooms);
+        console.log(newQuery_courses);
+
+        //Adding all to new query
+        // fetch('http://localhost:4321/query',
+        //     { method: "POST",
+        //         headers: {
+        //             'Accept' : 'application/json',
+        //             'Content-type': 'application/json'
+        //         },
+        //         mode:'no-cors',
+        //         body: JSON.stringify(newQuery)})
+        //     .then((response) => response.json())
+        //     .then((json) => {
+        //         this.setState({
+        //             Data: json.result
+        //         });
+        //         console.log(json);
+        //     })
+        //     .catch((error) => {
+        //         console.error(error);
+        //     });
+        // this.setState({
+        //     Transform:false,
+        //     DisplayTable:true
+        // });
+        // console.log(this.state);
+
+    }
+    render() {
+        const isTable = this.state.DisplayTable;
+        let Table = null;
+        if(isTable) {
+            Table =
+                <ReactTable data={this.state.Data} columns={this.state.Columns} defaultPageSize={10}/>
+        }
+
+
+        return (
+
+            <div>
+                <form>
+                    <label>
+                        Courses to slot:
+                        <br />
+                        <input
+                            name ="courses_id"
+                            type="text"
+                            placeholder="Course Department"
+                            value ={this.state.courses_id}
+                            onChange={this.handleInputChange} />
+                        <input
+                            name ="courses_dept"
+                            type="text"
+                            placeholder="Course Number"
+                            value={this.state.courses_dept}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    <select onChange={this.handleBooleanParam}>
+                        <option value="EITHER_courses">Either</option>
+                        <option value="AND_courses">AND</option>
+                    </select>
+                    <br />
+                    <label>
+                        Avaliable Rooms:
+                        <br />
+                        <input
+                            name ="rooms_shortname"
+                            type="text"
+                            placeholder="Building Shortname"
+                            value ={this.state.rooms_shortname}
+                            onChange={this.handleInputChange} />
+                        Closeby Buildings:
+                        <input
+                            name ="rooms_shortname_query"
+                            type="text"
+                            placeholder="Building Shortname"
+                            value ={this.state.rooms_shortname_query}
+                            onChange={this.handleInputChange} />
+                        <input
+                            name ="Distance"
+                            type="text"
+                            placeholder="Distance"
+                            value ={this.state.Distance}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    <select onChange={this.handleBooleanParam}>
+                        <option value="EITHER_rooms">Either</option>
+                        <option value="AND_rooms">AND</option>
+                    </select>
                     <br/>
                     <button type="button" onClick={this.organizeObject}> Compile </button>
                 </form>
@@ -778,6 +1096,8 @@ let complete = (
         <Form/>
         <h2> Rooms Query </h2>
         <Rooms/>
+        <h2> Scheduler </h2>
+        <Schedule/>
     </div>
 );
 
