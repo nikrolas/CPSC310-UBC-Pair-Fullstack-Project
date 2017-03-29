@@ -208,6 +208,18 @@ describe("d3ServerSpec", function () {
             });
     });
 
+    it("PUT rooms.zip", function () {
+        return chai.request("http://localhost:4321")
+            .put('/dataset/rooms')
+            .attach("body", fs.readFileSync("./rooms.zip"), "rooms.zip")
+            .then(function (res: any) {
+                expect(res.status).to.be.equal(204);
+            })
+            .catch(function () {
+                expect.fail();
+            });
+    });
+
     it("Schedule CPSC310 in DMP", function () {
         let courseQuery =
             {
@@ -371,6 +383,17 @@ describe("d3ServerSpec", function () {
     it("Remove courses.zip", function () {
         return chai.request("http://localhost:4321")
             .del('/dataset/courses')
+            .then(function (res: any) {
+                expect(res.status).to.be.equal(204);
+            })
+            .catch(function () {
+                expect.fail();
+            });
+    });
+
+    it("Remove rooms.zip", function () {
+        return chai.request("http://localhost:4321")
+            .del('/dataset/rooms')
             .then(function (res: any) {
                 expect(res.status).to.be.equal(204);
             })
