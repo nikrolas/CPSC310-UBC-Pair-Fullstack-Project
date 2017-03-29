@@ -71,7 +71,8 @@ export default class InsightFacade implements IInsightFacade {
             let roomsResults = rooms["body"]["result"];
 
             let totalSections = Math.ceil(coursesResults.length/3);
-            let totalUnscheduledSections: number = 0;
+            let totalScheduledSections: number = 0;
+            let totalAttemptedSections: number = 0;
 
             let roomsSchedule: any = {};
             let slotsRemainingForRoom: any = {};
@@ -85,6 +86,8 @@ export default class InsightFacade implements IInsightFacade {
                 let cID = section["courses_id"];
                 let cName = cDept + cID;
                 let cSize = courseMaxSizes[cDept + cID];
+
+                totalAttemptedSections++;
 
                 for (let room of roomsResults) {
                     let rSeats = room["rooms_seats"];
@@ -108,7 +111,16 @@ export default class InsightFacade implements IInsightFacade {
                                 scheduledSection["time"] = translateTimeSlots(numberOfSlots + 1);
 
                                 roomsSchedule[rName].push(scheduledSection);
-                                scheduledCourses[cName]["numSections"] += 1;
+                                if (cName in scheduledCourses) {
+                                    scheduledCourses[cName]["numSections"] += 1;
+                                }
+                                else {
+                                    scheduledCourses[cName] = {};
+                                    scheduledCourses[cName]["numSections"] = 1;
+                                    scheduledCourses[cName]["maxSeats"] = section["courseSize"];
+                                }
+
+                                totalScheduledSections++;
                                 break;
                             }
                         }
@@ -125,13 +137,15 @@ export default class InsightFacade implements IInsightFacade {
 
                             scheduledCourses[cName] = {};
                             scheduledCourses[cName]["numSections"] = 1;
-                            scheduledCourses[cName]["maxSeats"] = scheduledSection["courseSize"];
+                            scheduledCourses[cName]["maxSeats"] = section["courseSize"];
+
+                            totalScheduledSections++;
                             break;
                         }
                     }
                 }
             }
-            let quality = totalUnscheduledSections/totalSections;
+            let quality = (totalAttemptedSections - totalScheduledSections)/totalSections;
             let finalReturnArray = [roomsSchedule, quality, scheduledCourses];
 
             return fulfill(insightResponseConstructor(200, {finalReturnArray}));

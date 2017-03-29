@@ -208,7 +208,7 @@ describe.only("d3ServerSpec", function () {
             });
     });
 
-    it.only("Schedule CPSC in DMP", function () {
+    it("Schedule CPSC310 in DMP", function () {
         let courseQuery =
             {
                 WHERE: {
@@ -256,6 +256,88 @@ describe.only("d3ServerSpec", function () {
                 IS:{
                     "rooms_shortname":"DMP"
                 }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "rooms_shortname", "rooms_number", "rooms_seats"
+                ],
+                ORDER: {
+                    dir: "UP",
+                    keys: ["rooms_seats"]
+                },
+                FORM:"TABLE"
+            }
+        };
+
+        let queryArray = [];
+        queryArray.push(courseQuery);
+        queryArray.push(roomQuery);
+
+        return chai.request("http://localhost:4321")
+            .post('/schedule')
+            .send(queryArray)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
+            });
+    });
+
+    it.only("Schedule CPSC in DMP and PHARM", function () {
+        let courseQuery =
+            {
+                WHERE: {
+                    AND:[
+                        {
+                            IS: {
+                                "courses_dept": "cpsc"
+                            }
+                        },
+                        {
+                            EQ: {
+                                "courses_year": 2014
+                            }
+                        }
+                    ]
+
+                },
+                OPTIONS: {
+                    COLUMNS: [
+                        "courses_dept","courses_id", "courses_section", "courseSize"
+                    ],
+                    ORDER: {
+                        dir:"DOWN",
+                        keys: ["courses_dept","courses_id", "courseSize"]
+                    },
+                    FORM: "TABLE"
+                },
+                TRANSFORMATIONS: {
+                    GROUP: ["courses_dept","courses_id", "courses_section"],
+                    APPLY: [{
+                        "courseSize": {
+                            MAX: "courses_size"
+                        }
+                    }]
+                }
+            };
+
+        let roomQuery = {
+            WHERE:{
+                OR:[
+                    {
+                        IS:{
+                            "rooms_shortname":"DMP"
+                        }
+                    },
+                    {
+                        IS:{
+                            "rooms_shortname":"PHARM"
+                        }
+                    }
+                ]
             },
             OPTIONS:{
                 COLUMNS:[
