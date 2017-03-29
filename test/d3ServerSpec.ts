@@ -50,7 +50,7 @@ describe("d3ServerSpec", function () {
             })
     });
 
-    it.only("PUT rooms.zip", function () {
+    it("PUT rooms.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/rooms')
             .attach("body", fs.readFileSync("./rooms.zip"), "rooms.zip")
@@ -108,7 +108,7 @@ describe("d3ServerSpec", function () {
             });
     });
 
-    it.only("PUT courses.zip", function () {
+    it("PUT courses.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/courses')
             .attach("body", fs.readFileSync("./courses.zip"), "courses.zip")
@@ -208,7 +208,7 @@ describe("d3ServerSpec", function () {
             });
     });
 
-    it.only("Schedule CPSC310 in DMP", function () {
+    it("Schedule CPSC310 in DMP", function () {
         let courseQuery =
             {
                 WHERE: {
