@@ -130,9 +130,21 @@ export default class Server {
                 that.rest.post('/schedule', function (req: restify.Request, res: restify.Response,
                                                       next: restify.Next) {
 
-                    insightFacade.getSchedule(req.body)
-                        .then(function (responseFromInsight) {
-                            res.json(responseFromInsight.code, responseFromInsight.body);
+                    insightFacade.performQuery(req.body[0])
+                        .then(function (coursesResponse) {
+                            insightFacade.performQuery(req.body[1])
+                                .then(function (roomsResponse) {
+                                    insightFacade.getSchedule(coursesResponse, roomsResponse)
+                                        .then(function (responseFromInsight) {
+                                            res.json(responseFromInsight.code, responseFromInsight.body);
+                                        })
+                                        .catch(function (err) {
+                                            res.json(err.code, err.body);
+                                        });
+                                })
+                                .catch(function (err) {
+                                    res.json(err.code, err.body);
+                                });
                         })
                         .catch(function (err) {
                             res.json(err.code, err.body);

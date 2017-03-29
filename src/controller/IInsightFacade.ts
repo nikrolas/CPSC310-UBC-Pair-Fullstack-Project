@@ -146,5 +146,5 @@ export interface IInsightFacade {
 
     getNearbyBuildings(id: string, distance: number): Promise<InsightResponse>;
 
-    getSchedule(condtions: any): Promise<InsightResponse>;
+    getSchedule(courses: any, rooms:any): Promise<InsightResponse>;
 }

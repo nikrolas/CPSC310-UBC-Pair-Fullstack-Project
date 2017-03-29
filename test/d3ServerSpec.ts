@@ -74,36 +74,6 @@ describe.only("d3ServerSpec", function () {
             });
     });
 
-    it("Distance test from DMP; 21 buildings", function () {
-        let distObject: any = ["DMP", 500];
-        return chai.request("http://localhost:4321")
-            .post('/distance')
-            .send(distObject)
-            .then(function (res: any) {
-                Log.trace('then:');
-                expect(res.status).to.be.equal(200);
-            })
-            .catch(function () {
-                Log.trace('catch:');
-                expect.fail();
-            });
-    });
-
-    it.only("Distance test from DMP", function () {
-        let distObject: any = ["DMP", 200];
-        return chai.request("http://localhost:4321")
-            .post('/distance')
-            .send(distObject)
-            .then(function (res: any) {
-                Log.trace('then:');
-                expect(res.status).to.be.equal(200);
-            })
-            .catch(function () {
-                Log.trace('catch:');
-                expect.fail();
-            });
-    });
-
     it("Remove rooms.zip", function () {
         return chai.request("http://localhost:4321")
             .del('/dataset/rooms')
@@ -138,7 +108,7 @@ describe.only("d3ServerSpec", function () {
             });
     });
 
-    it("PUT courses.zip", function () {
+    it.only("PUT courses.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/courses')
             .attach("body", fs.readFileSync("./courses.zip"), "courses.zip")
@@ -205,6 +175,114 @@ describe.only("d3ServerSpec", function () {
             .catch(function (err: any) {
                 Log.trace('catch:');
                 expect(err.status).to.be.equal(400);
+            });
+    });
+
+    it("Distance test from DMP; 21 buildings", function () {
+        let distObject: any = ["DMP", 500];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
+            });
+    });
+
+    it("Distance test from DMP", function () {
+        let distObject: any = ["DMP", 200];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
+            });
+    });
+
+    it.only("Schedule CPSC in DMP", function () {
+        let courseQuery =
+            {
+                WHERE: {
+                    AND:[
+                        {
+                            IS: {
+                                "courses_dept": "cpsc"
+                            }
+                        },
+                        {
+                            EQ: {
+                                "courses_year": 2014
+                            }
+                        },
+                        {
+                            IS: {
+                                "courses_id": "310"
+                            }
+                        }
+                        ]
+
+                },
+                OPTIONS: {
+                    COLUMNS: [
+                        "courses_dept","courses_id", "courses_section", "courseSize"
+                    ],
+                    ORDER: {
+                        dir:"DOWN",
+                        keys: ["courses_dept","courses_id", "courseSize"]
+                    },
+                    FORM: "TABLE"
+                },
+                TRANSFORMATIONS: {
+                    GROUP: ["courses_dept","courses_id", "courses_section"],
+                    APPLY: [{
+                        "courseSize": {
+                            MAX: "courses_size"
+                        }
+                    }]
+                }
+            };
+
+        let roomQuery = {
+            WHERE:{
+                IS:{
+                    "rooms_shortname":"DMP"
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "rooms_shortname", "rooms_number", "rooms_seats"
+                ],
+                ORDER: {
+                    dir: "UP",
+                    keys: ["rooms_seats"]
+                },
+                FORM:"TABLE"
+            }
+        };
+
+        let queryArray = [];
+        queryArray.push(courseQuery);
+        queryArray.push(roomQuery);
+
+        return chai.request("http://localhost:4321")
+            .post('/schedule')
+            .send(queryArray)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
             });
     });
 

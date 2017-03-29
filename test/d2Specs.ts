@@ -7,7 +7,7 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {QueryRequest} from "../src/controller/IInsightFacade";
 
-describe.only("d2Spec", function () {
+describe("d2Spec", function () {
 
     let insightFacade: InsightFacade = null;
     let fs = require("fs");
@@ -76,7 +76,7 @@ describe.only("d2Spec", function () {
             })
     });
 
-    it.only("Dataset didn't exist; added courses successfully", function (done) {
+    it("Dataset didn't exist; added courses successfully", function (done) {
         insightFacade.addDataset("courses", dataCourses.toString( 'base64'))
             .then(function (response) {
                 expect(response.code).is.equal(204);
@@ -190,7 +190,7 @@ describe.only("d2Spec", function () {
 
     //Perform Query Test valid
 
-    it.only("Testing", function (done) {
+    it("Testing", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
                 IS: {

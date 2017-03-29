@@ -65,18 +65,78 @@ export default class InsightFacade implements IInsightFacade {
         Log.trace('InsightFacadeImpl::init()');
     }
 
-    // getSchedule(conditions: any): Promise<InsightResponse> {
-    //     return new Promise(function(fulfill, reject) {
-    //         let dept = conditions["courses_dept"];
-    //         let id = conditions["courses_id"];
-    //         let room = conditions["rooms_shortname"];
-    //         let dist = conditions["rooms_dist"];
-    //
-    //         if (dept != null && id != null) {
-    //             let courseQuery = {AND:[{IS:{"courses_dept":dept}},{EQ:}
-    //         }
-    //     })
-    // }
+    getSchedule(courses:any, rooms: any): Promise<InsightResponse> {
+        return new Promise(function(fulfill, reject) {
+            let coursesResults = courses["body"]["result"];
+            let roomsResults = rooms["body"]["result"];
+
+            let totalSections = Math.ceil(coursesResults.length/3);
+            let totalUnscheduledSections: number = 0;
+
+            let roomsSchedule: any = {};
+            let slotsRemainingForRoom: any = {};
+            let scheduledCourses: any = {};
+            let courseMaxSizes: any = generateMaxSizes(coursesResults);
+
+            //Perform scheduling by iterating
+            // through both courses and rooms
+            for (let section of coursesResults) {
+                let cDept = section["courses_dept"];
+                let cID = section["courses_id"];
+                let cName = cDept + cID;
+                let cSize = courseMaxSizes[cDept + cID];
+
+                for (let room of roomsResults) {
+                    let rSeats = room["rooms_seats"];
+
+                    if (rSeats >= cSize) {
+                        let scheduledSection: any = {};
+
+                        let rName = room["rooms_shortname"] + room["rooms_number"];
+                        let sec = section["courses_section"];
+
+                        //Check if the room has been scheduled before
+                        if (rName in slotsRemainingForRoom) {
+
+                            let numberOfSlots = slotsRemainingForRoom[rName];
+                            //and check if there are available time slots left
+                            if (numberOfSlots < 15) {
+                                slotsRemainingForRoom[rName] += 1;
+                                scheduledSection["dept"] = cDept;
+                                scheduledSection["id"] = cID;
+                                scheduledSection["section"] = sec;
+                                scheduledSection["time"] = translateTimeSlots(numberOfSlots + 1);
+
+                                roomsSchedule[rName].push(scheduledSection);
+                                scheduledCourses[cName]["numSections"] += 1;
+                                break;
+                            }
+                        }
+                        else {
+                            //If room has not been scheduled before
+                            slotsRemainingForRoom[rName] = 1;
+                            scheduledSection["dept"] = cDept;
+                            scheduledSection["id"] = cID;
+                            scheduledSection["section"] = sec;
+                            scheduledSection["time"] = translateTimeSlots(1);
+
+                            roomsSchedule[rName] = [];
+                            roomsSchedule[rName].push(scheduledSection);
+
+                            scheduledCourses[cName] = {};
+                            scheduledCourses[cName]["numSections"] = 1;
+                            scheduledCourses[cName]["maxSeats"] = scheduledSection["courseSize"];
+                            break;
+                        }
+                    }
+                }
+            }
+            let quality = totalUnscheduledSections/totalSections;
+            let finalReturnArray = [roomsSchedule, quality, scheduledCourses];
+
+            return fulfill(insightResponseConstructor(200, {finalReturnArray}));
+        })
+    }
 
     getNearbyBuildings(fromBuilding: string, maxDistance: number): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
@@ -422,13 +482,50 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
                 finalFilteredData["result"] = finalArray;
-                console.log (finalFilteredData);
+                //console.log (finalFilteredData);
                 return fulfill(insightResponseConstructor(200, finalFilteredData));
             } catch (e) {
                 return reject(insightResponseConstructor(400, {"error": e}))
             }
         });
     }
+}
+
+function generateMaxSizes(courses: any) {
+    let courseMaxSizes: any = {};
+
+    for (let i = 0; i < courses.length; i++) {
+        let dept: string = courses[i]["courses_dept"];
+        let id: string = courses[i]["courses_id"];
+        let cname: string = dept + id;
+        if (!(cname in courseMaxSizes)) {
+            courseMaxSizes[cname] = courses[i]["courseSize"];
+        }
+    }
+
+    return courseMaxSizes;
+}
+
+function translateTimeSlots(slotNumber: number) {
+    let slotToTime: any = {
+        1: "MWF 8-9",
+        2: "MWF 9-10",
+        3: "MWF 10-11",
+        4: "MWF 11-12",
+        5: "MWF 12-1",
+        6: "MWF 1-2",
+        7: "MWF 2-3",
+        8: "MWF 3-4",
+        9: "MWF 4-5",
+        10:"TuTh 8-930",
+        11:"TuTh 930-11",
+        12:"TuTh 11-1230",
+        13:"TuTh 1230-2",
+        14:"TuTh 2-330",
+        15:"TuTh 330-5"
+    };
+
+    return slotToTime[slotNumber];
 }
 
 //From http://stackoverflow.com/a/27943
