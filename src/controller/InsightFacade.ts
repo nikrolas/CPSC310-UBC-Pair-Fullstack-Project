@@ -146,7 +146,8 @@ export default class InsightFacade implements IInsightFacade {
                         }
                     }
                 }
-                let quality = 1 - ((totalAttemptedSections - totalScheduledSections) / totalSections);
+                let quality: number = 0.0;
+                quality = 1 - ((totalAttemptedSections - totalScheduledSections) / totalSections);
                 let finalReturnArray = [roomsSchedule, quality, scheduledCourses];
 
                 return fulfill(insightResponseConstructor(200, {finalReturnArray}));

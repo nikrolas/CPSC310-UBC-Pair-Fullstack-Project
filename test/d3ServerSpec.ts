@@ -9,7 +9,7 @@ var chai = require('chai');
 var chaihttp = require('chai-http');
 chai.use(chaihttp);
 
-describe.only("d3ServerSpec", function () {
+describe("d3ServerSpec", function () {
 
     let fs = require("fs");
     let server: Server;
@@ -208,26 +208,26 @@ describe.only("d3ServerSpec", function () {
             });
     });
 
-    it("Schedule CPSC310 in DMP", function () {
+    it.only("Schedule CPSC310 in DMP", function () {
         let courseQuery =
             {
                 WHERE: {
                     AND:[
                         {
                             IS: {
-                                "courses_dept": "cpsc"
+                                "courses_dept": "psyc"
                             }
                         },
                         {
                             EQ: {
                                 "courses_year": 2014
                             }
-                        },
+                        }/*,
                         {
                             IS: {
                                 "courses_id": "310"
                             }
-                        }
+                        }*/
                         ]
 
                 },
@@ -286,7 +286,7 @@ describe.only("d3ServerSpec", function () {
             });
     });
 
-    it.only("Schedule CPSC in DMP and PHARM", function () {
+    it("Schedule CPSC in DMP and BUCH", function () {
         let courseQuery =
             {
                 WHERE: {
@@ -334,7 +334,7 @@ describe.only("d3ServerSpec", function () {
                     },
                     {
                         IS:{
-                            "rooms_shortname":"PHARM"
+                            "rooms_shortname":"BUCH"
                         }
                     }
                 ]
