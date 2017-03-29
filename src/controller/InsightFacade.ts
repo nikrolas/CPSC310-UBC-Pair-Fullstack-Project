@@ -67,88 +67,92 @@ export default class InsightFacade implements IInsightFacade {
 
     getSchedule(courses:any, rooms: any): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
-            let coursesResults = courses["body"]["result"];
-            let roomsResults = rooms["body"]["result"];
+            try {
+                let coursesResults = courses["body"]["result"];
+                let roomsResults = rooms["body"]["result"];
 
-            let totalSections = Math.ceil(coursesResults.length/3);
-            let totalScheduledSections: number = 0;
-            let totalAttemptedSections: number = 0;
+                let totalSections = Math.ceil(coursesResults.length / 3);
+                let totalScheduledSections: number = 0;
+                let totalAttemptedSections: number = 0;
 
-            let roomsSchedule: any = {};
-            let slotsRemainingForRoom: any = {};
-            let scheduledCourses: any = {};
-            let courseMaxSizes: any = generateMaxSizes(coursesResults);
+                let roomsSchedule: any = {};
+                let slotsRemainingForRoom: any = {};
+                let scheduledCourses: any = {};
+                let courseMaxSizes: any = generateMaxSizes(coursesResults);
 
-            //Perform scheduling by iterating
-            // through both courses and rooms
-            for (let section of coursesResults) {
-                let cDept = section["courses_dept"];
-                let cID = section["courses_id"];
-                let cName = cDept + cID;
-                let cSize = courseMaxSizes[cDept + cID];
+                //Perform scheduling by iterating
+                // through both courses and rooms
+                for (let section of coursesResults) {
+                    let cDept = section["courses_dept"];
+                    let cID = section["courses_id"];
+                    let cName = cDept + cID;
+                    let cSize = courseMaxSizes[cDept + cID];
 
-                totalAttemptedSections++;
+                    totalAttemptedSections++;
 
-                for (let room of roomsResults) {
-                    let rSeats = room["rooms_seats"];
+                    for (let room of roomsResults) {
+                        let rSeats = room["rooms_seats"];
 
-                    if (rSeats >= cSize) {
-                        let scheduledSection: any = {};
+                        if (rSeats >= cSize) {
+                            let scheduledSection: any = {};
 
-                        let rName = room["rooms_shortname"] + room["rooms_number"];
-                        let sec = section["courses_section"];
+                            let rName = room["rooms_shortname"] + room["rooms_number"];
+                            let sec = section["courses_section"];
 
-                        //Check if the room has been scheduled before
-                        if (rName in slotsRemainingForRoom) {
+                            //Check if the room has been scheduled before
+                            if (rName in slotsRemainingForRoom) {
 
-                            let numberOfSlots = slotsRemainingForRoom[rName];
-                            //and check if there are available time slots left
-                            if (numberOfSlots < 15) {
-                                slotsRemainingForRoom[rName] += 1;
+                                let numberOfSlots = slotsRemainingForRoom[rName];
+                                //and check if there are available time slots left
+                                if (numberOfSlots < 15) {
+                                    slotsRemainingForRoom[rName] += 1;
+                                    scheduledSection["dept"] = cDept;
+                                    scheduledSection["id"] = cID;
+                                    scheduledSection["section"] = sec;
+                                    scheduledSection["time"] = translateTimeSlots(numberOfSlots + 1);
+
+                                    roomsSchedule[rName].push(scheduledSection);
+                                    if (cName in scheduledCourses) {
+                                        scheduledCourses[cName]["numSections"] += 1;
+                                    }
+                                    else {
+                                        scheduledCourses[cName] = {};
+                                        scheduledCourses[cName]["numSections"] = 1;
+                                        scheduledCourses[cName]["maxSeats"] = section["courseSize"];
+                                    }
+
+                                    totalScheduledSections++;
+                                    break;
+                                }
+                            }
+                            else {
+                                //If room has not been scheduled before
+                                slotsRemainingForRoom[rName] = 1;
                                 scheduledSection["dept"] = cDept;
                                 scheduledSection["id"] = cID;
                                 scheduledSection["section"] = sec;
-                                scheduledSection["time"] = translateTimeSlots(numberOfSlots + 1);
+                                scheduledSection["time"] = translateTimeSlots(1);
 
+                                roomsSchedule[rName] = [];
                                 roomsSchedule[rName].push(scheduledSection);
-                                if (cName in scheduledCourses) {
-                                    scheduledCourses[cName]["numSections"] += 1;
-                                }
-                                else {
-                                    scheduledCourses[cName] = {};
-                                    scheduledCourses[cName]["numSections"] = 1;
-                                    scheduledCourses[cName]["maxSeats"] = section["courseSize"];
-                                }
+
+                                scheduledCourses[cName] = {};
+                                scheduledCourses[cName]["numSections"] = 1;
+                                scheduledCourses[cName]["maxSeats"] = section["courseSize"];
 
                                 totalScheduledSections++;
                                 break;
                             }
                         }
-                        else {
-                            //If room has not been scheduled before
-                            slotsRemainingForRoom[rName] = 1;
-                            scheduledSection["dept"] = cDept;
-                            scheduledSection["id"] = cID;
-                            scheduledSection["section"] = sec;
-                            scheduledSection["time"] = translateTimeSlots(1);
-
-                            roomsSchedule[rName] = [];
-                            roomsSchedule[rName].push(scheduledSection);
-
-                            scheduledCourses[cName] = {};
-                            scheduledCourses[cName]["numSections"] = 1;
-                            scheduledCourses[cName]["maxSeats"] = section["courseSize"];
-
-                            totalScheduledSections++;
-                            break;
-                        }
                     }
                 }
-            }
-            let quality = (totalAttemptedSections - totalScheduledSections)/totalSections;
-            let finalReturnArray = [roomsSchedule, quality, scheduledCourses];
+                let quality = 1 - ((totalAttemptedSections - totalScheduledSections) / totalSections);
+                let finalReturnArray = [roomsSchedule, quality, scheduledCourses];
 
-            return fulfill(insightResponseConstructor(200, {finalReturnArray}));
+                return fulfill(insightResponseConstructor(200, {finalReturnArray}));
+            } catch (e) {
+                return reject(insightResponseConstructor(400, {"error": "cannot be scheduled"}));
+            }
         })
     }
 
@@ -157,6 +161,10 @@ export default class InsightFacade implements IInsightFacade {
             let nearbyBuildings: any = [];
             let startLat: number = buildings[fromBuilding][0];
             let startLon: number = buildings[fromBuilding][1];
+
+            if (!(fromBuilding in buildings)) {
+                return reject(insightResponseConstructor(400, {"error": "building does not exist"}));
+            }
 
             Object.keys(buildings).forEach(function(key) {
                 //if (key != fromBuilding) {
