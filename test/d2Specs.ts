@@ -193,9 +193,14 @@ describe("d2Spec", function () {
     it("Testing", function (done) {
         let qr : QueryRequest =  {
             WHERE: {
-                IS: {
-                    "courses_dept": "cpsc"
-                }
+                AND:[{
+                    IS: {
+                        "courses_dept": "cpsc"
+                    }
+                },
+                    { EQ: {"courses_year": 2014}
+                    }]
+
             },
             OPTIONS: {
                 COLUMNS: [

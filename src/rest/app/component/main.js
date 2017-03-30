@@ -6,12 +6,13 @@ let fetch = require('node-fetch');
 let ReactBoot = require('react-bootstrap');
 let Nav = require('react-bootstrap').Nav;
 let ReactTable = require('react-table').default;
+let rmp = require("rmp-api")
 import 'react-table/react-table.css';
 import './main.css';
 
- /*
-  * Components
-  */
+/*
+ * Components
+ */
 
 
 
@@ -167,7 +168,7 @@ class Form extends React.Component {
         let newEQ = {};
         let oldObject = this.state;
 
-       // let oldObject = this.state;
+        // let oldObject = this.state;
         let objectHolder = [];
         //Format object according to state
         if(this.state.Transform) {
@@ -269,7 +270,7 @@ class Form extends React.Component {
                 console.error(error);
             });
         this.setState({
-           Transform:false,
+            Transform:false,
             DisplayTable:true
         });
         console.log(this.state);
@@ -281,10 +282,10 @@ class Form extends React.Component {
         if(isSizeFilled) {
             sizeDropdown =
                 <select onChange={this.handleBooleanParam} >
-                <option value="GT">Greater Than</option>
-                <option value="LT">Less Than</option>
-                <option value="EQ">Equal To</option>
-            </select>
+                    <option value="GT">Greater Than</option>
+                    <option value="LT">Less Than</option>
+                    <option value="EQ">Equal To</option>
+                </select>
         }
         const isDept = this.state.courses_dept;
         const isNum = this.state.courses_id;
@@ -314,81 +315,81 @@ class Form extends React.Component {
         return (
 
             <div>
-            <form>
-                <label>
-                    Course Number:
-                    <br />
+                <form>
+                    <label>
+                        Course Number:
+                        <br />
 
-                    <input
-                        name ="courses_id"
-                        type="text"
-                        placeholder="ex: 210"
-                        value ={this.state.courses_id}
-                        onChange={this.handleInputChange} />
-                </label>
-                <br />
-                <label>
-                    Department:
+                        <input
+                            name ="courses_id"
+                            type="text"
+                            placeholder="ex: 210"
+                            value ={this.state.courses_id}
+                            onChange={this.handleInputChange} />
+                    </label>
                     <br />
+                    <label>
+                        Department:
+                        <br />
 
-                    <input
-                        name ="courses_dept"
-                        type="text"
-                        placeholder="ex: CPSC"
-                        value={this.state.courses_dept}
-                        onChange={this.handleInputChange} />
-                </label>
-                {numberDepartmentDropdown}
-                <br />
-                <label>
-                    Instructor:
+                        <input
+                            name ="courses_dept"
+                            type="text"
+                            placeholder="ex: CPSC"
+                            value={this.state.courses_dept}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    {numberDepartmentDropdown}
                     <br />
+                    <label>
+                        Instructor:
+                        <br />
 
-                    <input
-                        name ="courses_instructor"
-                        type="text"
-                        placeholder="ex: young, robin"
-                        value ={this.state.courses_instructor}
-                        onChange={this.handleInputChange} />
-                </label>
-                <br />
-                <label>
-                    Section Size:
+                        <input
+                            name ="courses_instructor"
+                            type="text"
+                            placeholder="ex: young, robin"
+                            value ={this.state.courses_instructor}
+                            onChange={this.handleInputChange} />
+                    </label>
                     <br />
-                    <input
-                        name ="courses_size"
-                        type="text"
-                        placeholder="ex: 100"
-                        value ={this.state.courses_size}
-                        onChange={this.handleInputChange} />
-                </label>
-                {sizeDropdown}
-                <br />
-                <label>
-                    Title:
+                    <label>
+                        Section Size:
+                        <br />
+                        <input
+                            name ="courses_size"
+                            type="text"
+                            placeholder="ex: 100"
+                            value ={this.state.courses_size}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    {sizeDropdown}
                     <br />
+                    <label>
+                        Title:
+                        <br />
 
-                    <input
-                        name ="courses_title"
-                        type="text"
-                        placeholder="ex: sftwr constructn"
-                        value ={this.state.courses_title}
-                        onChange={this.handleInputChange} />
-                </label>
-                <br />
-                <select onChange={this.handleBooleanParam}>
-                    <option value="AND">AND</option>
-                    <option value="OR">OR</option>
-                </select>
-                <br/>
-                //TODO: Potential sort by button populated by filled in form w/ Ascending/Descending options
-                <br/>
-                //TODO: Returning Errors
-                <br/>
-                //TODO: Transform state for constant ordering option but different department and probably section size as well
-                <br/>
-                <button type="button" onClick={this.organizeObject}> Compile </button>
-            </form>
+                        <input
+                            name ="courses_title"
+                            type="text"
+                            placeholder="ex: sftwr constructn"
+                            value ={this.state.courses_title}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    <br />
+                    <select onChange={this.handleBooleanParam}>
+                        <option value="AND">AND</option>
+                        <option value="OR">OR</option>
+                    </select>
+                    <br/>
+                    //TODO: Potential sort by button populated by filled in form w/ Ascending/Descending options
+                    <br/>
+                    //TODO: Returning Errors
+                    <br/>
+                    //TODO: Transform state for constant ordering option but different department and probably section size as well
+                    <br/>
+                    <button type="button" onClick={this.organizeObject}> Compile </button>
+                </form>
                 {Table}
             </div>
 
@@ -827,14 +828,27 @@ class Schedule extends React.Component {
             AND_courses: false,
             EITHER_rooms:true,
             AND_rooms: false,
-            Data:[],
-            Columns: [],
+            Current:[],
+            Columns:[{
+                header:'Department',
+                accessor: 'dept'
+            },{
+                header:'ID',
+                accessor: 'id'
+            },{
+                header:'Section',
+                accessor: 'section'
+            },{
+                header:'Time',
+                accessor: 'time'
+            }],
             DisplayTable: false,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleBooleanParam = this.handleBooleanParam.bind(this);
         this.organizeObject = this.organizeObject.bind(this);
+        this.onDropdownSelected = this.onDropdownSelected.bind(this);
     }
 
     handleInputChange(event) {
@@ -849,7 +863,7 @@ class Schedule extends React.Component {
     handleBooleanParam(event) {
         const target = event.target;
         const value = target.value;
-       if (value == "AND_courses") {
+        if (value == "AND_courses") {
             this.setState({
                 [value]: true,
                 EITHER_courses:false
@@ -864,46 +878,80 @@ class Schedule extends React.Component {
             });
         }
 
-       else if (value == "EITHER_courses") {
-           this.setState({
-               [value]: true,
-               AND_courses: false,
-           });
-       }
-       else if (value == "EITHER_rooms") {
-           this.setState({
-               [value]: true,
-               AND_rooms: false,
-           });
-       }
-       console.log(this.state);
+        else if (value == "EITHER_courses") {
+            this.setState({
+                [value]: true,
+                AND_courses: false,
+            });
+        }
+        else if (value == "EITHER_rooms") {
+            this.setState({
+                [value]: true,
+                AND_rooms: false,
+            });
+        }
+        console.log(this.state);
     }
 
+    createSelectItems() {
+        let items = [];
+        if(this.state.Schedule == null) {
+            return;
+        }
+        else {
+            for (let i = 0; i < Object.keys(this.state.Schedule).length; i++) {
+                items.push(<option key={Object.keys(this.state.Schedule)[i]} value={Object.keys(this.state.Schedule)[i]}>{Object.keys(this.state.Schedule)[i]}</option>);
+                //here I will be creating my options dynamically based on
+                //what props are currently passed to the parent component
+            }
+            return items;
+        }
+    }
+
+    onDropdownSelected(e) {
+        const target = e.target;
+        const value = target.value;
+        console.log(this.state);
+        this.setState ({
+            Current: value
+        });
+        //here you will see the current selected value of the select input
+    }
 
     organizeObject() {
         //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery_courses = {
             WHERE: {},
             OPTIONS: {
-                COLUMNS:["courses_id", "courses_dept", "courses_uuid", "courseSize"],
-                ORDER: {dir: "DOWN", keys: ["courseSize"]},         //TODO: to be determined
-                FORM:"TABLE"
+                COLUMNS: [
+                    "courses_dept","courses_id", "courses_section", "courseSize"
+                ],
+                ORDER: {
+                    dir:"DOWN",
+                    keys: ["courses_dept","courses_id", "courseSize"]
+                },
+                FORM: "TABLE"
             },
-            TRANSFORMATIONS:{
-                GROUP: ["courses_id", "courses_dept", "courses_section"],
+            TRANSFORMATIONS: {
+                GROUP: ["courses_dept","courses_id", "courses_section"],
                 APPLY: [{
                     "courseSize": {
-                        "MAX": "courses_size"
+                        MAX: "courses_size"
                     }
                 }]
             }
-        }
-        ;
+        };
+
         let newQuery_rooms = {
             WHERE: {},
-            OPTIONS: {
-                COLUMNS:["rooms_seats", "rooms_shortname", "rooms_number"],
-                ORDER: {dir: "DOWN", keys: ["rooms_seats"]},              //TODO: to be determined
+            OPTIONS:{
+                COLUMNS:[
+                    "rooms_shortname", "rooms_number", "rooms_seats"
+                ],
+                ORDER: {
+                    dir: "UP",
+                    keys: ["rooms_seats"]
+                },
                 FORM:"TABLE"
             }
         };
@@ -911,25 +959,28 @@ class Schedule extends React.Component {
 
         //Creating and adding options for where
 
-        let newAND = {};
-        let newOR = {};
+        let newAND1 = {};
+        let newOR1 = {};
+        let newAND2 = {};
+        let newOR2 = {};
         let oldObject = this.state;
         let objectHolder =[];
+
 
         // let oldObject = this.state;
         //All things to do with courses
         if(oldObject.EITHER_courses) {
             if(oldObject.courses_id == "" && oldObject.courses_dept != "" ) {
-                newQuery_courses.WHERE = {IS: oldObject.courses_dept};
+                newQuery_courses.WHERE = {AND:[{IS: {courses_dept:oldObject.courses_dept}},{EQ:{"courses_year":2014}}]};
             }
             else if (oldObject.courses_id != "" && oldObject.courses_dept == "" ) {
-                newQuery_courses.WHERE = {IS: oldObject.courses_id};
+                newQuery_courses.WHERE = {AND:[{IS: {courses_id:oldObject.courses_id}},{EQ:{"courses_year":2014}}]};
             }
             else {
-                objectHolder.push({courses_id:oldObject.courses_id});
-                objectHolder.push({courses_dept:oldObject.courses_dept});
-                newOR["OR"] = objectHolder;
-                newQuery_courses.WHERE = newOR;
+                objectHolder.push({IS:{courses_id:oldObject.courses_id}});
+                objectHolder.push({IS:{courses_dept:oldObject.courses_dept}});
+                newOR1["OR"] = objectHolder;
+                newQuery_courses.WHERE = {AND:[newOR1,{EQ:{courses_year:2014}}]};;
             }
             //TODO: Throw error?
         }
@@ -937,93 +988,150 @@ class Schedule extends React.Component {
             console.log("hit");
             objectHolder.push({IS:{courses_dept:oldObject.courses_dept}});
             objectHolder.push({IS:{courses_id:oldObject.courses_id}});
-            newAND["AND"] = objectHolder;
-            newQuery_courses.WHERE = newAND;
+            newAND1["AND"] = objectHolder;
+            newQuery_courses.WHERE = {AND:[newAND1,{EQ:{courses_year:2014}}]};;
         }
         //All things to do with rooms
         if(oldObject.rooms_shortname_query != "" && oldObject.Distance != "") {
             fetch('http://localhost:4321/distance',
-                    { method: "POST",
-                        headers: {
-                            'Accept' : 'application/json',
-                            'Content-type': 'application/json'
-                        },
-                        mode:'no-cors',
-                        body: JSON.stringify([oldObject.rooms_shortname_query,parseInt(oldObject.Distance)])})
-                    .then((response) => response.json())
-                    .then((json) => {
-                        let objectHolder1 = [];
-                        this.setState({
-                            DistanceQuery: json.nearbyBuildings
-                        });
-                        for(let i in this.state.DistanceQuery) {
-                            let newIS = {};
-                            newIS = {IS: {rooms_shortname:this.state.DistanceQuery[i]}};
-                            objectHolder1.push(newIS);
-                        }
-                        if (oldObject.AND_rooms) {
-                            objectHolder.push({IS:{rooms_shortname:oldObject.rooms_shortname}});
-                            objectHolder.push({OR: objectHolder1});
-                            newAND["AND"] = objectHolder;
-                            newQuery_rooms.WHERE = newAND;
-                        }
-                        else if(oldObject.EITHER_rooms) {
-                            if (oldObject.rooms_shortname == "" && oldObject.rooms_shortname_query != "" && oldObject.Distance != "") {
-                                newQuery_rooms.WHERE = {OR:objectHolder1};
-                            }
-                            else {
-                                objectHolder.push({IS:oldObject.rooms_shortname});
-                                objectHolder.push({OR: objectHolder1});
-                                newOR["OR"] = objectHolder;
-                                newQuery_rooms.WHERE = newOR;
-                            }
-                        }
-
-                    })
-                    .catch((error) => {
-                        console.error(error);
+                { method: "POST",
+                    headers: {
+                        'Accept' : 'application/json',
+                        'Content-type': 'application/json'
+                    },
+                    mode:'no-cors',
+                    body: JSON.stringify([oldObject.rooms_shortname_query,parseInt(oldObject.Distance)])})
+                .then((response) => response.json())
+                .then((json) => {
+                    let objectHolder1 = [];
+                    let ORObjectHolder =[];
+                    this.setState({
+                        DistanceQuery: json.nearbyBuildings
                     });
+                    for(let i in this.state.DistanceQuery) {
+                        let newIS = {};
+                        newIS = {IS: {rooms_shortname:this.state.DistanceQuery[i]}};
+                        ORObjectHolder.push(newIS);
+                    }
+                    if (oldObject.AND_rooms) {
+                        objectHolder1.push({IS:{rooms_shortname:oldObject.rooms_shortname}});
+                        objectHolder1.push({OR: ORObjectHolder});
+                        newAND2["AND"] = objectHolder1;
+                        newQuery_rooms.WHERE = newAND2;
+                    }
+                    else if(oldObject.EITHER_rooms) {
+                        if (oldObject.rooms_shortname == "" && oldObject.rooms_shortname_query != "" && oldObject.Distance != "") {
+                            newQuery_rooms.WHERE = {OR:ORObjectHolder};
+                        }
+                        else {
+                            objectHolder1.push({IS:{rooms_shortname:oldObject.rooms_shortname}});
+                            objectHolder1.push({OR: ORObjectHolder});
+                            newOR2["OR"] = objectHolder1;
+                            newQuery_rooms.WHERE = newOR2;
+                        }
+                    }
+                    console.log(newQuery_rooms);
+                    console.log(newQuery_courses);
+                    let queryArray=[];
+                    queryArray.push(newQuery_courses);
+                    queryArray.push(newQuery_rooms);
+                    console.log(queryArray);
+                    console.log("through first");
+
+                    //     Adding all to new query
+                    fetch('http://localhost:4321/schedule',
+                        { method: "POST",
+                            headers: {
+                                'Accept' : 'application/json',
+                                'Content-type': 'application/json'
+                            },
+                            mode:'no-cors',
+                            body: JSON.stringify(queryArray)})
+                        .then((response) => response.json())
+                        .then((json) => {
+                            this.setState({
+                                Schedule: json.finalReturnArray[0],
+                                Quality: json.finalReturnArray[1],
+                                List: json.finalReturnArray[2],
+                            });
+                            console.log(json);
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+
+                    this.setState({
+                        Transform:false,
+                        DisplayTable:true
+                    });
+
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+
         }
         else if(oldObject.rooms_shortname != "") {
             newQuery_rooms.WHERE = {IS: {rooms_shortname: oldObject.rooms_shortname}};
+            console.log(newQuery_rooms);
+            console.log(newQuery_courses);
+            let queryArray=[];
+            queryArray.push(newQuery_courses);
+            queryArray.push(newQuery_rooms);
+            console.log(queryArray);
+            console.log("through second");
+
+
+            //     Adding all to new query
+            fetch('http://localhost:4321/schedule',
+                { method: "POST",
+                    headers: {
+                        'Accept' : 'application/json',
+                        'Content-type': 'application/json'
+                    },
+                    mode:'no-cors',
+                    body: JSON.stringify(queryArray)})
+                .then((response) => response.json())
+                .then((json) => {
+                    this.setState({
+                        Schedule: json.finalReturnArray[0],
+                        Quality: json.finalReturnArray[1],
+                        List: json.finalReturnArray[2],
+                    });
+                    console.log(json);
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+
+            this.setState({
+                Transform:false,
+                DisplayTable:true
+            });
         }
-
-
-        console.log(newQuery_rooms);
-        console.log(newQuery_courses);
-
-        //Adding all to new query
-        // fetch('http://localhost:4321/query',
-        //     { method: "POST",
-        //         headers: {
-        //             'Accept' : 'application/json',
-        //             'Content-type': 'application/json'
-        //         },
-        //         mode:'no-cors',
-        //         body: JSON.stringify(newQuery)})
-        //     .then((response) => response.json())
-        //     .then((json) => {
-        //         this.setState({
-        //             Data: json.result
-        //         });
-        //         console.log(json);
-        //     })
-        //     .catch((error) => {
-        //         console.error(error);
-        //     });
-        // this.setState({
-        //     Transform:false,
-        //     DisplayTable:true
-        // });
-        // console.log(this.state);
 
     }
     render() {
+
         const isTable = this.state.DisplayTable;
-        let Table = null;
+
+        let coursesDropdown = null;
+        let quality = null;
         if(isTable) {
+            coursesDropdown =
+                <select onChange={this.onDropdownSelected}>
+                    {this.createSelectItems()}
+                </select>
+            quality = <p> Quality Measure: {this.state.Quality}
+            </p>
+        };
+
+
+        const isDropdown = this.state.Current;
+        let Table = null;
+        if(typeof isDropdown == "string") {
             Table =
-                <ReactTable data={this.state.Data} columns={this.state.Columns} defaultPageSize={10}/>
+                <ReactTable data={this.state.Schedule[this.state.Current]} columns={this.state.Columns} defaultPageSize={10}/>;
         }
 
 
@@ -1035,16 +1143,16 @@ class Schedule extends React.Component {
                         Courses to slot:
                         <br />
                         <input
-                            name ="courses_id"
-                            type="text"
-                            placeholder="Course Department"
-                            value ={this.state.courses_id}
-                            onChange={this.handleInputChange} />
-                        <input
                             name ="courses_dept"
                             type="text"
+                            placeholder="Course Department"
+                            value ={this.state.courses_dept}
+                            onChange={this.handleInputChange} />
+                        <input
+                            name ="courses_id"
+                            type="text"
                             placeholder="Course Number"
-                            value={this.state.courses_dept}
+                            value={this.state.courses_id}
                             onChange={this.handleInputChange} />
                     </label>
                     <select onChange={this.handleBooleanParam}>
@@ -1082,13 +1190,183 @@ class Schedule extends React.Component {
                     <br/>
                     <button type="button" onClick={this.organizeObject}> Compile </button>
                 </form>
+                {coursesDropdown}
+                {quality}
                 {Table}
             </div>
 
         );
     }
 }
+class Novel extends React.Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            courses_id: "",
+            courses_dept: "",
+            Data:[],
+            Columns:[{
+            header:'Department',
+            accessor: 'courses_dept'
+        },{
+            header:'Course Number',
+            accessor: 'courses_id'
+        },{
+            header:'Instructor',
+            accessor: 'courses_instructor'
+        }],
+            DisplayTable: false,
+        };
+
+        this.handleInputChange = this.handleInputChange.bind(this);
+
+        this.organizeObject = this.organizeObject.bind(this);
+    }
+
+    handleInputChange(event) {
+        const target = event.target;
+        const name = target.name;
+        const value = target.value;
+        this.setState({
+            [name]: value
+        });
+    }
+
+
+
+
+
+
+    organizeObject() {
+        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
+        let newQuery = {
+            WHERE: {},
+            OPTIONS: {
+                COLUMNS: [
+                    "courses_dept","courses_id", "courses_instructor"
+                ],
+                FORM: "TABLE"
+            },
+            TRANSFORMATIONS: {
+                GROUP: ["courses_dept","courses_id", "courses_instructor"],
+                APPLY: []
+            }
+        };
+        //Format object according to state
+
+        //Creating and adding options for where
+
+
+        let newIS = {};
+
+        // let oldObject = this.state;
+        let objectHolder = [];
+        //Format object according to state
+
+
+        if ( this.state.courses_id != "" && this.state.courses_dept != "" ) {
+                console.log("hello");
+                newIS = {IS:{courses_id:this.state.courses_id}};
+                objectHolder.push(newIS);
+                newIS = {IS:{courses_dept:this.state.courses_dept.toLowerCase()}};
+                objectHolder.push(newIS);
+                newQuery.WHERE = {AND: objectHolder};
+        }
+
+        console.log(newQuery);
+
+        //Adding all to new query
+        fetch('http://localhost:4321/query',
+            { method: "POST",
+                headers: {
+                    'Accept' : 'application/json',
+                    'Content-type': 'application/json'
+                },
+                mode:'no-cors',
+                body: JSON.stringify(newQuery)})
+            .then((response) => response.json())
+            .then((json) => {
+                this.setState({
+                    Data: json.result
+                });
+
+                // let callback = function(professor) {
+                //     if (professor === null) {
+                //         console.log("No professor found.");
+                //         return;
+                //     }
+                //     console.log("Name: " + professor.fname + " " + professor.lname);
+                //     console.log("University: "+ professor.university);
+                //     console.log("Quality: " + professor.quality);
+                //     console.log("Easiness: " + professor.easiness);
+                //     console.log("Helpfulness: " + professor.help);
+                //     console.log("Average Grade: " + professor.grade);
+                //     console.log("Chili: " + professor.chili);
+                //     console.log("URL: " + professor.url);
+                //     console.log("First comment: " + professor.comments[0]);
+                // };
+                //
+                // rmp.get("Paul Lynch", callback);
+
+                console.log(json);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+        this.setState({
+            Transform:false,
+            DisplayTable:true
+        });
+        console.log(this.state);
+
+    }
+    render() {
+
+        const isTable = this.state.DisplayTable;
+        let Table = null;
+        if(isTable) {
+            Table =
+                <ReactTable data={this.state.Data} columns={this.state.Columns} defaultPageSize={10}/>
+        }
+
+
+        return (
+
+            <div>
+                <form>
+                    <label>
+                        Course Number:
+                        <br />
+
+                        <input
+                            name ="courses_id"
+                            type="text"
+                            placeholder="ex: 210"
+                            value ={this.state.courses_id}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    <br />
+                    <label>
+                        Department:
+                        <br />
+
+                        <input
+                            name ="courses_dept"
+                            type="text"
+                            placeholder="ex: CPSC"
+                            value={this.state.courses_dept}
+                            onChange={this.handleInputChange} />
+                    </label>
+                    <br/>
+                    <button type="button" onClick={this.organizeObject}> Compile </button>
+                </form>
+                {Table}
+            </div>
+
+        );
+    }
+}
 let complete = (
     <div>
         <h1> UBC Insight Query </h1>
@@ -1098,14 +1376,16 @@ let complete = (
         <Rooms/>
         <h2> Scheduler </h2>
         <Schedule/>
+        <h2>Enhanced Rate My Prof</h2>
+        <Novel/>
     </div>
 );
 
- /*
-  * Entry point
-  */
+/*
+ * Entry point
+ */
 
- ReactDOM.render(
-     complete,
-   document.getElementById('app')
- );
+ReactDOM.render(
+    complete,
+    document.getElementById('app')
+);
