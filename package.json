@@ -66,6 +66,7 @@
     "react-table": "^5.3.5",
     "request": "^2.79.0",
     "restify": "^4.3.0",
+    "rmp-api": "0.0.1-security",
     "style-loader": "^0.16.0",
     "ts-node": "^2.0.0",
     "typescript": "^2.2.1",
