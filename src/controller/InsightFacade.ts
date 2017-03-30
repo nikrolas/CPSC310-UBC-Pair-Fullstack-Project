@@ -82,9 +82,9 @@ export default class InsightFacade implements IInsightFacade {
 
                 //Perform scheduling by iterating
                 // through both courses and rooms
-                for (let section of coursesResults) {
-                    let cDept = section["courses_dept"];
-                    let cID = section["courses_id"];
+                for (let i = 0; i < totalSections; i++) {
+                    let cDept = coursesResults[i]["courses_dept"];
+                    let cID = coursesResults[i]["courses_id"];
                     let cName = cDept + cID;
                     let cSize = courseMaxSizes[cDept + cID];
 
@@ -97,7 +97,7 @@ export default class InsightFacade implements IInsightFacade {
                             let scheduledSection: any = {};
 
                             let rName = room["rooms_shortname"] + room["rooms_number"];
-                            let sec = section["courses_section"];
+                            let sec = coursesResults[i]["courses_section"];
 
                             //Check if the room has been scheduled before
                             if (rName in slotsRemainingForRoom) {
@@ -118,7 +118,7 @@ export default class InsightFacade implements IInsightFacade {
                                     else {
                                         scheduledCourses[cName] = {};
                                         scheduledCourses[cName]["numSections"] = 1;
-                                        scheduledCourses[cName]["maxSeats"] = section["courseSize"];
+                                        scheduledCourses[cName]["maxSeats"] = coursesResults[i]["courseSize"];
                                     }
 
                                     totalScheduledSections++;
@@ -138,7 +138,7 @@ export default class InsightFacade implements IInsightFacade {
 
                                 scheduledCourses[cName] = {};
                                 scheduledCourses[cName]["numSections"] = 1;
-                                scheduledCourses[cName]["maxSeats"] = section["courseSize"];
+                                scheduledCourses[cName]["maxSeats"] = coursesResults[i]["courseSize"];
 
                                 totalScheduledSections++;
                                 break;
@@ -146,8 +146,7 @@ export default class InsightFacade implements IInsightFacade {
                         }
                     }
                 }
-                let quality: number = 0.0;
-                quality = 1 - ((totalAttemptedSections - totalScheduledSections) / totalSections);
+                let quality: number = 1 - ((totalAttemptedSections - totalScheduledSections) / totalSections);
                 let finalReturnArray = [roomsSchedule, quality, scheduledCourses];
 
                 return fulfill(insightResponseConstructor(200, {finalReturnArray}));

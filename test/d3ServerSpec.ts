@@ -108,7 +108,7 @@ describe("d3ServerSpec", function () {
             });
     });
 
-    it("PUT courses.zip", function () {
+    it.only("PUT courses.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/courses')
             .attach("body", fs.readFileSync("./courses.zip"), "courses.zip")
@@ -200,7 +200,6 @@ describe("d3ServerSpec", function () {
             .send(distObject)
             .then(function (res: any) {
                 Log.trace('then:');
-                console.log(res.body);
                 expect(res.status).to.be.equal(200);
             })
             .catch(function () {
@@ -220,7 +219,6 @@ describe("d3ServerSpec", function () {
             })
             .catch(function (err: any) {
                 Log.trace('catch:');
-                console.log(err.body);
                 expect(err.status).to.be.equal(400);
             });
     });
@@ -236,7 +234,6 @@ describe("d3ServerSpec", function () {
             })
             .catch(function (err: any) {
                 Log.trace('catch:');
-                console.log(err.body);
                 expect(err.status).to.be.equal(400);
             });
     });
@@ -252,12 +249,11 @@ describe("d3ServerSpec", function () {
             })
             .catch(function (err: any) {
                 Log.trace('catch:');
-                console.log(err.body);
                 expect(err.status).to.be.equal(400);
             });
     });
 
-    it("PUT rooms.zip", function () {
+    it.only("PUT rooms.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/rooms')
             .attach("body", fs.readFileSync("./rooms.zip"), "rooms.zip")
@@ -276,19 +272,19 @@ describe("d3ServerSpec", function () {
                     AND:[
                         {
                             IS: {
-                                "courses_dept": "psyc"
+                                "courses_dept": "cpsc"
                             }
                         },
                         {
                             EQ: {
                                 "courses_year": 2014
                             }
-                        }/*,
+                        },
                         {
                             IS: {
                                 "courses_id": "310"
                             }
-                        }*/
+                        }
                         ]
 
                 },
@@ -316,6 +312,84 @@ describe("d3ServerSpec", function () {
             WHERE:{
                 IS:{
                     "rooms_shortname":"DMP"
+                }
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "rooms_shortname", "rooms_number", "rooms_seats"
+                ],
+                ORDER: {
+                    dir: "UP",
+                    keys: ["rooms_seats"]
+                },
+                FORM:"TABLE"
+            }
+        };
+
+        let queryArray = [];
+        queryArray.push(courseQuery);
+        queryArray.push(roomQuery);
+
+        return chai.request("http://localhost:4321")
+            .post('/schedule')
+            .send(queryArray)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
+            });
+    });
+
+    it("Schedule CPSC310 in PHARM", function () {
+        let courseQuery =
+            {
+                WHERE: {
+                    AND:[
+                        {
+                            IS: {
+                                "courses_dept": "cpsc"
+                            }
+                        },
+                        {
+                            EQ: {
+                                "courses_year": 2014
+                            }
+                        },
+                        {
+                            IS: {
+                                "courses_id": "310"
+                            }
+                        }
+                    ]
+
+                },
+                OPTIONS: {
+                    COLUMNS: [
+                        "courses_dept","courses_id", "courses_section", "courseSize"
+                    ],
+                    ORDER: {
+                        dir:"DOWN",
+                        keys: ["courses_dept","courses_id", "courseSize"]
+                    },
+                    FORM: "TABLE"
+                },
+                TRANSFORMATIONS: {
+                    GROUP: ["courses_dept","courses_id", "courses_section"],
+                    APPLY: [{
+                        "courseSize": {
+                            MAX: "courses_size"
+                        }
+                    }]
+                }
+            };
+
+        let roomQuery = {
+            WHERE:{
+                IS:{
+                    "rooms_shortname":"PHARM"
                 }
             },
             OPTIONS:{
@@ -399,6 +473,69 @@ describe("d3ServerSpec", function () {
                         }
                     }
                 ]
+            },
+            OPTIONS:{
+                COLUMNS:[
+                    "rooms_shortname", "rooms_number", "rooms_seats"
+                ],
+                ORDER: {
+                    dir: "UP",
+                    keys: ["rooms_seats"]
+                },
+                FORM:"TABLE"
+            }
+        };
+
+        let queryArray = [];
+        queryArray.push(courseQuery);
+        queryArray.push(roomQuery);
+
+        return chai.request("http://localhost:4321")
+            .post('/schedule')
+            .send(queryArray)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.status).to.be.equal(200);
+            })
+            .catch(function () {
+                Log.trace('catch:');
+                expect.fail();
+            });
+    });
+
+    it.only("Schedule 310 in DMP", function () {
+        let courseQuery =
+            {
+                WHERE: {
+                        IS: {
+                            "courses_id": "310"
+                        }
+                    },
+                OPTIONS: {
+                    COLUMNS: [
+                        "courses_dept","courses_id", "courses_section", "courseSize"
+                    ],
+                    ORDER: {
+                        dir:"DOWN",
+                        keys: ["courses_dept","courses_id", "courseSize"]
+                    },
+                    FORM: "TABLE"
+                },
+                TRANSFORMATIONS: {
+                    GROUP: ["courses_dept","courses_id", "courses_section"],
+                    APPLY: [{
+                        "courseSize": {
+                            MAX: "courses_size"
+                        }
+                    }]
+                }
+            };
+
+        let roomQuery = {
+            WHERE:{
+                IS:{
+                    "rooms_shortname":"DMP"
+                }
             },
             OPTIONS:{
                 COLUMNS:[
