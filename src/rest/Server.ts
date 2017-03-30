@@ -116,10 +116,9 @@ export default class Server {
                 that.rest.post('/distance', function (req: restify.Request, res: restify.Response,
                                                    next: restify.Next) {
 
-                    if (req.body[0] == undefined || req.body[1] == undefined) {
+                    if (req.body[1] == undefined || typeof req.body[0] !== "string" || typeof req.body[1] !== "number") {
                         res.json(400, {"error":"incorrect format"});
                     }
-
                     else{
                         insightFacade.getNearbyBuildings(req.body[0], req.body[1])
                             .then(function (responseFromInsight) {

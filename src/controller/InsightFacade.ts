@@ -159,13 +159,13 @@ export default class InsightFacade implements IInsightFacade {
 
     getNearbyBuildings(fromBuilding: string, maxDistance: number): Promise<InsightResponse> {
         return new Promise(function(fulfill, reject) {
-            let nearbyBuildings: any = [];
-            let startLat: number = buildings[fromBuilding][0];
-            let startLon: number = buildings[fromBuilding][1];
-
             if (!(fromBuilding in buildings)) {
                 return reject(insightResponseConstructor(400, {"error": "building does not exist"}));
             }
+
+            let nearbyBuildings: any = [];
+            let startLat: number = buildings[fromBuilding][0];
+            let startLon: number = buildings[fromBuilding][1];
 
             Object.keys(buildings).forEach(function(key) {
                 //if (key != fromBuilding) {

@@ -200,6 +200,7 @@ describe("d3ServerSpec", function () {
             .send(distObject)
             .then(function (res: any) {
                 Log.trace('then:');
+                console.log(res.body);
                 expect(res.status).to.be.equal(200);
             })
             .catch(function () {
@@ -208,7 +209,7 @@ describe("d3ServerSpec", function () {
             });
     });
 
-    it.only("Distance test from DMP without distance", function () {
+    it("Distance test from DMP without distance", function () {
         let distObject: any = ["DMP"];
         return chai.request("http://localhost:4321")
             .post('/distance')
@@ -219,6 +220,39 @@ describe("d3ServerSpec", function () {
             })
             .catch(function (err: any) {
                 Log.trace('catch:');
+                console.log(err.body);
+                expect(err.status).to.be.equal(400);
+            });
+    });
+
+    it("Distance test from CHAN", function () {
+        let distObject: any = ["CHAN", 200];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function () {
+                Log.trace('then:');
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                Log.trace('catch:');
+                console.log(err.body);
+                expect(err.status).to.be.equal(400);
+            });
+    });
+
+    it("Real building, fake distance", function () {
+        let distObject: any = ["CHAN", "fdasfsa"];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function () {
+                Log.trace('then:');
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                Log.trace('catch:');
+                console.log(err.body);
                 expect(err.status).to.be.equal(400);
             });
     });
