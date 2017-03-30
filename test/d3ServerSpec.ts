@@ -208,6 +208,21 @@ describe("d3ServerSpec", function () {
             });
     });
 
+    it.only("Distance test from DMP without distance", function () {
+        let distObject: any = ["DMP"];
+        return chai.request("http://localhost:4321")
+            .post('/distance')
+            .send(distObject)
+            .then(function () {
+                Log.trace('then:');
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                Log.trace('catch:');
+                expect(err.status).to.be.equal(400);
+            });
+    });
+
     it("PUT rooms.zip", function () {
         return chai.request("http://localhost:4321")
             .put('/dataset/rooms')
