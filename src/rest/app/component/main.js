@@ -6,7 +6,6 @@ let fetch = require('node-fetch');
 let ReactBoot = require('react-bootstrap');
 let Nav = require('react-bootstrap').Nav;
 let ReactTable = require('react-table').default;
-let rmp = require("rmp-api")
 import 'react-table/react-table.css';
 import './main.css';
 
@@ -829,6 +828,7 @@ class Schedule extends React.Component {
             EITHER_rooms:true,
             AND_rooms: false,
             Current:[],
+            Current_list:[],
             Columns:[{
                 header:'Department',
                 accessor: 'dept'
@@ -841,6 +841,16 @@ class Schedule extends React.Component {
             },{
                 header:'Time',
                 accessor: 'time'
+            }],
+            Columns_list:[{
+                header:'Course Name',
+                accessor: 'courseName'
+            },{
+                header:'Max Seats',
+                accessor: 'maxSeats'
+            },{
+                header:'Number of Sections',
+                accessor: 'numSections'
             }],
             DisplayTable: false,
         };
@@ -1049,10 +1059,15 @@ class Schedule extends React.Component {
                             body: JSON.stringify(queryArray)})
                         .then((response) => response.json())
                         .then((json) => {
+                            let convertArray = [];
+                            for(let i = 0; i < Object.keys(json.finalReturnArray[2]).length; i++) {
+                                json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]] = {courseName:Object.keys(json.finalReturnArray[2])[i], maxSeats:json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]].maxSeats, numSections:json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]].numSections}
+                                convertArray.push(json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]]);
+                            }
                             this.setState({
                                 Schedule: json.finalReturnArray[0],
                                 Quality: json.finalReturnArray[1],
-                                List: json.finalReturnArray[2],
+                                List: convertArray,
                             });
                             console.log(json);
                         })
@@ -1093,10 +1108,15 @@ class Schedule extends React.Component {
                     body: JSON.stringify(queryArray)})
                 .then((response) => response.json())
                 .then((json) => {
+                let convertArray = [];
+                for(let i = 0; i < Object.keys(json.finalReturnArray[2]).length; i++) {
+                    json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]] = {courseName:Object.keys(json.finalReturnArray[2])[i], maxSeats:json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]].maxSeats, numSections:json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]].numSections}
+                    convertArray.push(json.finalReturnArray[2][Object.keys(json.finalReturnArray[2])[i]]);
+                }
                     this.setState({
                         Schedule: json.finalReturnArray[0],
                         Quality: json.finalReturnArray[1],
-                        List: json.finalReturnArray[2],
+                        List: convertArray,
                     });
                     console.log(json);
                 })
@@ -1129,9 +1149,12 @@ class Schedule extends React.Component {
 
         const isDropdown = this.state.Current;
         let Table = null;
+        let ListTable = null;
         if(typeof isDropdown == "string") {
             Table =
                 <ReactTable data={this.state.Schedule[this.state.Current]} columns={this.state.Columns} defaultPageSize={10}/>;
+            ListTable =
+                <ReactTable data={this.state.List} columns={this.state.Columns_list} defaultPageSize={10}/>;
         }
 
 
@@ -1193,6 +1216,7 @@ class Schedule extends React.Component {
                 {coursesDropdown}
                 {quality}
                 {Table}
+                {ListTable}
             </div>
 
         );
