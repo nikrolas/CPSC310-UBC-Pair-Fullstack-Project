@@ -147,7 +147,6 @@ class Form extends React.Component {
 
 
     organizeObject() {
-        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery = {
             WHERE: {},
             OPTIONS: {
@@ -381,12 +380,6 @@ class Form extends React.Component {
                         <option value="OR">OR</option>
                     </select>
                     <br/>
-                    //TODO: Potential sort by button populated by filled in form w/ Ascending/Descending options
-                    <br/>
-                    //TODO: Returning Errors
-                    <br/>
-                    //TODO: Transform state for constant ordering option but different department and probably section size as well
-                    <br/>
                     <button type="button" onClick={this.organizeObject}> Compile </button>
                 </form>
                 {Table}
@@ -473,7 +466,6 @@ class Rooms extends React.Component {
 
 
     organizeObject() {
-        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newIS = {};
         let newGT = {};
         let newLT = {};
@@ -799,11 +791,6 @@ class Rooms extends React.Component {
                         <option value="OR">OR</option>
                     </select>
                     <br/>
-                    //TODO: Dropdown do not reset unless on click
-                    <br/>
-                    <br/>
-                    //TODO: Make everything a dropdown except for number and size?
-                    <br/>
                     <button type="button" onClick={this.organizeObject}> Compile </button>
                 </form>
                 {Table}
@@ -929,7 +916,6 @@ class Schedule extends React.Component {
     }
 
     organizeObject() {
-        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery_courses = {
             WHERE: {},
             OPTIONS: {
@@ -992,7 +978,6 @@ class Schedule extends React.Component {
                 newOR1["OR"] = objectHolder;
                 newQuery_courses.WHERE = {AND:[newOR1,{EQ:{courses_year:2014}}]};;
             }
-            //TODO: Throw error?
         }
         else if(oldObject.AND_courses){
             console.log("hit");
@@ -1239,7 +1224,10 @@ class Novel extends React.Component {
         },{
             header:'Instructor',
             accessor: 'courses_instructor'
-        }],
+        },{
+                header:'Overall Avg',
+                accessor: 'overallAvg'
+            }],
             DisplayTable: false,
         };
 
@@ -1263,18 +1251,17 @@ class Novel extends React.Component {
 
 
     organizeObject() {
-        //TODO: Order not specified for now - can add when we get around to it. Delete if not active
         let newQuery = {
             WHERE: {},
             OPTIONS: {
                 COLUMNS: [
-                    "courses_dept","courses_id", "courses_instructor"
+                    "courses_dept","courses_id", "courses_instructor", "overallAvg"
                 ],
                 FORM: "TABLE"
             },
             TRANSFORMATIONS: {
                 GROUP: ["courses_dept","courses_id", "courses_instructor"],
-                APPLY: []
+                APPLY: [{"overallAvg":{AVG: "courses_avg"}}]
             }
         };
         //Format object according to state
