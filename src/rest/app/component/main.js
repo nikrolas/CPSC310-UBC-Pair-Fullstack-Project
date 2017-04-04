@@ -6,13 +6,14 @@ let fetch = require('node-fetch');
 let ReactBoot = require('react-bootstrap');
 let Nav = require('react-bootstrap').Nav;
 let ReactTable = require('react-table').default;
+
+
 import 'react-table/react-table.css';
 import './main.css';
 
 /*
  * Components
  */
-
 
 
 
